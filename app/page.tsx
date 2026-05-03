@@ -64,13 +64,15 @@ export default function MarpoLottoPage() {
             document.head.appendChild(script);
             await new Promise(r => setTimeout(r, 1000));
           }
-          const Pi = (window as any).Pi;
-          await Pi.init({ version: "2.0", sandbox: true });
-          const auth = await Pi.authenticate(['username', 'payments'], async (p: any) => {
-            await fetch('/api/payments/complete', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ paymentId: p.identifier, txid: p.transaction?.txid || 'cleanup' }) });
-          });
-          setUser(auth.user);
-          fetchMyTickets(auth.user.username);
+          if ((window as any).Pi) {
+            const Pi = (window as any).Pi;
+            await Pi.init({ version: "2.0", sandbox: true });
+            const auth = await Pi.authenticate(['username', 'payments'], async (p: any) => {
+              await fetch('/api/payments/complete', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ paymentId: p.identifier, txid: p.transaction?.txid || 'cleanup' }) });
+            });
+            setUser(auth.user);
+            fetchMyTickets(auth.user.username);
+          }
         } catch (err) { setUser({ username: "GUEST" }); }
       };
       initPi();
@@ -92,7 +94,7 @@ export default function MarpoLottoPage() {
       const res = await fetch('/api/tickets', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ numbers: { main: mainNumbers, spirit: spiritNumbers }, userId: user?.username, amount: 1, transactionId: txid }) });
       if (res.ok) { 
         alert("MARPO VAULT: 티켓이 안전하게 봉인되었습니다! 🏎️💨");
-        fetchMyTickets(user.username);
+        if (user?.username) fetchMyTickets(user.username);
       }
     } finally {
       setIsStoring(false); setIsModalOpen(false); setMainNumbers([]); setSpiritNumbers([]);
@@ -116,24 +118,41 @@ export default function MarpoLottoPage() {
     } catch (e) { setIsStoring(false); }
   };
 
-  const handleCheckTickets = async () => {
-    setIsChecking(true);
-    try {
-      const res = await fetch('/api/draw', { method: 'POST' });
-      const data = await res.json();
-      alert(data.message);
-      fetchMyTickets(user.username);
-    } finally { setIsChecking(false); }
-  };
-
-  // 🚨 신규: 당첨금 수령 함수
   const handleClaimPrize = async (ticketId: string) => {
     try {
       const res = await fetch('/api/claim', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ticketId }) });
       const data = await res.json();
       alert(data.message);
-      if (data.success) fetchMyTickets(user.username);
+      if (data.success && user?.username) fetchMyTickets(user.username);
     } catch (e) { alert("통신 에러"); }
+  };
+
+  // 🚨 대표님이 지시하신 완벽한 '개인화 당첨 확인' 로직
+  const handleCheckTickets = async () => {
+    setIsChecking(true);
+    try {
+      const res = await fetch('/api/draw', { method: 'POST' });
+      const data = await res.json();
+      
+      if (data.success) {
+        const myResponse = await fetch(`/api/tickets?userId=${user?.username}`);
+        const myData = await myResponse.json();
+        setMyTickets(myData.tickets);
+
+        const latestWin = myData.tickets.find((t: any) => t.status === "WON");
+        if (latestWin) {
+          alert(`🎉 축하합니다, @${user?.username}님! ${latestWin.rank}등에 당첨되었습니다!`);
+        } else {
+          alert(`@${user?.username}님, 아쉽게도 이번 회차에는 당첨되지 않았습니다. 다음 기회를 노려보세요!`);
+        }
+      } else {
+        alert(data.message);
+      }
+    } catch (e) {
+      alert("추첨 서버 통신 에러");
+    } finally {
+      setIsChecking(false);
+    }
   };
 
   return (
@@ -167,7 +186,7 @@ export default function MarpoLottoPage() {
 
       <button onClick={() => setIsModalOpen(true)} disabled={mainNumbers.length !== 8 || spiritNumbers.length !== 2 || !user} className="w-full max-w-md py-5 rounded-2xl font-black text-2xl tracking-[0.3em] mb-16 bg-gradient-to-r from-yellow-600 to-yellow-500 text-black shadow-xl disabled:opacity-50 transition-all">PLAY 1 PI</button>
 
-      {/* MY TICKETS - 🚨 지급 프로세스 UI 적용 */}
+      {/* MY TICKETS */}
       {user && (
         <section className="w-full max-w-md mb-16">
           <div className="flex items-center justify-between mb-6 border-b border-zinc-800 pb-3"><h2 className="text-lg font-black text-yellow-500 tracking-widest uppercase italic">My Tickets</h2><span className="text-xs text-zinc-500 font-bold tracking-widest bg-zinc-900 px-3 py-1 rounded-full border border-zinc-800">{myTickets.length} ENTRY</span></div>
@@ -225,7 +244,9 @@ export default function MarpoLottoPage() {
         </section>
       )}
 
+      {/* 역대 당첨 번호판 */}
       <WinnerBoard />
+
       <div className="w-full max-w-md mt-6">
         <button onClick={handleCheckTickets} disabled={isChecking || myTickets.filter(t => t.status === 'COMPLETED').length === 0} className={`w-full py-5 rounded-2xl font-black text-xl tracking-[0.2em] uppercase transition-all shadow-lg ${isChecking ? 'bg-zinc-800 text-zinc-500' : 'bg-zinc-900 border border-zinc-700 text-white hover:border-yellow-500 hover:text-yellow-500'}`}>
           {isChecking ? 'SCANNING...' : 'CHECK MY TICKETS'}

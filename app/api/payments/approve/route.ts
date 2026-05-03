@@ -2,22 +2,32 @@ import { NextResponse } from 'next/server';
 
 export async function POST(req: Request) {
   try {
-    const { paymentId, txid } = await req.json();
-    const piApiKey = process.env.PI_API_KEY;
+    const { paymentId } = await req.json();
+    // 💡 비밀번호 앞뒤에 실수로 들어간 띄어쓰기(공백)를 자동 제거합니다.
+    const piApiKey = process.env.PI_API_KEY?.trim(); 
 
-    // 파이 서버에 "블록체인 기록 확인했어, 완료 처리해!" 라고 대답하는 로직
-    const response = await fetch(`https://api.minepi.com/v2/payments/${paymentId}/complete`, {
+    if (!piApiKey) {
+      return NextResponse.json({ error: "비밀번호(API Key)가 Vercel 금고에 없습니다." }, { status: 400 });
+    }
+
+    const response = await fetch(`https://api.minepi.com/v2/payments/${paymentId}/approve`, {
       method: 'POST',
       headers: {
         'Authorization': `Key ${piApiKey}`,
-        'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ txid }),
     });
 
-    const data = await response.json();
-    return NextResponse.json(data);
-  } catch (error) {
-    return NextResponse.json({ error: "완료 처리 실패" }, { status: 500 });
+    const text = await response.text(); 
+    try {
+      const data = JSON.parse(text);
+      if (!response.ok) {
+        return NextResponse.json({ error: "파이 서버가 승인을 거절함", details: text }, { status: response.status });
+      }
+      return NextResponse.json(data);
+    } catch (e) {
+      return NextResponse.json({ error: "파이 서버 응답이 이상함", details: text }, { status: 500 });
+    }
+  } catch (error: any) {
+    return NextResponse.json({ error: "Vercel 서버 내부 고장", details: error.message }, { status: 500 });
   }
 }

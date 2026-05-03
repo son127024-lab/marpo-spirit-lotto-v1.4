@@ -24,10 +24,10 @@ export default function MarpoLottoPage() {
           setMyTickets(data.tickets);
         }
       } catch (parseError) {
-        console.error("🚨 API 에러: /api/tickets 경로를 확인하세요!");
+        console.error("API 에러");
       }
     } catch (error) {
-      console.error("Failed to fetch tickets:", error);
+      console.error(error);
     }
   };
 
@@ -36,7 +36,6 @@ export default function MarpoLottoPage() {
       const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
       
       if (isLocalhost) {
-        console.log("엔진 로컬 모드 가동! 강제 유저 주입 완료.");
         setTimeout(() => {
           const mockUser = { username: "MARPO_LOCAL_DEV" };
           setUser(mockUser);
@@ -50,13 +49,11 @@ export default function MarpoLottoPage() {
           if ((window as any).Pi) {
             const Pi = (window as any).Pi;
             await Pi.init({ version: "2.0", sandbox: true }); 
-            
             const auth = await Pi.authenticate(['username', 'payments'], onIncompletePaymentFound);
             setUser(auth.user);
             fetchMyTickets(auth.user.username);
           }
         } catch (err) {
-          console.error("Auth Startup Failed:", err);
           setUser({ username: "OFFLINE_TESTER" });
         }
       };
@@ -64,8 +61,25 @@ export default function MarpoLottoPage() {
     }
   }, []);
 
-  const onIncompletePaymentFound = (payment: any) => {
-    console.log("미완료 결제건 발견:", payment);
+  // 🚨 K1 긴급 백신: 미완료 찌꺼기를 발견하면 즉시 '완료(complete)' 처리해서 청소합니다!
+  const onIncompletePaymentFound = async (payment: any) => {
+    console.log("미완료 결제건 발견! 자동 청소 시작:", payment);
+    try {
+      const res = await fetch('/api/payments/complete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          paymentId: payment.identifier,
+          txid: payment.transaction?.txid || 'stuck_txid_cleanup'
+        })
+      });
+      const data = await res.json();
+      if (!data.error) {
+        setTimeout(() => alert("🧹 [시스템] 이전에 멈춰있던 결제 찌꺼기를 성공적으로 청소했습니다! 이제 정상적으로 결제가 가능합니다."), 1000);
+      }
+    } catch (error) {
+      console.error("청소 중 에러:", error);
+    }
   };
 
   const toggleMainNumber = (num: number) => {
@@ -88,7 +102,7 @@ export default function MarpoLottoPage() {
     if (mainNumbers.length === 8 && spiritNumbers.length === 2) setIsModalOpen(true);
   };
 
-  const saveTicketToDB = async (txid: string = "TEST_TXID") => {
+  const saveTicketToDB = async (txid: string) => {
     try {
       const response = await fetch('/api/tickets', {
         method: 'POST',
@@ -103,16 +117,18 @@ export default function MarpoLottoPage() {
 
       const data = await response.json();
       if (data.success) {
-        alert("MARPO VAULT: 결제 완료! 티켓이 금고에 안전하게 보관되었습니다! 🏎️💨");
+        setTimeout(() => {
+          alert("MARPO VAULT: 결제 완료! 티켓이 금고에 안전하게 보관되었습니다! 🏎️💨");
+        }, 500);
         setIsModalOpen(false);
         setMainNumbers([]);
         setSpiritNumbers([]);
         if (user?.username) fetchMyTickets(user.username);
       } else {
-        alert("엔진 오류: 데이터 전송에 실패했습니다.");
+        setTimeout(() => alert("엔진 오류: 금고 저장 실패"), 500);
       }
     } catch (error) {
-      console.error("DB Storage Error:", error);
+      setTimeout(() => alert("네트워크 오류"), 500);
     } finally {
       setIsStoring(false);
     }
@@ -123,7 +139,6 @@ export default function MarpoLottoPage() {
     setIsStoring(true);
 
     const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-
     if (isLocalhost) {
       await saveTicketToDB("LOCAL_TEST_TXID");
       return;
@@ -131,49 +146,55 @@ export default function MarpoLottoPage() {
 
     try {
       const Pi = (window as any).Pi;
-      if (!Pi) throw new Error("파이 엔진을 찾을 수 없습니다.");
+      if (!Pi) throw new Error("파이 엔진 없음");
 
       Pi.createPayment({
         amount: 1, 
         memo: "Marpo Spirit - 1 Entry", 
-        metadata: { type: "lotto_ticket", numbers: mainNumbers.join(',') }
+        metadata: { type: "lotto_ticket" }
       }, {
         onReadyForServerApproval: async (paymentId: string) => {
-          console.log("1단계: 결제 승인 요청됨", paymentId);
           try {
-            // 🚨 K1 긴급 수정: Headers(이름표) 완벽 추가!
-            await fetch('/api/payments/approve', { 
+            const res = await fetch('/api/payments/approve', { 
               method: 'POST', 
               headers: { 'Content-Type': 'application/json' }, 
               body: JSON.stringify({ paymentId }) 
             });
-          } catch(e) { console.error(e); }
+            const data = await res.json();
+            if (data.error) {
+              setTimeout(() => alert(`🚨 승인 에러: ${data.error}\n상세: ${data.details || '없음'}`), 500);
+            }
+          } catch(e: any) { 
+            setTimeout(() => alert(`🚨 통신 실패: ${e.message}`), 500);
+          }
         },
         onReadyForServerCompletion: async (paymentId: string, txid: string) => {
-          console.log("2단계: 결제 완료 및 블록체인 기록", txid);
           try {
-            // 🚨 K1 긴급 수정: Headers(이름표) 완벽 추가!
-            await fetch('/api/payments/complete', { 
+            const res = await fetch('/api/payments/complete', { 
               method: 'POST', 
               headers: { 'Content-Type': 'application/json' }, 
               body: JSON.stringify({ paymentId, txid }) 
             });
-            await saveTicketToDB(txid);
-          } catch(e) { console.error(e); }
+            const data = await res.json();
+            if (data.error) {
+              setTimeout(() => alert(`🚨 완료 에러: ${data.error}`), 500);
+            } else {
+              await saveTicketToDB(txid);
+            }
+          } catch(e: any) { 
+             setTimeout(() => alert(`🚨 완료 통신 실패: ${e.message}`), 500);
+          }
         },
         onCancel: (paymentId: string) => {
-          console.log("결제 취소됨", paymentId);
           setIsStoring(false);
         },
         onError: (error: Error, payment: any) => {
-          console.error("결제 에러 발생", error);
-          alert("결제 처리 중 에러가 발생했습니다.");
+          setTimeout(() => alert(`지갑 에러: ${error.message}`), 500);
           setIsStoring(false);
         }
       });
-    } catch (error) {
-      console.error("Payment Start Error:", error);
-      alert("파이 지갑을 여는 데 실패했습니다.");
+    } catch (error: any) {
+      setTimeout(() => alert(`결제 시작 실패: ${error.message}`), 500);
       setIsStoring(false);
     }
   };

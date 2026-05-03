@@ -4,6 +4,10 @@ import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import WinnerBoard from '../components/WinnerBoard';
 
+// 🚨 에러 방어막: TypeScript 검사기 무시 명령어
+// @ts-ignore
+import confetti from 'canvas-confetti';
+
 export default function MarpoLottoPage() {
   const [user, setUser] = useState<any>(null);
   const [mainNumbers, setMainNumbers] = useState<number[]>([]);
@@ -93,7 +97,7 @@ export default function MarpoLottoPage() {
     try {
       const res = await fetch('/api/tickets', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ numbers: { main: mainNumbers, spirit: spiritNumbers }, userId: user?.username, amount: 1, transactionId: txid }) });
       if (res.ok) { 
-        alert("MARPO VAULT: 티켓이 안전하게 봉인되었습니다! 🏎️💨");
+        alert("MARPO VAULT: Your ticket has been safely sealed! 🏎️💨");
         if (user?.username) fetchMyTickets(user.username);
       }
     } finally {
@@ -124,32 +128,47 @@ export default function MarpoLottoPage() {
       const data = await res.json();
       alert(data.message);
       if (data.success && user?.username) fetchMyTickets(user.username);
-    } catch (e) { alert("통신 에러"); }
+    } catch (e) { alert("Network Error"); }
   };
 
-  // 🚨 대표님이 지시하신 완벽한 '개인화 당첨 확인' 로직
   const handleCheckTickets = async () => {
     setIsChecking(true);
     try {
-      const res = await fetch('/api/draw', { method: 'POST' });
-      const data = await res.json();
+      await fetch('/api/draw', { method: 'POST' });
+      const myResponse = await fetch(`/api/tickets?userId=${user?.username}`);
+      const myData = await myResponse.json();
       
-      if (data.success) {
-        const myResponse = await fetch(`/api/tickets?userId=${user?.username}`);
-        const myData = await myResponse.json();
+      if (myData.success && myData.tickets.length > 0) {
         setMyTickets(myData.tickets);
+        const latestTicket = myData.tickets[0];
+        
+        if (latestTicket.status === "COMPLETED") {
+          alert(`Your ticket is still sealed, @${user?.username}.\nPlease wait for the draw (Friday 20:00 KST)! 🏎️💨`);
+        } else if (latestTicket.status === "WON" || latestTicket.status === "CLAIMED") {
+          try {
+            const audio = new Audio('/win.mp3');
+            audio.play().catch(() => console.log("Sound muted by browser"));
+          } catch (e) {}
 
-        const latestWin = myData.tickets.find((t: any) => t.status === "WON");
-        if (latestWin) {
-          alert(`🎉 축하합니다, @${user?.username}님! ${latestWin.rank}등에 당첨되었습니다!`);
+          confetti({
+            particleCount: 200,
+            spread: 120,
+            origin: { y: 0.6 },
+            colors: ['#EAB308', '#DC2626', '#FFFFFF'], 
+            zIndex: 9999
+          });
+
+          setTimeout(() => {
+            alert(`🎉 Congratulations, @${user?.username}!\nYou won the ${latestTicket.rank} prize in the latest draw! 🏆`);
+          }, 500);
         } else {
-          alert(`@${user?.username}님, 아쉽게도 이번 회차에는 당첨되지 않았습니다. 다음 기회를 노려보세요!`);
+          alert(`Unfortunately, @${user?.username}, your latest ticket didn't win.\nBetter luck next time!`);
         }
       } else {
-        alert(data.message);
+        alert("No tickets found. Please play 1 PI first!");
       }
     } catch (e) {
-      alert("추첨 서버 통신 에러");
+      alert("Network error: Could not connect to the draw server.");
     } finally {
       setIsChecking(false);
     }
@@ -162,7 +181,6 @@ export default function MarpoLottoPage() {
       <h1 className="text-4xl font-black tracking-[0.2em] mb-1 text-yellow-500 uppercase italic">Marpo Spirit</h1>
       <p className="text-zinc-500 mb-8 uppercase tracking-[0.4em] text-[10px]">Lottoworld Global Jackpot</p>
 
-      {/* DASHBOARD */}
       <section className="w-full max-w-md bg-gradient-to-b from-zinc-900 to-black p-8 rounded-[2.5rem] border border-yellow-500/30 mb-10 text-center shadow-[0_20px_50px_rgba(234,179,8,0.1)]">
         <p className="text-zinc-500 text-[10px] uppercase tracking-[0.5em] font-black mb-3">Current Accumulated Prize</p>
         <p className="text-6xl font-black text-white tracking-tighter mb-6">{mockJackpot}</p>
@@ -173,7 +191,6 @@ export default function MarpoLottoPage() {
         </div>
       </section>
 
-      {/* Selection UI */}
       <section className="w-full max-w-md bg-zinc-900/50 p-6 rounded-3xl border border-zinc-800 mb-6">
         <div className="flex justify-between items-end mb-6 px-1"><h2 className="text-xs font-bold text-zinc-400 uppercase tracking-widest">Main Numbers</h2><span className="text-2xl font-black text-yellow-500 italic">{mainNumbers.length}<span className="text-zinc-600 text-sm not-italic ml-1">/ 8</span></span></div>
         <div className="grid grid-cols-7 gap-2.5">{Array.from({ length: 45 }, (_, i) => i + 1).map((n) => (<button key={`m-${n}`} onClick={() => toggleMainNumber(n)} className={`h-11 w-11 rounded-full text-sm font-black transition-all ${mainNumbers.includes(n) ? 'bg-yellow-500 text-black scale-110 shadow-[0_0_20px_rgba(234,179,8,0.4)]' : 'bg-zinc-800/50 text-zinc-500 border border-zinc-700/50'}`}>{n}</button>))}</div>
@@ -186,14 +203,13 @@ export default function MarpoLottoPage() {
 
       <button onClick={() => setIsModalOpen(true)} disabled={mainNumbers.length !== 8 || spiritNumbers.length !== 2 || !user} className="w-full max-w-md py-5 rounded-2xl font-black text-2xl tracking-[0.3em] mb-16 bg-gradient-to-r from-yellow-600 to-yellow-500 text-black shadow-xl disabled:opacity-50 transition-all">PLAY 1 PI</button>
 
-      {/* MY TICKETS */}
       {user && (
         <section className="w-full max-w-md mb-16">
           <div className="flex items-center justify-between mb-6 border-b border-zinc-800 pb-3"><h2 className="text-lg font-black text-yellow-500 tracking-widest uppercase italic">My Tickets</h2><span className="text-xs text-zinc-500 font-bold tracking-widest bg-zinc-900 px-3 py-1 rounded-full border border-zinc-800">{myTickets.length} ENTRY</span></div>
           <div className="flex flex-col gap-5">
             {myTickets.map((ticket, index) => {
               const drawDate = ticket.drawDate ? new Date(ticket.drawDate) : null;
-              const expiryDate = drawDate ? new Date(drawDate.setFullYear(drawDate.getFullYear() + 1)) : null;
+              const expiryDate = drawDate ? new Date(drawDate.getTime() + 365 * 24 * 60 * 60 * 1000) : null;
               const isExpired = expiryDate && new Date() > expiryDate;
 
               return (
@@ -226,14 +242,14 @@ export default function MarpoLottoPage() {
                     {ticket.status === 'WON' && !isExpired ? (
                       <div className="flex flex-col items-center">
                         <p className="text-yellow-500 font-black text-lg mb-3">JACKPOT: {ticket.prize} Pi</p>
-                        <button onClick={() => handleClaimPrize(ticket._id)} className="bg-yellow-500 text-black font-black py-3 px-8 rounded-xl uppercase tracking-widest hover:scale-105 transition-all">당첨금 수령</button>
-                        <p className="text-[9px] text-zinc-500 mt-3 uppercase">기한: {expiryDate?.toLocaleDateString()} 까지</p>
+                        <button onClick={() => handleClaimPrize(ticket._id)} className="bg-yellow-500 text-black font-black py-3 px-8 rounded-xl uppercase tracking-widest hover:scale-105 transition-all">CLAIM PRIZE</button>
+                        <p className="text-[9px] text-zinc-500 mt-3 uppercase font-bold">Expiry: {expiryDate?.toLocaleDateString()}</p>
                       </div>
                     ) : ticket.status === 'CLAIMED' ? (
-                      <p className="text-green-500 font-bold italic">▶ 지급 프로세스 진행 중...</p>
+                      <p className="text-green-500 font-bold italic">▶ Processing payment...</p>
                     ) : (
                       <p className="text-[11px] font-bold italic text-zinc-500">
-                        {ticket.status === 'COMPLETED' ? "▶ Your numbers are locked for fairness." : isExpired ? "▶ 지급 기한이 만료되어 기금으로 귀속되었습니다." : "▶ 아쉽게도 낙첨되었습니다."}
+                        {ticket.status === 'COMPLETED' ? "▶ Your numbers are locked for fairness." : isExpired ? "▶ The claim period has expired." : "▶ Better luck next time."}
                       </p>
                     )}
                   </div>
@@ -244,7 +260,6 @@ export default function MarpoLottoPage() {
         </section>
       )}
 
-      {/* 역대 당첨 번호판 */}
       <WinnerBoard />
 
       <div className="w-full max-w-md mt-6">
@@ -253,7 +268,6 @@ export default function MarpoLottoPage() {
         </button>
       </div>
 
-      {/* 모달 */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/95 backdrop-blur-sm flex justify-center items-center z-50 p-6">
           <div className="bg-zinc-900 border-2 border-yellow-500/50 p-8 rounded-[2.5rem] w-full max-w-md relative shadow-[0_0_100px_rgba(0,0,0,1)] text-center">

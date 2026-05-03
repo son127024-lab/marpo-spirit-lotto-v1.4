@@ -49,9 +49,8 @@ export default function MarpoLottoPage() {
         try {
           if ((window as any).Pi) {
             const Pi = (window as any).Pi;
-            await Pi.init({ version: "2.0", sandbox: true }); // 테스트넷 샌드박스 가동
+            await Pi.init({ version: "2.0", sandbox: true }); 
             
-            // 🚀 미완료 결제건을 찾아내는 파이 코어 기능 연결
             const auth = await Pi.authenticate(['username', 'payments'], onIncompletePaymentFound);
             setUser(auth.user);
             fetchMyTickets(auth.user.username);
@@ -65,10 +64,8 @@ export default function MarpoLottoPage() {
     }
   }, []);
 
-  // 🚀 미완료 결제건 처리 함수 (필수)
   const onIncompletePaymentFound = (payment: any) => {
     console.log("미완료 결제건 발견:", payment);
-    // 향후 미완료 결제건을 서버로 보내 완료 처리하는 로직이 추가될 곳입니다.
   };
 
   const toggleMainNumber = (num: number) => {
@@ -91,7 +88,6 @@ export default function MarpoLottoPage() {
     if (mainNumbers.length === 8 && spiritNumbers.length === 2) setIsModalOpen(true);
   };
 
-  // 🚀 [K1 방어막] 금고 저장 전용 로직 (결제가 성공했을 때만 호출됨)
   const saveTicketToDB = async (txid: string = "TEST_TXID") => {
     try {
       const response = await fetch('/api/tickets', {
@@ -101,7 +97,7 @@ export default function MarpoLottoPage() {
           numbers: { main: mainNumbers, spirit: spiritNumbers },
           userId: user?.username || "Guest_User",
           amount: 1,
-          transactionId: txid // 결제 영수증 번호 추가
+          transactionId: txid 
         }),
       });
 
@@ -122,14 +118,12 @@ export default function MarpoLottoPage() {
     }
   };
 
-  // 🚀 [최종 보스] 진짜 파이 결제 톨게이트 로직
   const handlePaymentSubmit = async () => {
     if (isStoring) return;
     setIsStoring(true);
 
     const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 
-    // 로컬 컴퓨터 환경에서는 지갑이 안 뜨므로 바로 금고 저장 로직으로 바이패스
     if (isLocalhost) {
       await saveTicketToDB("LOCAL_TEST_TXID");
       return;
@@ -139,28 +133,33 @@ export default function MarpoLottoPage() {
       const Pi = (window as any).Pi;
       if (!Pi) throw new Error("파이 엔진을 찾을 수 없습니다.");
 
-      // 파이 결제 지갑 호출!
       Pi.createPayment({
-        amount: 1, // 결제될 파이 코인 개수
-        memo: "Marpo Spirit - 1 Entry", // 지갑에 찍힐 영수증 이름
+        amount: 1, 
+        memo: "Marpo Spirit - 1 Entry", 
         metadata: { type: "lotto_ticket", numbers: mainNumbers.join(',') }
       }, {
         onReadyForServerApproval: async (paymentId: string) => {
           console.log("1단계: 결제 승인 요청됨", paymentId);
-          // ⚠️ 여기서 백엔드(/api/payments/approve)로 승인 요청을 보내야 합니다.
-          // 현재는 껍데기만 호출합니다.
           try {
-            await fetch('/api/payments/approve', { method: 'POST', body: JSON.stringify({ paymentId }) });
-          } catch(e) { console.log(e); }
+            // 🚨 K1 긴급 수정: Headers(이름표) 완벽 추가!
+            await fetch('/api/payments/approve', { 
+              method: 'POST', 
+              headers: { 'Content-Type': 'application/json' }, 
+              body: JSON.stringify({ paymentId }) 
+            });
+          } catch(e) { console.error(e); }
         },
         onReadyForServerCompletion: async (paymentId: string, txid: string) => {
           console.log("2단계: 결제 완료 및 블록체인 기록", txid);
-          // ⚠️ 백엔드(/api/payments/complete) 처리 후 금고에 저장
           try {
-            await fetch('/api/payments/complete', { method: 'POST', body: JSON.stringify({ paymentId, txid }) });
-            // 결제가 완벽히 성공했으니 티켓을 금고에 넣습니다!
+            // 🚨 K1 긴급 수정: Headers(이름표) 완벽 추가!
+            await fetch('/api/payments/complete', { 
+              method: 'POST', 
+              headers: { 'Content-Type': 'application/json' }, 
+              body: JSON.stringify({ paymentId, txid }) 
+            });
             await saveTicketToDB(txid);
-          } catch(e) { console.log(e); }
+          } catch(e) { console.error(e); }
         },
         onCancel: (paymentId: string) => {
           console.log("결제 취소됨", paymentId);

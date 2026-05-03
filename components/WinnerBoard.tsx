@@ -50,10 +50,6 @@ export default function WinnerBoard() {
           </div>
         ))}
       </div>
-
-      <button className="w-full mt-6 bg-zinc-800 hover:bg-zinc-700 text-gray-300 font-bold py-4 rounded-xl border border-zinc-700 transition-colors duration-300 shadow-inner uppercase tracking-widest">
-        Check My Tickets
-      </button>
     </div>
   );
 }

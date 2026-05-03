@@ -10,6 +10,7 @@ export default function MarpoLottoPage() {
   const [spiritNumbers, setSpiritNumbers] = useState<number[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isStoring, setIsStoring] = useState(false);
+  const [isChecking, setIsChecking] = useState(false); // 🚨 신규: 티켓 확인 중 로딩 상태
   const [myTickets, setMyTickets] = useState<any[]>([]);
   
   const mockJackpot = "15,420 Pi";
@@ -111,7 +112,7 @@ export default function MarpoLottoPage() {
         throw new Error(data.error || "알 수 없는 금고 오류");
       }
     } catch (error: any) {
-      setTimeout(() => alert(`🚨 금고 저장 실패!\n원인: ${error.message}\n(MongoDB 연결이나 API 경로를 확인해주세요)`), 300);
+      setTimeout(() => alert(`🚨 금고 저장 실패!\n원인: ${error.message}`), 300);
     } finally {
       setIsStoring(false);
       setIsModalOpen(false);
@@ -162,25 +163,28 @@ export default function MarpoLottoPage() {
     }
   };
 
-  // 🚨 신규 추가: 당첨 추첨 엔진 가동 버튼 로직
-  const handleSecretDraw = async () => {
+  // 🚨 신규: CHECK MY TICKETS 버튼 작동 로직
+  const handleCheckTickets = async () => {
     try {
+      setIsChecking(true);
       const res = await fetch('/api/draw', { method: 'POST' });
       const data = await res.json();
+      
       if (data.success) {
         alert(data.message);
-        // 추첨 완료 후 즉시 화면 갱신
-        if (user?.username) fetchMyTickets(user.username);
+        if (user?.username) fetchMyTickets(user.username); // 결과 즉시 새로고침
       } else {
-        alert(`🚨 추첨 실패: ${data.message || data.error}`);
+        alert(`알림: ${data.message || data.error}`);
       }
     } catch (e) {
-      alert("네트워크 통신 에러");
+      alert("네트워크 에러: 추첨 서버와 연결할 수 없습니다.");
+    } finally {
+      setIsChecking(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-black text-white flex flex-col items-center p-4 font-sans relative">
+    <div className="min-h-screen bg-black text-white flex flex-col items-center p-4 font-sans relative pb-20">
       <div className="mt-10 mb-6">
         <Image src="/marpo-group-logo.png" alt="MARPO GROUP" width={180} height={180} priority />
       </div>
@@ -239,20 +243,14 @@ export default function MarpoLottoPage() {
         </div>
       </section>
 
-      <button onClick={() => setIsModalOpen(true)} disabled={mainNumbers.length !== 8 || spiritNumbers.length !== 2 || !user} className="w-full max-w-md py-5 rounded-2xl font-black text-2xl tracking-[0.3em] mb-16 bg-gradient-to-r from-yellow-600 to-yellow-500 text-black shadow-xl disabled:opacity-50">PLAY 1 PI</button>
+      <button onClick={() => setIsModalOpen(true)} disabled={mainNumbers.length !== 8 || spiritNumbers.length !== 2 || !user} className="w-full max-w-md py-5 rounded-2xl font-black text-2xl tracking-[0.3em] mb-16 bg-gradient-to-r from-yellow-600 to-yellow-500 text-black shadow-xl disabled:opacity-50 transition-all">PLAY 1 PI</button>
 
       {/* MY TICKETS */}
       {user && (
         <section className="w-full max-w-md mb-16">
           <div className="flex items-center justify-between mb-6 border-b border-zinc-800 pb-3 text-center">
             <h2 className="text-lg font-black text-yellow-500 tracking-widest uppercase italic text-center">My Tickets</h2>
-            
-            {/* 🚨 신규 추가: 대표님 전용 SECRET DRAW 버튼 증축 */}
-            <div className="flex gap-2 items-center">
-              <button onClick={handleSecretDraw} className="text-[10px] bg-red-900/30 text-red-500 border border-red-900 px-3 py-1.5 rounded-full font-black tracking-widest uppercase hover:bg-red-600 hover:text-white transition-all shadow-lg">SECRET DRAW</button>
-              <span className="text-xs text-zinc-500 font-bold tracking-widest bg-zinc-900 px-3 py-1 rounded-full border border-zinc-800 text-center">{myTickets.length} ENTRY</span>
-            </div>
-
+            <span className="text-xs text-zinc-500 font-bold tracking-widest bg-zinc-900 px-3 py-1 rounded-full border border-zinc-800 text-center">{myTickets.length} ENTRY</span>
           </div>
           
           {myTickets.length === 0 ? (
@@ -263,7 +261,7 @@ export default function MarpoLottoPage() {
           ) : (
             <div className="flex flex-col gap-5">
               {myTickets.map((ticket, index) => (
-                <div key={index} className="bg-zinc-900/80 border border-zinc-800 rounded-[2rem] p-6 shadow-xl text-center">
+                <div key={index} className={`bg-zinc-900/80 border rounded-[2rem] p-6 shadow-xl text-center transition-all duration-500 ${ticket.status === 'WON' ? 'border-yellow-500 shadow-[0_0_30px_rgba(234,179,8,0.2)] scale-[1.02]' : 'border-zinc-800'}`}>
                   <div className="flex justify-between items-center mb-5 text-center">
                     <span className="text-[9px] font-black text-zinc-600 uppercase text-center">{new Date(ticket.createdAt).toLocaleDateString()}</span>
                     <span className={`text-[10px] font-black px-4 py-1.5 rounded-full uppercase text-center ${
@@ -279,9 +277,9 @@ export default function MarpoLottoPage() {
                     {ticket.selectedNumbers.spirit.map((n: number, i: number) => <span key={i} className={`w-10 h-10 flex items-center justify-center text-xs font-black rounded-full border text-center shadow-lg ${ticket.status === 'WON' ? 'bg-red-600 text-white border-red-500' : 'bg-red-900/30 text-red-500 border-red-900/50'}`}>{n}</span>)}
                   </div>
                   <div className="pt-4 border-t border-zinc-800/50">
-                    <p className={`text-[11px] font-bold italic text-center ${ticket.status === 'WON' ? 'text-yellow-500' : 'text-zinc-500'}`}>
+                    <p className={`text-[11px] font-bold italic text-center ${ticket.status === 'WON' ? 'text-yellow-500 text-sm tracking-widest' : 'text-zinc-500'}`}>
                       {ticket.status === 'COMPLETED' ? "▶ 이번 주 추첨 대기 중..." : 
-                       ticket.status === 'WON' ? `▶ 축하합니다! 당첨금 ${ticket.prize || '10'} Pi 지급 완료!` : 
+                       ticket.status === 'WON' ? `🎉 JACKPOT! 당첨금 ${ticket.prize || '15,420'} Pi 지급 완료!` : 
                        "▶ 아쉽게도 낙첨되었습니다."}
                     </p>
                   </div>
@@ -292,7 +290,24 @@ export default function MarpoLottoPage() {
         </section>
       )}
 
+      {/* 명예의 전당 */}
       <WinnerBoard />
+
+      {/* 🚨 신규: CHECK MY TICKETS 실제 기능 버튼 증축 */}
+      <div className="w-full max-w-md mt-6">
+        <button 
+          onClick={handleCheckTickets}
+          disabled={isChecking || myTickets.filter(t => t.status === 'COMPLETED').length === 0}
+          className={`w-full py-5 rounded-2xl font-black text-xl tracking-[0.2em] uppercase transition-all shadow-lg ${
+            isChecking ? 'bg-zinc-800 text-zinc-500 cursor-wait' :
+            myTickets.filter(t => t.status === 'COMPLETED').length > 0
+            ? 'bg-zinc-900 border border-zinc-700 text-white hover:border-yellow-500 hover:text-yellow-500'
+            : 'bg-black border border-zinc-900 text-zinc-800 cursor-not-allowed'
+          }`}
+        >
+          {isChecking ? 'SCANNING...' : 'CHECK MY TICKETS'}
+        </button>
+      </div>
 
       {/* 모달 */}
       {isModalOpen && (

@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import clientPromise from '@/lib/mongodb';
 
-// 🚨 신규 추가: 대표님 전용 비밀 추첨 엔진 (POST)
 export async function POST(req: Request) {
   try {
     const client = await clientPromise;
@@ -11,27 +10,27 @@ export async function POST(req: Request) {
     const pendingTickets = await db.collection("tickets").find({ status: "COMPLETED" }).toArray();
 
     if (pendingTickets.length === 0) {
-      return NextResponse.json({ success: false, message: "대기 중인 티켓이 없습니다." });
+      return NextResponse.json({ success: false, message: "추첨 대기 중인 티켓이 없습니다." });
     }
 
-    // 2. [관리자 특권] 테스트를 위해 가장 첫 번째(최근) 티켓을 무조건 당첨시킵니다!
+    // 2. [대표님 전용 테스트 모드] 대기 중인 티켓 중 첫 번째 것을 무조건 1등으로 만듭니다!
     const targetTicket = pendingTickets[0];
     const winMain = targetTicket.selectedNumbers.main;
     const winSpirit = targetTicket.selectedNumbers.spirit;
 
-    // 3. 당첨 및 낙첨 처리 (DB 업데이트)
+    // 3. 금고(DB) 안의 티켓들을 당첨/낙첨으로 업데이트합니다.
+    let winCount = 0;
     for (const ticket of pendingTickets) {
       const isMainMatch = JSON.stringify(ticket.selectedNumbers.main) === JSON.stringify(winMain);
       const isSpiritMatch = JSON.stringify(ticket.selectedNumbers.spirit) === JSON.stringify(winSpirit);
 
       if (isMainMatch && isSpiritMatch) {
-        // 일치하면 WON (당첨) 상태로 변경하고 상금 입력
         await db.collection("tickets").updateOne(
           { _id: ticket._id },
           { $set: { status: "WON", prize: "15,420" } }
         );
+        winCount++;
       } else {
-        // 일치하지 않으면 LOSE (낙첨) 상태로 변경
         await db.collection("tickets").updateOne(
           { _id: ticket._id },
           { $set: { status: "LOSE" } }
@@ -41,7 +40,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ 
       success: true, 
-      message: "🎰 [SECRET DRAW] 추첨 완료! 대표님의 티켓이 당첨되었습니다!" 
+      message: `🎰 추첨 완료! ${winCount}장의 티켓이 잭팟에 당첨되었습니다!` 
     });
   } catch (e: any) {
     return NextResponse.json({ success: false, error: e.message }, { status: 500 });

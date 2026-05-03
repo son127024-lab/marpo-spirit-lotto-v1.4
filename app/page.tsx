@@ -162,6 +162,23 @@ export default function MarpoLottoPage() {
     }
   };
 
+  // 🚨 신규 추가: 당첨 추첨 엔진 가동 버튼 로직
+  const handleSecretDraw = async () => {
+    try {
+      const res = await fetch('/api/draw', { method: 'POST' });
+      const data = await res.json();
+      if (data.success) {
+        alert(data.message);
+        // 추첨 완료 후 즉시 화면 갱신
+        if (user?.username) fetchMyTickets(user.username);
+      } else {
+        alert(`🚨 추첨 실패: ${data.message || data.error}`);
+      }
+    } catch (e) {
+      alert("네트워크 통신 에러");
+    }
+  };
+
   return (
     <div className="min-h-screen bg-black text-white flex flex-col items-center p-4 font-sans relative">
       <div className="mt-10 mb-6">
@@ -229,7 +246,13 @@ export default function MarpoLottoPage() {
         <section className="w-full max-w-md mb-16">
           <div className="flex items-center justify-between mb-6 border-b border-zinc-800 pb-3 text-center">
             <h2 className="text-lg font-black text-yellow-500 tracking-widest uppercase italic text-center">My Tickets</h2>
-            <span className="text-xs text-zinc-500 font-bold tracking-widest bg-zinc-900 px-3 py-1 rounded-full border border-zinc-800 text-center">{myTickets.length} ENTRY</span>
+            
+            {/* 🚨 신규 추가: 대표님 전용 SECRET DRAW 버튼 증축 */}
+            <div className="flex gap-2 items-center">
+              <button onClick={handleSecretDraw} className="text-[10px] bg-red-900/30 text-red-500 border border-red-900 px-3 py-1.5 rounded-full font-black tracking-widest uppercase hover:bg-red-600 hover:text-white transition-all shadow-lg">SECRET DRAW</button>
+              <span className="text-xs text-zinc-500 font-bold tracking-widest bg-zinc-900 px-3 py-1 rounded-full border border-zinc-800 text-center">{myTickets.length} ENTRY</span>
+            </div>
+
           </div>
           
           {myTickets.length === 0 ? (
@@ -243,18 +266,22 @@ export default function MarpoLottoPage() {
                 <div key={index} className="bg-zinc-900/80 border border-zinc-800 rounded-[2rem] p-6 shadow-xl text-center">
                   <div className="flex justify-between items-center mb-5 text-center">
                     <span className="text-[9px] font-black text-zinc-600 uppercase text-center">{new Date(ticket.createdAt).toLocaleDateString()}</span>
-                    <span className="text-[10px] font-black px-4 py-1.5 rounded-full uppercase bg-zinc-800 text-yellow-500 text-center">{ticket.status === 'COMPLETED' ? '⌛ Waiting' : ticket.status}</span>
+                    <span className={`text-[10px] font-black px-4 py-1.5 rounded-full uppercase text-center ${
+                      ticket.status === 'WON' ? 'bg-yellow-500 text-black animate-pulse' : 
+                      ticket.status === 'LOSE' ? 'bg-zinc-800 text-zinc-600' : 'bg-zinc-800 text-yellow-500'
+                    }`}>
+                      {ticket.status === 'COMPLETED' ? '⌛ Waiting' : ticket.status}
+                    </span>
                   </div>
                   <div className="flex flex-wrap gap-2 mb-5 justify-center">
-                    {ticket.selectedNumbers.main.map((n: number, i: number) => <span key={i} className="w-10 h-10 flex items-center justify-center bg-zinc-800 text-white text-xs font-black rounded-full border border-zinc-700 text-center shadow-lg">{n}</span>)}
+                    {ticket.selectedNumbers.main.map((n: number, i: number) => <span key={i} className={`w-10 h-10 flex items-center justify-center text-xs font-black rounded-full border text-center shadow-lg ${ticket.status === 'WON' ? 'bg-yellow-500 text-black border-yellow-400' : 'bg-zinc-800 text-white border-zinc-700'}`}>{n}</span>)}
                     <div className="w-[1px] h-10 bg-zinc-800 mx-1"></div>
-                    {ticket.selectedNumbers.spirit.map((n: number, i: number) => <span key={i} className="w-10 h-10 flex items-center justify-center bg-red-900/30 text-red-500 text-xs font-black rounded-full border border-red-900/50 text-center shadow-lg">{n}</span>)}
+                    {ticket.selectedNumbers.spirit.map((n: number, i: number) => <span key={i} className={`w-10 h-10 flex items-center justify-center text-xs font-black rounded-full border text-center shadow-lg ${ticket.status === 'WON' ? 'bg-red-600 text-white border-red-500' : 'bg-red-900/30 text-red-500 border-red-900/50'}`}>{n}</span>)}
                   </div>
                   <div className="pt-4 border-t border-zinc-800/50">
-                    <p className="text-[11px] font-bold italic text-zinc-500 text-center">
-                      {/* 🚨 바로 이곳의 에러를 제거하고 화살표 기호로 수정했습니다 */}
+                    <p className={`text-[11px] font-bold italic text-center ${ticket.status === 'WON' ? 'text-yellow-500' : 'text-zinc-500'}`}>
                       {ticket.status === 'COMPLETED' ? "▶ 이번 주 추첨 대기 중..." : 
-                       ticket.status === 'WON' ? `▶ 당첨! ${ticket.prize || '10'} Pi 지급 완료` : 
+                       ticket.status === 'WON' ? `▶ 축하합니다! 당첨금 ${ticket.prize || '10'} Pi 지급 완료!` : 
                        "▶ 아쉽게도 낙첨되었습니다."}
                     </p>
                   </div>

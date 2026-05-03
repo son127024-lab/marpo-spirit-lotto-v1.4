@@ -3,7 +3,6 @@ import { NextResponse } from 'next/server';
 export async function POST(req: Request) {
   try {
     const { paymentId, txid } = await req.json();
-    // 💡 1단계처럼 공백 제거 및 블랙박스 완벽 장착!
     const piApiKey = process.env.PI_API_KEY?.trim(); 
 
     if (!piApiKey) {

@@ -14,19 +14,17 @@ export default function MarpoLottoPage() {
   
   const mockJackpot = "15,420 Pi";
 
-  // 🚀 [K1 방어막 적용] 에러가 나도 화면이 죽지 않는 튼튼한 함수
   const fetchMyTickets = async (userId: string) => {
     try {
       const response = await fetch(`/api/tickets?userId=${userId}`);
-      const text = await response.text(); // 일단 JSON이 아니라 텍스트로 무조건 받습니다.
-      
+      const text = await response.text(); 
       try {
-        const data = JSON.parse(text); // 여기서 JSON 변환 시도
+        const data = JSON.parse(text); 
         if (data.success) {
           setMyTickets(data.tickets);
         }
       } catch (parseError) {
-        console.error("🚨 API 주소를 찾지 못해 HTML이 반환되었습니다. /api/tickets/route.ts 파일 위치를 확인하세요!");
+        console.error("🚨 API 에러: /api/tickets 경로를 확인하세요!");
       }
     } catch (error) {
       console.error("Failed to fetch tickets:", error);
@@ -51,7 +49,9 @@ export default function MarpoLottoPage() {
         try {
           if ((window as any).Pi) {
             const Pi = (window as any).Pi;
-            await Pi.init({ version: "2.0", sandbox: true });
+            await Pi.init({ version: "2.0", sandbox: true }); // 테스트넷 샌드박스 가동
+            
+            // 🚀 미완료 결제건을 찾아내는 파이 코어 기능 연결
             const auth = await Pi.authenticate(['username', 'payments'], onIncompletePaymentFound);
             setUser(auth.user);
             fetchMyTickets(auth.user.username);
@@ -65,7 +65,11 @@ export default function MarpoLottoPage() {
     }
   }, []);
 
-  const onIncompletePaymentFound = (payment: any) => {};
+  // 🚀 미완료 결제건 처리 함수 (필수)
+  const onIncompletePaymentFound = (payment: any) => {
+    console.log("미완료 결제건 발견:", payment);
+    // 향후 미완료 결제건을 서버로 보내 완료 처리하는 로직이 추가될 곳입니다.
+  };
 
   const toggleMainNumber = (num: number) => {
     if (mainNumbers.includes(num)) {
@@ -87,46 +91,96 @@ export default function MarpoLottoPage() {
     if (mainNumbers.length === 8 && spiritNumbers.length === 2) setIsModalOpen(true);
   };
 
-  const handlePaymentSubmit = async () => {
-    if (isStoring) return;
-    setIsStoring(true);
-    
+  // 🚀 [K1 방어막] 금고 저장 전용 로직 (결제가 성공했을 때만 호출됨)
+  const saveTicketToDB = async (txid: string = "TEST_TXID") => {
     try {
       const response = await fetch('/api/tickets', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          numbers: {
-            main: mainNumbers,
-            spirit: spiritNumbers
-          },
+          numbers: { main: mainNumbers, spirit: spiritNumbers },
           userId: user?.username || "Guest_User",
           amount: 1,
+          transactionId: txid // 결제 영수증 번호 추가
         }),
       });
 
       const data = await response.json();
-
       if (data.success) {
-        alert("MARPO VAULT: 티켓이 금고에 안전하게 보관되었습니다! 🏎️💨");
+        alert("MARPO VAULT: 결제 완료! 티켓이 금고에 안전하게 보관되었습니다! 🏎️💨");
         setIsModalOpen(false);
         setMainNumbers([]);
         setSpiritNumbers([]);
         if (user?.username) fetchMyTickets(user.username);
       } else {
-        alert("엔진 오류: 데이터 전송에 실패했습니다. (API 확인 필요)");
+        alert("엔진 오류: 데이터 전송에 실패했습니다.");
       }
     } catch (error) {
-      console.error("Critical Engine Failure:", error);
-      alert("네트워크 통신 오류가 발생했습니다.");
+      console.error("DB Storage Error:", error);
     } finally {
+      setIsStoring(false);
+    }
+  };
+
+  // 🚀 [최종 보스] 진짜 파이 결제 톨게이트 로직
+  const handlePaymentSubmit = async () => {
+    if (isStoring) return;
+    setIsStoring(true);
+
+    const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+
+    // 로컬 컴퓨터 환경에서는 지갑이 안 뜨므로 바로 금고 저장 로직으로 바이패스
+    if (isLocalhost) {
+      await saveTicketToDB("LOCAL_TEST_TXID");
+      return;
+    }
+
+    try {
+      const Pi = (window as any).Pi;
+      if (!Pi) throw new Error("파이 엔진을 찾을 수 없습니다.");
+
+      // 파이 결제 지갑 호출!
+      Pi.createPayment({
+        amount: 1, // 결제될 파이 코인 개수
+        memo: "Marpo Spirit - 1 Entry", // 지갑에 찍힐 영수증 이름
+        metadata: { type: "lotto_ticket", numbers: mainNumbers.join(',') }
+      }, {
+        onReadyForServerApproval: async (paymentId: string) => {
+          console.log("1단계: 결제 승인 요청됨", paymentId);
+          // ⚠️ 여기서 백엔드(/api/payments/approve)로 승인 요청을 보내야 합니다.
+          // 현재는 껍데기만 호출합니다.
+          try {
+            await fetch('/api/payments/approve', { method: 'POST', body: JSON.stringify({ paymentId }) });
+          } catch(e) { console.log(e); }
+        },
+        onReadyForServerCompletion: async (paymentId: string, txid: string) => {
+          console.log("2단계: 결제 완료 및 블록체인 기록", txid);
+          // ⚠️ 백엔드(/api/payments/complete) 처리 후 금고에 저장
+          try {
+            await fetch('/api/payments/complete', { method: 'POST', body: JSON.stringify({ paymentId, txid }) });
+            // 결제가 완벽히 성공했으니 티켓을 금고에 넣습니다!
+            await saveTicketToDB(txid);
+          } catch(e) { console.log(e); }
+        },
+        onCancel: (paymentId: string) => {
+          console.log("결제 취소됨", paymentId);
+          setIsStoring(false);
+        },
+        onError: (error: Error, payment: any) => {
+          console.error("결제 에러 발생", error);
+          alert("결제 처리 중 에러가 발생했습니다.");
+          setIsStoring(false);
+        }
+      });
+    } catch (error) {
+      console.error("Payment Start Error:", error);
+      alert("파이 지갑을 여는 데 실패했습니다.");
       setIsStoring(false);
     }
   };
 
   return (
     <div className="min-h-screen bg-black text-white flex flex-col items-center p-4 font-sans relative">
-      
       <div className="mt-10 mb-6">
         <Image src="/marpo-group-logo.png" alt="MARPO GROUP" width={180} height={180} priority />
       </div>

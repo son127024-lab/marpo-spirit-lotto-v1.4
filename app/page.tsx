@@ -10,10 +10,44 @@ export default function MarpoLottoPage() {
   const [spiritNumbers, setSpiritNumbers] = useState<number[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isStoring, setIsStoring] = useState(false);
-  const [isChecking, setIsChecking] = useState(false); // 🚨 신규: 티켓 확인 중 로딩 상태
+  const [isChecking, setIsChecking] = useState(false);
   const [myTickets, setMyTickets] = useState<any[]>([]);
+  const [currentTime, setCurrentTime] = useState(new Date()); // 카운트다운용 실시간 시계
   
   const mockJackpot = "15,420 Pi";
+
+  // 🕒 1. 다음 추첨일(매주 금요일 20:00) 계산기
+  const getNextDrawDate = () => {
+    const now = new Date();
+    const nextFriday = new Date();
+    nextFriday.setDate(now.getDate() + (5 - now.getDay() + 7) % 7);
+    nextFriday.setHours(20, 0, 0, 0);
+    
+    // 만약 오늘이 금요일인데 이미 20시가 지났다면 다음 주 금요일로 설정
+    if (now > nextFriday) {
+      nextFriday.setDate(nextFriday.getDate() + 7);
+    }
+    return nextFriday;
+  };
+
+  // ⏳ 2. 남은 시간 포맷팅 (D-Day HH:MM:SS)
+  const getTimeRemaining = () => {
+    const diff = getNextDrawDate().getTime() - currentTime.getTime();
+    if (diff <= 0) return "DRAWING NOW...";
+    
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
+    const minutes = Math.floor((diff / (1000 * 60)) % 60);
+    const seconds = Math.floor((diff / 1000) % 60);
+    
+    return `${days}D ${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+  };
+
+  // 시계 가동 (1초마다 갱신)
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   const fetchMyTickets = async (userId: string) => {
     try {
@@ -24,14 +58,13 @@ export default function MarpoLottoPage() {
         setMyTickets(data.tickets);
       }
     } catch (error) {
-      console.error("티켓 목록 로딩 실패");
+      console.error("티켓 로딩 실패");
     }
   };
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-      
       if (isLocalhost) {
         setTimeout(() => {
           const mockUser = { username: "MARPO_LOCAL_DEV" };
@@ -40,7 +73,6 @@ export default function MarpoLottoPage() {
         }, 500);
         return; 
       }
-
       const initPi = async () => {
         try {
           if (!(window as any).Pi) {
@@ -49,7 +81,6 @@ export default function MarpoLottoPage() {
             document.head.appendChild(script);
             await new Promise(resolve => setTimeout(resolve, 1000));
           }
-
           if ((window as any).Pi) {
             const Pi = (window as any).Pi;
             await Pi.init({ version: "2.0", sandbox: true }); 
@@ -99,20 +130,13 @@ export default function MarpoLottoPage() {
           transactionId: txid 
         }),
       });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`서버 응답 오류 (${response.status}): ${errorText.substring(0, 50)}`);
-      }
-
+      if (!response.ok) throw new Error("금고 연결 실패");
       const data = await response.json();
       if (data.success) {
-        setTimeout(() => alert("MARPO VAULT: 금고 저장 완료! 🏎️💨"), 300);
-      } else {
-        throw new Error(data.error || "알 수 없는 금고 오류");
+        setTimeout(() => alert("MARPO VAULT: 티켓이 안전하게 봉인되었습니다! 🏎️💨"), 300);
       }
     } catch (error: any) {
-      setTimeout(() => alert(`🚨 금고 저장 실패!\n원인: ${error.message}`), 300);
+      setTimeout(() => alert(`🚨 저장 실패: ${error.message}`), 300);
     } finally {
       setIsStoring(false);
       setIsModalOpen(false);
@@ -125,12 +149,10 @@ export default function MarpoLottoPage() {
   const handlePaymentSubmit = async () => {
     if (isStoring) return;
     setIsStoring(true);
-
     if (window.location.hostname === 'localhost') {
       await saveTicketToDB("LOCAL_TEST_TXID");
       return;
     }
-
     try {
       const Pi = (window as any).Pi;
       Pi.createPayment({
@@ -147,37 +169,25 @@ export default function MarpoLottoPage() {
           } catch(e) {}
           await saveTicketToDB(txid);
         },
-        onCancel: () => {
-          setIsStoring(false);
-          setIsModalOpen(false);
-        },
-        onError: (error: Error) => {
-          alert(`지갑 에러: ${error.message}`);
-          setIsStoring(false);
-          setIsModalOpen(false);
-        }
+        onCancel: () => setIsStoring(false),
+        onError: () => setIsStoring(false)
       });
     } catch (error: any) {
       setIsStoring(false);
-      setIsModalOpen(false);
     }
   };
 
-  // 🚨 신규: CHECK MY TICKETS 버튼 작동 로직
   const handleCheckTickets = async () => {
     try {
       setIsChecking(true);
       const res = await fetch('/api/draw', { method: 'POST' });
       const data = await res.json();
-      
       if (data.success) {
         alert(data.message);
-        if (user?.username) fetchMyTickets(user.username); // 결과 즉시 새로고침
-      } else {
-        alert(`알림: ${data.message || data.error}`);
+        if (user?.username) fetchMyTickets(user.username);
       }
     } catch (e) {
-      alert("네트워크 에러: 추첨 서버와 연결할 수 없습니다.");
+      alert("추첨 서버 통신 에러");
     } finally {
       setIsChecking(false);
     }
@@ -245,66 +255,60 @@ export default function MarpoLottoPage() {
 
       <button onClick={() => setIsModalOpen(true)} disabled={mainNumbers.length !== 8 || spiritNumbers.length !== 2 || !user} className="w-full max-w-md py-5 rounded-2xl font-black text-2xl tracking-[0.3em] mb-16 bg-gradient-to-r from-yellow-600 to-yellow-500 text-black shadow-xl disabled:opacity-50 transition-all">PLAY 1 PI</button>
 
-      {/* MY TICKETS */}
+      {/* MY TICKETS - 🚨 봉인 및 카운트다운 로직 적용 부분 */}
       {user && (
         <section className="w-full max-w-md mb-16">
-          <div className="flex items-center justify-between mb-6 border-b border-zinc-800 pb-3 text-center">
-            <h2 className="text-lg font-black text-yellow-500 tracking-widest uppercase italic text-center">My Tickets</h2>
-            <span className="text-xs text-zinc-500 font-bold tracking-widest bg-zinc-900 px-3 py-1 rounded-full border border-zinc-800 text-center">{myTickets.length} ENTRY</span>
+          <div className="flex items-center justify-between mb-6 border-b border-zinc-800 pb-3">
+            <h2 className="text-lg font-black text-yellow-500 tracking-widest uppercase italic">My Tickets</h2>
+            <span className="text-xs text-zinc-500 font-bold tracking-widest bg-zinc-900 px-3 py-1 rounded-full border border-zinc-800">{myTickets.length} ENTRY</span>
           </div>
-          
-          {myTickets.length === 0 ? (
-            <div className="bg-zinc-900/50 border border-zinc-800 rounded-3xl p-10 text-center">
-              <p className="text-zinc-600 text-sm font-bold tracking-widest uppercase">No tickets found</p>
-              <p className="text-zinc-700 text-[10px] mt-2 italic">Start your engine and play!</p>
-            </div>
-          ) : (
-            <div className="flex flex-col gap-5">
-              {myTickets.map((ticket, index) => (
-                <div key={index} className={`bg-zinc-900/80 border rounded-[2rem] p-6 shadow-xl text-center transition-all duration-500 ${ticket.status === 'WON' ? 'border-yellow-500 shadow-[0_0_30px_rgba(234,179,8,0.2)] scale-[1.02]' : 'border-zinc-800'}`}>
-                  <div className="flex justify-between items-center mb-5 text-center">
-                    <span className="text-[9px] font-black text-zinc-600 uppercase text-center">{new Date(ticket.createdAt).toLocaleDateString()}</span>
-                    <span className={`text-[10px] font-black px-4 py-1.5 rounded-full uppercase text-center ${
-                      ticket.status === 'WON' ? 'bg-yellow-500 text-black animate-pulse' : 
-                      ticket.status === 'LOSE' ? 'bg-zinc-800 text-zinc-600' : 'bg-zinc-800 text-yellow-500'
-                    }`}>
-                      {ticket.status === 'COMPLETED' ? '⌛ Waiting' : ticket.status}
-                    </span>
-                  </div>
-                  <div className="flex flex-wrap gap-2 mb-5 justify-center">
-                    {ticket.selectedNumbers.main.map((n: number, i: number) => <span key={i} className={`w-10 h-10 flex items-center justify-center text-xs font-black rounded-full border text-center shadow-lg ${ticket.status === 'WON' ? 'bg-yellow-500 text-black border-yellow-400' : 'bg-zinc-800 text-white border-zinc-700'}`}>{n}</span>)}
-                    <div className="w-[1px] h-10 bg-zinc-800 mx-1"></div>
-                    {ticket.selectedNumbers.spirit.map((n: number, i: number) => <span key={i} className={`w-10 h-10 flex items-center justify-center text-xs font-black rounded-full border text-center shadow-lg ${ticket.status === 'WON' ? 'bg-red-600 text-white border-red-500' : 'bg-red-900/30 text-red-500 border-red-900/50'}`}>{n}</span>)}
-                  </div>
-                  <div className="pt-4 border-t border-zinc-800/50">
-                    <p className={`text-[11px] font-bold italic text-center ${ticket.status === 'WON' ? 'text-yellow-500 text-sm tracking-widest' : 'text-zinc-500'}`}>
-                      {ticket.status === 'COMPLETED' ? "▶ 이번 주 추첨 대기 중..." : 
-                       ticket.status === 'WON' ? `🎉 JACKPOT! 당첨금 ${ticket.prize || '15,420'} Pi 지급 완료!` : 
-                       "▶ 아쉽게도 낙첨되었습니다."}
-                    </p>
-                  </div>
+          <div className="flex flex-col gap-5">
+            {myTickets.map((ticket, index) => (
+              <div key={index} className={`bg-zinc-900/80 border rounded-[2rem] p-6 shadow-xl text-center transition-all ${ticket.status === 'WON' ? 'border-yellow-500' : 'border-zinc-800'}`}>
+                <div className="flex justify-between items-center mb-5">
+                  <span className="text-[9px] font-black text-zinc-600 uppercase">{new Date(ticket.createdAt).toLocaleDateString()}</span>
+                  <span className={`text-[10px] font-black px-4 py-1.5 rounded-full uppercase ${
+                    ticket.status === 'WON' ? 'bg-yellow-500 text-black animate-pulse' : 
+                    ticket.status === 'LOSE' ? 'bg-zinc-800 text-zinc-600' : 'bg-zinc-800 text-yellow-500'
+                  }`}>
+                    {ticket.status === 'COMPLETED' ? '⌛ Waiting' : ticket.status}
+                  </span>
                 </div>
-              ))}
-            </div>
-          )}
+
+                {/* 🚨 번호 노출 제어 부분 */}
+                {ticket.status === 'COMPLETED' ? (
+                  // 추첨 전: 번호를 숨기고 카운트다운을 보여줍니다.
+                  <div className="bg-zinc-800/40 border border-dashed border-zinc-700 rounded-2xl p-6 mb-5">
+                    <p className="text-[10px] text-yellow-500/70 font-black uppercase tracking-[0.2em] mb-2">Ticket Sealed</p>
+                    <p className="text-2xl font-black text-white tracking-widest animate-pulse">{getTimeRemaining()}</p>
+                    <p className="text-[9px] text-zinc-600 mt-2 font-bold uppercase tracking-widest">Draw: {getNextDrawDate().toLocaleDateString()} 20:00 KST</p>
+                  </div>
+                ) : (
+                  // 추첨 후 (WON/LOSE): 번호를 공개하여 결과를 확인하게 합니다.
+                  <div className="flex flex-wrap gap-2 mb-5 justify-center">
+                    {ticket.selectedNumbers.main.map((n: number, i: number) => <span key={i} className={`w-10 h-10 flex items-center justify-center text-xs font-black rounded-full border shadow-lg ${ticket.status === 'WON' ? 'bg-yellow-500 text-black border-yellow-400' : 'bg-zinc-800 text-white border-zinc-700'}`}>{n}</span>)}
+                    <div className="w-[1px] h-10 bg-zinc-800 mx-1"></div>
+                    {ticket.selectedNumbers.spirit.map((n: number, i: number) => <span key={i} className={`w-10 h-10 flex items-center justify-center text-xs font-black rounded-full border shadow-lg ${ticket.status === 'WON' ? 'bg-red-600 text-white border-red-500' : 'bg-red-900/30 text-red-500 border-red-900/50'}`}>{n}</span>)}
+                  </div>
+                )}
+
+                <div className="pt-4 border-t border-zinc-800/50">
+                  <p className={`text-[11px] font-bold italic text-center ${ticket.status === 'WON' ? 'text-yellow-500' : 'text-zinc-500'}`}>
+                    {ticket.status === 'COMPLETED' ? "▶ Your numbers are locked for fairness." : 
+                     ticket.status === 'WON' ? `🎉 JACKPOT! 당첨금 ${ticket.prize || '15,420'} Pi 지급 완료!` : 
+                     "▶ 아쉽게도 낙첨되었습니다."}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
         </section>
       )}
 
-      {/* 명예의 전당 */}
       <WinnerBoard />
 
-      {/* 🚨 신규: CHECK MY TICKETS 실제 기능 버튼 증축 */}
       <div className="w-full max-w-md mt-6">
-        <button 
-          onClick={handleCheckTickets}
-          disabled={isChecking || myTickets.filter(t => t.status === 'COMPLETED').length === 0}
-          className={`w-full py-5 rounded-2xl font-black text-xl tracking-[0.2em] uppercase transition-all shadow-lg ${
-            isChecking ? 'bg-zinc-800 text-zinc-500 cursor-wait' :
-            myTickets.filter(t => t.status === 'COMPLETED').length > 0
-            ? 'bg-zinc-900 border border-zinc-700 text-white hover:border-yellow-500 hover:text-yellow-500'
-            : 'bg-black border border-zinc-900 text-zinc-800 cursor-not-allowed'
-          }`}
-        >
+        <button onClick={handleCheckTickets} disabled={isChecking || myTickets.filter(t => t.status === 'COMPLETED').length === 0} className={`w-full py-5 rounded-2xl font-black text-xl tracking-[0.2em] uppercase transition-all shadow-lg ${isChecking ? 'bg-zinc-800 text-zinc-500' : 'bg-zinc-900 border border-zinc-700 text-white hover:border-yellow-500 hover:text-yellow-500'}`}>
           {isChecking ? 'SCANNING...' : 'CHECK MY TICKETS'}
         </button>
       </div>
@@ -314,17 +318,17 @@ export default function MarpoLottoPage() {
         <div className="fixed inset-0 bg-black/95 backdrop-blur-sm flex justify-center items-center z-50 p-6">
           <div className="bg-zinc-900 border-2 border-yellow-500/50 p-8 rounded-[2.5rem] w-full max-w-md relative shadow-[0_0_100px_rgba(0,0,0,1)] text-center">
             <button onClick={() => setIsModalOpen(false)} className="absolute top-6 right-6 text-zinc-500 hover:text-white">✕</button>
-            <h2 className="text-3xl font-black text-yellow-500 mb-1 uppercase italic tracking-tighter text-center">Marpo Spirit</h2>
-            <p className="text-zinc-500 text-[10px] mb-8 uppercase tracking-[0.3em] text-center">Confirmation</p>
-            <div className="bg-zinc-800/50 border border-zinc-800 rounded-2xl p-6 mb-8 text-center">
-              <p className="text-zinc-500 text-[10px] mb-2 uppercase tracking-widest font-bold text-center">Estimated Jackpot</p>
-              <p className="text-5xl font-black text-white tracking-tighter text-center">{mockJackpot}</p>
+            <h2 className="text-3xl font-black text-yellow-500 mb-1 uppercase italic tracking-tighter">Marpo Spirit</h2>
+            <p className="text-zinc-500 text-[10px] mb-8 uppercase tracking-[0.3em]">Confirmation</p>
+            <div className="bg-zinc-800/50 border border-zinc-800 rounded-2xl p-6 mb-8">
+              <p className="text-zinc-500 text-[10px] mb-2 uppercase tracking-widest font-bold">Estimated Jackpot</p>
+              <p className="text-5xl font-black text-white tracking-tighter">{mockJackpot}</p>
             </div>
             <div className="mb-8 flex flex-wrap justify-center gap-2">
-              {mainNumbers.map(n => <span key={n} className="bg-yellow-500 text-black text-xs font-black px-2.5 py-1.5 rounded-lg text-center">{n}</span>)}
-              {spiritNumbers.map(n => <span key={n} className="bg-red-600 text-white text-xs font-black px-2.5 py-1.5 rounded-lg text-center">{n}</span>)}
+              {mainNumbers.map(n => <span key={n} className="bg-yellow-500 text-black text-xs font-black px-2.5 py-1.5 rounded-lg">{n}</span>)}
+              {spiritNumbers.map(n => <span key={n} className="bg-red-600 text-white text-xs font-black px-2.5 py-1.5 rounded-lg">{n}</span>)}
             </div>
-            <button onClick={handlePaymentSubmit} disabled={isStoring} className="w-full bg-gradient-to-r from-yellow-500 to-yellow-400 text-black font-black text-xl py-5 rounded-2xl uppercase tracking-widest shadow-lg text-center">{isStoring ? 'STORING...' : 'Confirm & Pay'}</button>
+            <button onClick={handlePaymentSubmit} disabled={isStoring} className="w-full bg-gradient-to-r from-yellow-500 to-yellow-400 text-black font-black text-xl py-5 rounded-2xl uppercase tracking-widest shadow-lg">{isStoring ? 'STORING...' : 'Confirm & Pay'}</button>
           </div>
         </div>
       )}

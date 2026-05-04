@@ -5,25 +5,21 @@ import Image from 'next/image';
 import Link from 'next/link';
 import WinnerBoard from '../components/WinnerBoard';
 
-// @ts-ignore
-import confetti from 'canvas-confetti';
-
 export default function MarpoLottoPage() {
   const [user, setUser] = useState<any>(null);
   const [mainNumbers, setMainNumbers] = useState<number[]>([]);
   const [spiritNumbers, setSpiritNumbers] = useState<number[]>([]);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isStoring, setIsStoring] = useState(false);
-  const [isChecking, setIsChecking] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+  const [isStoring, setIsStoring] = useState<boolean>(false);
+  const [isChecking, setIsChecking] = useState<boolean>(false);
   const [myTickets, setMyTickets] = useState<any[]>([]);
-  const [currentTime, setCurrentTime] = useState(new Date());
+  const [currentTime, setCurrentTime] = useState<Date>(new Date());
   
-  // 🟢 모든 상태는 순수한 숫자(Number)로 관리하여 에러 원천 차단
+  // 🟢 결제 안정성을 위한 소수점 5자리 고정
   const [ticketPrice, setTicketPrice] = useState<number>(0.13014); 
   const [peggedUsd, setPeggedUsd] = useState<number>(38.42);
   const [jackpot, setJackpot] = useState<number>(0);
 
-  // 다음 추첨일 계산 로직
   const getNextDrawDate = () => {
     const now = new Date();
     const nextFriday = new Date();
@@ -49,7 +45,8 @@ export default function MarpoLottoPage() {
         const res = await fetch('/api/admin/settings');
         const json = await res.json();
         if (json.success && json.settings) {
-          setTicketPrice(Number(json.settings.ticketPricePi) || 0);
+          const strictPrice = Number(Number(json.settings.ticketPricePi).toFixed(5));
+          setTicketPrice(strictPrice || 0);
           setPeggedUsd(Number(json.settings.peggedUsd) || 0);
           setJackpot(Number(json.settings.realJackpot) || 0);
         }
@@ -72,8 +69,12 @@ export default function MarpoLottoPage() {
     if (typeof window !== 'undefined') {
       const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
       if (isLocalhost) {
-        setTimeout(() => { const mu = { username: "MARPO_DEV" }; setUser(mu); fetchMyTickets(mu.username); }, 500);
-        return;
+        const timeoutId = setTimeout(() => { 
+          const mu = { username: "MARPO_DEV" }; 
+          setUser(mu); 
+          fetchMyTickets(mu.username); 
+        }, 500);
+        return () => clearTimeout(timeoutId);
       }
       const initPi = async () => {
         try {
@@ -104,10 +105,11 @@ export default function MarpoLottoPage() {
 
   const saveTicketToDB = async (txid: string) => {
     try {
+      const safeAmount = Number(ticketPrice.toFixed(5));
       const res = await fetch('/api/tickets', { 
         method: 'POST', 
         headers: { 'Content-Type': 'application/json' }, 
-        body: JSON.stringify({ numbers: { main: mainNumbers, spirit: spiritNumbers }, userId: user?.username, amount: ticketPrice, transactionId: txid }) 
+        body: JSON.stringify({ numbers: { main: mainNumbers, spirit: spiritNumbers }, userId: user?.username, amount: safeAmount, transactionId: txid }) 
       });
       if (res.ok) { 
         alert("MARPO VAULT: Ticket Sealed! 🏎️💨");
@@ -122,8 +124,9 @@ export default function MarpoLottoPage() {
     if (isStoring) return; setIsStoring(true);
     if (window.location.hostname === 'localhost') { await saveTicketToDB("DEV_TXID"); return; }
     try {
+      const safeAmount = Number(ticketPrice.toFixed(5));
       const Pi = (window as any).Pi;
-      Pi.createPayment({ amount: ticketPrice, memo: "Marpo Spirit Entry", metadata: { type: "lotto_ticket" } }, {
+      Pi.createPayment({ amount: safeAmount, memo: "Marpo Spirit Entry", metadata: { type: "lotto_ticket" } }, {
         onReadyForServerApproval: async (pid: string) => fetch('/api/payments/approve', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ paymentId: pid }) }),
         onReadyForServerCompletion: async (pid: string, txid: string) => {
           await fetch('/api/payments/complete', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ paymentId: pid, txid }) });
@@ -145,6 +148,8 @@ export default function MarpoLottoPage() {
         setMyTickets(myData.tickets);
         const latestTicket = myData.tickets[0];
         if (latestTicket.status === "WON" || latestTicket.status === "CLAIMED") {
+          // 🚨 에러 3 완벽 해결: 모듈 에러를 피하기 위해 폭죽을 터뜨릴 때만 동적으로 불러옵니다!
+          const confetti = (await import('canvas-confetti')).default;
           confetti({ particleCount: 200, spread: 120, origin: { y: 0.6 }, colors: ['#EAB308', '#DC2626', '#FFFFFF'] });
           alert(`🎉 Congratulations! You won the ${latestTicket.rank} prize!`);
         } else {
@@ -157,19 +162,10 @@ export default function MarpoLottoPage() {
   return (
     <div className="min-h-screen bg-black text-white flex flex-col items-center p-4 font-sans relative pb-20 text-center">
       
-      {/* 🚨 에러 1번 해결: Next.js 안전 규격의 스타일 주입 방식 */}
-      <style dangerouslySetInnerHTML={{ __html: `
-        @keyframes slowGlow {
-          0%, 100% { opacity: 0.4; filter: brightness(0.8); }
-          50% { opacity: 1; filter: brightness(1.2); }
-        }
-        .animate-slow-glow { animation: slowGlow 3s ease-in-out infinite; }
-      `}} />
-
-      {/* 헤더 영역 */}
+      {/* 🟢 헤더 영역 */}
       <div className="w-full max-w-md flex flex-col items-center pt-6 mb-8 px-2 relative mt-4 gap-6">
         <div className="flex flex-col items-center text-center">
-          <Image src="/marpo-group-logo.png" alt="MARPO GROUP" width={140} height={140} priority />
+          <Image src="/marpo-group-logo.png" alt="MARPO GROUP" width={140} height={140} priority={true} />
           <p className="mt-4 text-yellow-500 font-black text-xl tracking-widest uppercase">@{user?.username || "GUEST"}</p>
         </div>
 
@@ -179,7 +175,7 @@ export default function MarpoLottoPage() {
             <p className="text-3xl font-black text-white tracking-wider text-center">$ {peggedUsd.toLocaleString()} <span className="text-zinc-500 text-lg">USD</span></p>
           </div>
           
-          <div className="flex flex-col items-center animate-slow-glow w-full bg-yellow-900/10 py-3 rounded-xl border border-yellow-500/20">
+          <div className="flex flex-col items-center animate-pulse opacity-90 w-full bg-yellow-900/10 py-3 rounded-xl border border-yellow-500/20">
             <p className="text-sm text-zinc-400 leading-relaxed tracking-tight text-center uppercase font-bold mb-1">
               Price fluctuates based on Pi value.
             </p>
@@ -193,10 +189,10 @@ export default function MarpoLottoPage() {
       <h1 className="text-6xl font-black tracking-[0.1em] mb-3 text-yellow-500 uppercase italic">Marpo Spirit</h1>
       <p className="text-zinc-400 mb-12 uppercase tracking-[0.2em] text-lg font-black">Lottoworld Global Jackpot</p>
 
-      {/* 잭팟 전광판 */}
+      {/* 🟢 잭팟 전광판 */}
       <section className="w-full max-w-md bg-gradient-to-b from-zinc-900 to-black p-8 rounded-[2.5rem] border border-yellow-500/30 mb-12 shadow-[0_20px_50px_rgba(234,179,8,0.15)]">
         <p className="text-zinc-400 text-lg uppercase tracking-[0.2em] font-black mb-6 text-red-500 animate-pulse">● Live Total Prize</p>
-        <p className="text-[3.5rem] leading-none font-black text-white tracking-tighter mb-10">{jackpot.toLocaleString(undefined, {minimumFractionDigits: 4})} <br/><span className="text-3xl text-zinc-500 mt-2 block">Pi</span></p>
+        <p className="text-[3.5rem] leading-none font-black text-white tracking-tighter mb-10">{jackpot.toLocaleString(undefined, {minimumFractionDigits: 4})} <br /><span className="text-3xl text-zinc-500 mt-2 block">Pi</span></p>
         
         <div className="flex flex-col gap-4 bg-zinc-800/50 py-6 px-6 rounded-2xl border border-zinc-700/50">
           <div className="text-center">
@@ -211,28 +207,43 @@ export default function MarpoLottoPage() {
         </div>
       </section>
 
-      {/* 번호 선택 버튼 */}
+      {/* 🟢 번호 선택 버튼 및 선택 카운터 */}
       <section className="w-full max-w-md mb-14">
-        <p className="text-xl font-black text-zinc-500 mb-4 uppercase tracking-widest">Main Numbers</p>
+        
+        {/* 메인 번호 섹션 */}
+        <div className="flex justify-between items-center mb-4 px-1">
+          <p className="text-xl font-black text-zinc-500 uppercase tracking-widest">Main Numbers</p>
+          <span className={`text-2xl font-black transition-all ${mainNumbers.length === 8 ? 'text-yellow-500 animate-pulse' : 'text-zinc-500'}`}>
+            {mainNumbers.length} <span className="text-sm text-zinc-600">/ 8</span>
+          </span>
+        </div>
         <div className="grid grid-cols-7 gap-3 mb-10">
           {Array.from({ length: 45 }, (_, i) => i + 1).map((n) => (
             <button key={`m-${n}`} onClick={() => toggleMainNumber(n)} className={`h-12 w-12 rounded-full text-xl font-black transition-all ${mainNumbers.includes(n) ? 'bg-yellow-500 text-black scale-110 shadow-[0_0_15px_rgba(234,179,8,0.5)]' : 'bg-zinc-800 text-zinc-300 border border-zinc-700/50 hover:bg-zinc-700'}`}>{n}</button>
           ))}
         </div>
-        <p className="text-xl font-black text-red-500 mb-4 uppercase tracking-widest">Spirit Numbers</p>
+
+        {/* 스피릿 번호 섹션 */}
+        <div className="flex justify-between items-center mb-4 px-1">
+          <p className="text-xl font-black text-red-500 uppercase tracking-widest">Spirit Numbers</p>
+          <span className={`text-2xl font-black transition-all ${spiritNumbers.length === 2 ? 'text-red-500 animate-pulse' : 'text-zinc-500'}`}>
+            {spiritNumbers.length} <span className="text-sm text-zinc-600">/ 2</span>
+          </span>
+        </div>
         <div className="grid grid-cols-7 gap-3">
           {Array.from({ length: 45 }, (_, i) => i + 1).map((n) => (
             <button key={`s-${n}`} onClick={() => toggleSpiritNumber(n)} className={`h-12 w-12 rounded-full text-xl font-black transition-all ${spiritNumbers.includes(n) ? 'bg-red-600 text-white scale-110 shadow-[0_0_15px_rgba(220,38,38,0.5)]' : 'bg-zinc-800 text-zinc-300 border border-zinc-700/50 hover:bg-zinc-700'}`}>{n}</button>
           ))}
         </div>
+
       </section>
 
-      {/* 결제 버튼 (5자리 정밀도 안전 적용) */}
+      {/* 🟢 플레이 버튼 */}
       <button onClick={() => setIsModalOpen(true)} disabled={mainNumbers.length !== 8 || spiritNumbers.length !== 2 || !user} className="w-full max-w-md py-8 rounded-[2rem] font-black text-3xl tracking-widest mb-16 bg-gradient-to-r from-yellow-600 to-yellow-500 text-black shadow-xl disabled:opacity-50 transition-all uppercase hover:scale-[1.02] active:scale-95 leading-tight">
-        PLAY <br/>{ticketPrice.toFixed(5)} PI
+        PLAY <br />{ticketPrice.toFixed(5)} PI
       </button>
 
-      {/* 🚨 에러 2,3번 해결: 사라졌던 '내 구매 내역(My Tickets)' 복구 및 2배 크기 적용 */}
+      {/* 🟢 마이 티켓 영역 */}
       {user && myTickets.length > 0 && (
         <section className="w-full max-w-md mb-16">
           <div className="flex items-center justify-between mb-8 border-b border-zinc-800 pb-4">
@@ -242,33 +253,42 @@ export default function MarpoLottoPage() {
           
           <div className="flex flex-col gap-8">
             {myTickets.map((ticket: any, index: number) => {
-              const drawDate = ticket.drawDate ? new Date(ticket.drawDate) : null;
+              const drawDate = ticket?.drawDate ? new Date(ticket.drawDate) : null;
               const expiryDate = drawDate ? new Date(drawDate.getTime() + 365 * 24 * 60 * 60 * 1000) : null;
-              const isExpired = expiryDate && new Date() > expiryDate;
+              // 🚨 에러 2 완벽 해결: TS 규칙에 맞게 getTime()으로 명확히 비교합니다.
+              const isExpired = expiryDate ? new Date().getTime() > expiryDate.getTime() : false;
 
               return (
-                <div key={index} className={`bg-zinc-900/80 border rounded-[2rem] p-8 shadow-xl text-center transition-all ${ticket.status === 'WON' ? 'border-yellow-500 shadow-[0_0_30px_rgba(234,179,8,0.2)]' : ticket.status === 'CLAIMED' ? 'border-green-900' : 'border-zinc-800'}`}>
+                <div key={index} className={`bg-zinc-900/80 border rounded-[2rem] p-8 shadow-xl text-center transition-all ${ticket?.status === 'WON' ? 'border-yellow-500 shadow-[0_0_30px_rgba(234,179,8,0.2)]' : ticket?.status === 'CLAIMED' ? 'border-green-900' : 'border-zinc-800'}`}>
                   <div className="flex justify-between items-center mb-6 text-center">
-                    <span className="text-sm font-black text-zinc-500 uppercase">{new Date(ticket.createdAt).toLocaleDateString()}</span>
+                    <span className="text-sm font-black text-zinc-500 uppercase">{ticket?.createdAt ? new Date(ticket.createdAt).toLocaleDateString() : ''}</span>
                     <span className={`text-sm font-black px-5 py-2 rounded-full uppercase ${
-                      ticket.status === 'WON' ? 'bg-yellow-500 text-black animate-pulse' : 
-                      ticket.status === 'CLAIMED' ? 'bg-green-600 text-white' :
-                      ticket.status === 'LOSE' ? 'bg-zinc-800 text-zinc-600' : 'bg-zinc-800 text-yellow-500'
+                      ticket?.status === 'WON' ? 'bg-yellow-500 text-black animate-pulse' : 
+                      ticket?.status === 'CLAIMED' ? 'bg-green-600 text-white' :
+                      ticket?.status === 'LOSE' ? 'bg-zinc-800 text-zinc-600' : 'bg-zinc-800 text-yellow-500'
                     }`}>
-                      {ticket.status === 'COMPLETED' ? '⌛ Waiting' : isExpired && ticket.status === 'WON' ? 'Expired' : ticket.status}
+                      {ticket?.status === 'COMPLETED' ? '⌛ Waiting' : isExpired && ticket?.status === 'WON' ? 'Expired' : ticket?.status}
                     </span>
                   </div>
 
-                  {ticket.status === 'COMPLETED' ? (
+                  {ticket?.status === 'COMPLETED' ? (
                     <div className="bg-zinc-800/40 border border-dashed border-zinc-700 rounded-2xl p-8 mb-6">
                       <p className="text-sm text-yellow-500/70 font-black uppercase tracking-[0.2em] mb-4">Ticket Sealed</p>
                       <p className="text-4xl font-black text-white tracking-widest animate-pulse">{getTimeRemaining()}</p>
                     </div>
                   ) : (
                     <div className="flex flex-wrap gap-3 mb-6 justify-center">
-                      {ticket.selectedNumbers.main.map((n: number, i: number) => <span key={`mt-${i}`} className={`w-12 h-12 flex items-center justify-center text-lg font-black rounded-full border shadow-lg ${ticket.status === 'WON' ? 'bg-yellow-500 text-black border-yellow-400' : 'bg-zinc-800 text-white border-zinc-700'}`}>{n}</span>)}
+                      {ticket?.selectedNumbers?.main?.map((n: number, i: number) => (
+                        <span key={`mt-${i}`} className={`w-12 h-12 flex items-center justify-center text-lg font-black rounded-full border shadow-lg ${ticket?.status === 'WON' ? 'bg-yellow-500 text-black border-yellow-400' : 'bg-zinc-800 text-white border-zinc-700'}`}>
+                          {n}
+                        </span>
+                      ))}
                       <div className="w-[2px] h-12 bg-zinc-800 mx-2"></div>
-                      {ticket.selectedNumbers.spirit.map((n: number, i: number) => <span key={`st-${i}`} className={`w-12 h-12 flex items-center justify-center text-lg font-black rounded-full border shadow-lg ${ticket.status === 'WON' ? 'bg-red-600 text-white border-red-500' : 'bg-red-900/30 text-red-500 border-red-900/50'}`}>{n}</span>)}
+                      {ticket?.selectedNumbers?.spirit?.map((n: number, i: number) => (
+                        <span key={`st-${i}`} className={`w-12 h-12 flex items-center justify-center text-lg font-black rounded-full border shadow-lg ${ticket?.status === 'WON' ? 'bg-red-600 text-white border-red-500' : 'bg-red-900/30 text-red-500 border-red-900/50'}`}>
+                          {n}
+                        </span>
+                      ))}
                     </div>
                   )}
                 </div>
@@ -292,7 +312,7 @@ export default function MarpoLottoPage() {
         </Link>
       </div>
 
-      {/* 결제 확인 모달창 */}
+      {/* 🟢 결제 확인 모달창 */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/95 backdrop-blur-sm flex justify-center items-center z-50 p-6">
           <div className="bg-zinc-900 border-2 border-yellow-500/50 p-10 rounded-[2.5rem] w-full max-w-md relative shadow-2xl">

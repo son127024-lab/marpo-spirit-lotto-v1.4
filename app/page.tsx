@@ -17,7 +17,6 @@ export default function MarpoLottoPage() {
   const [myTickets, setMyTickets] = useState<any[]>([]);
   const [currentTime, setCurrentTime] = useState(new Date());
   
-  // 🚨 [근본적 해결] 모든 상태를 순수한 숫자(Number)로 유지합니다!
   const [ticketPrice, setTicketPrice] = useState<number>(0.13014055); 
   const [peggedUsd, setPeggedUsd] = useState<number>(38.42);
   const [jackpot, setJackpot] = useState<number>(0);
@@ -28,7 +27,6 @@ export default function MarpoLottoPage() {
         const res = await fetch('/api/admin/settings');
         const json = await res.json();
         if (json.success && json.settings) {
-          // 데이터도 순수한 숫자만 저장합니다. (에러 발생 확률 0%)
           setTicketPrice(Number(json.settings.ticketPricePi) || 0);
           setPeggedUsd(Number(json.settings.peggedUsd) || 0);
           setJackpot(Number(json.settings.realJackpot) || 0);
@@ -84,7 +82,6 @@ export default function MarpoLottoPage() {
 
   const saveTicketToDB = async (txid: string) => {
     try {
-      // ticketPrice가 이미 숫자이므로 그대로 넘깁니다.
       const res = await fetch('/api/tickets', { 
         method: 'POST', 
         headers: { 'Content-Type': 'application/json' }, 
@@ -140,7 +137,7 @@ export default function MarpoLottoPage() {
       
       <style jsx>{`
         @keyframes slowGlow {
-          0%, 100% { opacity: 0.3; filter: brightness(0.8); }
+          0%, 100% { opacity: 0.4; filter: brightness(0.8); }
           50% { opacity: 1; filter: brightness(1.2); }
         }
         .animate-slow-glow {
@@ -148,86 +145,96 @@ export default function MarpoLottoPage() {
         }
       `}</style>
 
-      <div className="w-full max-w-md flex justify-between items-start pt-6 mb-6 px-2 relative mt-4">
+      {/* 🟢 헤더 영역: 모바일 가독성 업그레이드 */}
+      <div className="w-full max-w-md flex justify-between items-start pt-6 mb-8 px-2 relative mt-4">
         <div className="flex flex-col items-start text-left">
-          <Image src="/marpo-group-logo.png" alt="MARPO GROUP" width={100} height={100} priority />
-          <p className="mt-2 text-yellow-500 font-black text-xs tracking-widest uppercase">@{user?.username || "GUEST"}</p>
+          <Image src="/marpo-group-logo.png" alt="MARPO GROUP" width={110} height={110} priority />
+          <p className="mt-3 text-yellow-500 font-black text-sm tracking-widest uppercase">@{user?.username || "GUEST"}</p>
         </div>
 
-        <div className="flex flex-col items-end gap-2">
-          <div className="bg-zinc-900/80 border border-zinc-800 rounded-xl px-4 py-2 flex flex-col items-end shadow-lg backdrop-blur-sm">
-            <p className="text-[8px] text-zinc-500 uppercase tracking-widest font-black mb-1 text-right">Global Pi Price</p>
-            {/* 🟢 출력할 때만 쉼표(toLocaleString)를 붙여줍니다 */}
-            <p className="text-sm font-black text-white tracking-wider text-right">$ {peggedUsd.toLocaleString()} <span className="text-zinc-500 text-[10px]">USD</span></p>
+        <div className="flex flex-col items-end gap-3">
+          <div className="bg-zinc-900/80 border border-zinc-800 rounded-xl px-5 py-3 flex flex-col items-end shadow-lg backdrop-blur-sm">
+            <p className="text-[10px] text-zinc-500 uppercase tracking-widest font-black mb-1 text-right">Global Pi Price</p>
+            <p className="text-base font-black text-white tracking-wider text-right">$ {peggedUsd.toLocaleString()} <span className="text-zinc-500 text-xs">USD</span></p>
           </div>
           
           <div className="flex flex-col items-end pr-1 animate-slow-glow">
-            <p className="text-[7px] text-zinc-500 leading-tight tracking-tighter text-right uppercase font-bold">
-              Price fluctuates based on Pi market value.
+            <p className="text-[9px] text-zinc-400 leading-tight tracking-tighter text-right uppercase font-bold mb-0.5">
+              Price fluctuates based on Pi value.
             </p>
-            <p className="text-[8px] text-yellow-600 font-black leading-tight tracking-tighter text-right uppercase">
+            <p className="text-[11px] text-yellow-600 font-black leading-tight tracking-tighter text-right uppercase">
               MARPO GROUP SUPPORTS <span className="text-yellow-500">GCV</span>
             </p>
           </div>
         </div>
       </div>
 
-      <h1 className="text-4xl font-black tracking-[0.2em] mb-1 text-yellow-500 uppercase italic">Marpo Spirit</h1>
-      <p className="text-zinc-500 mb-8 uppercase tracking-[0.4em] text-[10px]">Lottoworld Global Jackpot</p>
+      {/* 🟢 타이틀 영역 */}
+      <h1 className="text-4xl md:text-5xl font-black tracking-[0.2em] mb-2 text-yellow-500 uppercase italic">Marpo Spirit</h1>
+      <p className="text-zinc-500 mb-10 uppercase tracking-[0.3em] text-xs font-bold">Lottoworld Global Jackpot</p>
 
-      <section className="w-full max-w-md bg-gradient-to-b from-zinc-900 to-black p-8 rounded-[2.5rem] border border-yellow-500/30 mb-10 shadow-[0_20px_50px_rgba(234,179,8,0.1)]">
-        <p className="text-zinc-500 text-[10px] uppercase tracking-[0.5em] font-black mb-3 text-red-500 animate-pulse">● Live Total Applied Prize</p>
-        {/* 🟢 출력할 때만 쉼표와 소수점 4자리 형식을 적용합니다 */}
-        <p className="text-6xl font-black text-white tracking-tighter mb-6">{jackpot.toLocaleString(undefined, {minimumFractionDigits: 4})} <span className="text-xl text-zinc-600">Pi</span></p>
-        <div className="flex items-center justify-center gap-4 bg-zinc-800/40 py-3 px-6 rounded-2xl border border-zinc-700/30">
-          <div className="text-left"><p className="text-[9px] text-zinc-500 uppercase font-black tracking-widest">Draw Date</p><p className="text-sm text-yellow-500 font-black uppercase italic">Friday, 20:00 KST</p></div>
-          <div className="w-px h-8 bg-zinc-700/50"></div>
-          <div className="text-left"><p className="text-[9px] text-zinc-500 uppercase font-black tracking-widest text-center">Status</p><p className="text-sm text-green-500 font-black uppercase animate-pulse">Open</p></div>
+      {/* 🟢 잭팟 전광판: 글씨 크기 및 간격 최적화 */}
+      <section className="w-full max-w-md bg-gradient-to-b from-zinc-900 to-black p-8 rounded-[2.5rem] border border-yellow-500/30 mb-10 shadow-[0_20px_50px_rgba(234,179,8,0.15)]">
+        <p className="text-zinc-400 text-xs uppercase tracking-[0.3em] font-black mb-4 text-red-500 animate-pulse">● Live Total Applied Prize</p>
+        <p className="text-5xl md:text-6xl font-black text-white tracking-tighter mb-8">{jackpot.toLocaleString(undefined, {minimumFractionDigits: 4})} <span className="text-2xl text-zinc-600">Pi</span></p>
+        
+        <div className="flex items-center justify-center gap-6 bg-zinc-800/50 py-4 px-6 rounded-2xl border border-zinc-700/50">
+          <div className="text-left">
+            <p className="text-[11px] text-zinc-400 uppercase font-black tracking-widest mb-1">Draw Date</p>
+            <p className="text-base text-yellow-500 font-black uppercase italic">Friday, 20:00 KST</p>
+          </div>
+          <div className="w-px h-10 bg-zinc-600/50"></div>
+          <div className="text-left">
+            <p className="text-[11px] text-zinc-400 uppercase font-black tracking-widest text-center mb-1">Status</p>
+            <p className="text-base text-green-500 font-black uppercase animate-pulse text-center">Open</p>
+          </div>
         </div>
       </section>
 
-      <section className="w-full max-w-md mb-10">
-        <div className="grid grid-cols-7 gap-2 mb-8">
+      {/* 🟢 번호 선택 버튼: 모바일 터치 영역 대폭 개선 (w-11 -> w-12, text-xs -> text-sm) */}
+      <section className="w-full max-w-md mb-12">
+        <div className="grid grid-cols-7 gap-3 mb-8">
           {Array.from({ length: 45 }, (_, i) => i + 1).map((n) => (
-            <button key={`m-${n}`} onClick={() => toggleMainNumber(n)} className={`h-11 w-11 rounded-full text-xs font-black transition-all ${mainNumbers.includes(n) ? 'bg-yellow-500 text-black scale-110 shadow-lg' : 'bg-zinc-800 text-zinc-500 border border-zinc-700/50'}`}>{n}</button>
+            <button key={`m-${n}`} onClick={() => toggleMainNumber(n)} className={`h-12 w-12 rounded-full text-sm font-black transition-all ${mainNumbers.includes(n) ? 'bg-yellow-500 text-black scale-110 shadow-[0_0_15px_rgba(234,179,8,0.5)]' : 'bg-zinc-800 text-zinc-400 border border-zinc-700/50 hover:bg-zinc-700'}`}>{n}</button>
           ))}
         </div>
-        <div className="grid grid-cols-7 gap-2">
+        <div className="grid grid-cols-7 gap-3">
           {Array.from({ length: 45 }, (_, i) => i + 1).map((n) => (
-            <button key={`s-${n}`} onClick={() => toggleSpiritNumber(n)} className={`h-11 w-11 rounded-full text-xs font-black transition-all ${spiritNumbers.includes(n) ? 'bg-red-600 text-white scale-110 shadow-lg' : 'bg-zinc-800 text-zinc-500 border border-zinc-700/50'}`}>{n}</button>
+            <button key={`s-${n}`} onClick={() => toggleSpiritNumber(n)} className={`h-12 w-12 rounded-full text-sm font-black transition-all ${spiritNumbers.includes(n) ? 'bg-red-600 text-white scale-110 shadow-[0_0_15px_rgba(220,38,38,0.5)]' : 'bg-zinc-800 text-zinc-400 border border-zinc-700/50 hover:bg-zinc-700'}`}>{n}</button>
           ))}
         </div>
       </section>
 
-      <button onClick={() => setIsModalOpen(true)} disabled={mainNumbers.length !== 8 || spiritNumbers.length !== 2 || !user} className="w-full max-w-md py-5 rounded-2xl font-black text-2xl tracking-[0.1em] mb-16 bg-gradient-to-r from-yellow-600 to-yellow-500 text-black shadow-xl disabled:opacity-50 transition-all uppercase">
-        {/* 🟢 버튼에 띄울 때만 8자리 고정 형식 적용 */}
+      {/* 🟢 하단 플레이 및 유틸리티 버튼 */}
+      <button onClick={() => setIsModalOpen(true)} disabled={mainNumbers.length !== 8 || spiritNumbers.length !== 2 || !user} className="w-full max-w-md py-6 rounded-2xl font-black text-2xl tracking-[0.1em] mb-16 bg-gradient-to-r from-yellow-600 to-yellow-500 text-black shadow-xl disabled:opacity-50 transition-all uppercase hover:scale-[1.02] active:scale-95">
         PLAY {ticketPrice.toFixed(8)} PI
       </button>
 
       <WinnerBoard />
 
-      <div className="w-full max-w-md mt-6">
-        <button onClick={handleCheckTickets} disabled={isChecking || myTickets.length === 0} className={`w-full py-5 rounded-2xl font-black text-xl tracking-[0.2em] uppercase transition-all shadow-lg ${(isChecking || myTickets.length === 0) ? 'bg-zinc-800 text-zinc-500' : 'bg-zinc-900 border border-zinc-700 text-white hover:border-yellow-500 hover:text-yellow-500'}`}>
+      <div className="w-full max-w-md mt-8">
+        <button onClick={handleCheckTickets} disabled={isChecking || myTickets.length === 0} className={`w-full py-6 rounded-2xl font-black text-xl tracking-[0.2em] uppercase transition-all shadow-lg ${(isChecking || myTickets.length === 0) ? 'bg-zinc-800 text-zinc-500' : 'bg-zinc-900 border border-zinc-700 text-white hover:border-yellow-500 hover:text-yellow-500 active:scale-95'}`}>
           {isChecking ? 'SCANNING...' : 'CHECK MY TICKETS'}
         </button>
       </div>
 
-      <div className="w-full max-w-md mt-6 mb-4 text-center">
-        <Link href="/whitepaper" className="text-[11px] text-zinc-500 hover:text-yellow-500 font-bold tracking-[0.2em] uppercase transition-colors underline decoration-zinc-800 hover:decoration-yellow-500/50 underline-offset-8">
+      <div className="w-full max-w-md mt-8 mb-8 text-center">
+        <Link href="/whitepaper" className="text-sm text-zinc-400 hover:text-yellow-500 font-bold tracking-[0.2em] uppercase transition-colors underline decoration-zinc-700 hover:decoration-yellow-500/50 underline-offset-8">
           Read Marpo Whitepaper
         </Link>
       </div>
 
+      {/* 🟢 결제 확인 모달창 텍스트 크기 조정 */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/95 backdrop-blur-sm flex justify-center items-center z-50 p-6">
           <div className="bg-zinc-900 border-2 border-yellow-500/50 p-8 rounded-[2.5rem] w-full max-w-md relative shadow-2xl">
-            <button onClick={() => setIsModalOpen(false)} className="absolute top-6 right-6 text-zinc-500">✕</button>
+            <button onClick={() => setIsModalOpen(false)} className="absolute top-6 right-6 text-zinc-400 text-xl hover:text-white transition-colors">✕</button>
             <h2 className="text-3xl font-black text-yellow-500 mb-6 uppercase italic">Confirm Play</h2>
             <div className="bg-zinc-800/50 border border-zinc-800 rounded-2xl p-6 mb-8">
-              <p className="text-zinc-500 text-[10px] uppercase tracking-widest font-bold mb-2">Price for Entry</p>
+              <p className="text-zinc-400 text-xs uppercase tracking-widest font-bold mb-3">Price for Entry</p>
               <p className="text-4xl font-black text-white tracking-tighter">{ticketPrice.toFixed(8)} Pi</p>
             </div>
-            <button onClick={handlePaymentSubmit} disabled={isStoring} className="w-full bg-gradient-to-r from-yellow-500 to-yellow-400 text-black font-black text-xl py-5 rounded-2xl uppercase tracking-widest shadow-lg">{isStoring ? 'STORING...' : 'PAY NOW'}</button>
+            <button onClick={handlePaymentSubmit} disabled={isStoring} className="w-full bg-gradient-to-r from-yellow-500 to-yellow-400 text-black font-black text-xl py-5 rounded-2xl uppercase tracking-widest shadow-lg hover:scale-[1.02] active:scale-95">{isStoring ? 'STORING...' : 'PAY NOW'}</button>
           </div>
         </div>
       )}

@@ -6,15 +6,30 @@ export async function GET() {
     const client = await clientPromise;
     const db = client.db("marpo_lotto");
     
-    // DB에서 전역 설정값 찾기 (없으면 $5 기준으로 기본값 생성)
-    let settings = await db.collection("system_settings").findOne({ type: "global" });
+    // settings 타입을 any로 지정하여 필드 접근 에러 방지
+    let settings: any = await db.collection("system_settings").findOne({ type: "global" });
+    
     if (!settings) {
-      // 🚨 $5 기준 셋팅: 티켓 기본값을 0.13 Pi로 설정
-      settings = { type: "global", ticketPricePi: 0.13, peggedUsd: 38.42 };
+      settings = { type: "global", targetUsd: 5.0, peggedUsd: 38.42 };
       await db.collection("system_settings").insertOne(settings);
     }
     
-    return NextResponse.json({ success: true, settings });
+    // 데이터 추출 시 숫자 타입 보장
+    const tUsd = Number(settings.targetUsd || 5.0);
+    const pUsd = Number(settings.peggedUsd || 38.42);
+    
+    // 핵심 로직: 타겟 달러 / 파이 시세 = 결제할 Pi 개수
+    const ticketPricePi = Number((tUsd / pUsd).toFixed(4));
+    
+    return NextResponse.json({ 
+      success: true, 
+      settings: { 
+        type: "global",
+        targetUsd: tUsd,
+        peggedUsd: pUsd,
+        ticketPricePi: ticketPricePi 
+      } 
+    });
   } catch (e: any) {
     return NextResponse.json({ success: false, error: e.message });
   }
@@ -26,10 +41,13 @@ export async function POST(request: Request) {
     const client = await clientPromise;
     const db = client.db("marpo_lotto");
     
-    // 넘어온 값으로 DB 업데이트
     await db.collection("system_settings").updateOne(
       { type: "global" },
-      { $set: { ticketPricePi: Number(body.ticketPricePi), peggedUsd: Number(body.peggedUsd) } },
+      { $set: { 
+          targetUsd: Number(body.targetUsd), 
+          peggedUsd: Number(body.peggedUsd) 
+        } 
+      },
       { upsert: true }
     );
     

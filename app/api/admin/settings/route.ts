@@ -6,52 +6,32 @@ export async function GET() {
     const client = await clientPromise;
     const db = client.db("marpo_lotto");
     
-    // settings 타입을 any로 지정하여 필드 접근 에러 방지
+    // 1. 설정값 가져오기
     let settings: any = await db.collection("system_settings").findOne({ type: "global" });
-    
     if (!settings) {
       settings = { type: "global", targetUsd: 5.0, peggedUsd: 38.42 };
       await db.collection("system_settings").insertOne(settings);
     }
+
+    // 2. 실제 누적 판매액(Jackpot) 계산
+    // tickets 컬렉션에서 모든 티켓의 amount 합산
+    const ticketStats = await db.collection("tickets").aggregate([
+      { $group: { _id: null, totalAmount: { $sum: "$amount" } } }
+    ]).toArray();
+
+    const realJackpot = ticketStats.length > 0 ? ticketStats[0].totalAmount : 0;
     
-    // 데이터 추출 시 숫자 타입 보장
-    const tUsd = Number(settings.targetUsd || 5.0);
-    const pUsd = Number(settings.peggedUsd || 38.42);
-    
-    // 핵심 로직: 타겟 달러 / 파이 시세 = 결제할 Pi 개수
-    const ticketPricePi = Number((tUsd / pUsd).toFixed(4));
+    // 3. 티켓 가격 계산 (타겟 달러 / 파이 시세)
+    const ticketPricePi = Number((settings.targetUsd / settings.peggedUsd).toFixed(8));
     
     return NextResponse.json({ 
       success: true, 
       settings: { 
-        type: "global",
-        targetUsd: tUsd,
-        peggedUsd: pUsd,
-        ticketPricePi: ticketPricePi 
+        ...settings, 
+        ticketPricePi,
+        realJackpot: Number(realJackpot.toFixed(4)) // 잭팟은 소수점 4자리까지 표시
       } 
     });
-  } catch (e: any) {
-    return NextResponse.json({ success: false, error: e.message });
-  }
-}
-
-export async function POST(request: Request) {
-  try {
-    const body = await request.json();
-    const client = await clientPromise;
-    const db = client.db("marpo_lotto");
-    
-    await db.collection("system_settings").updateOne(
-      { type: "global" },
-      { $set: { 
-          targetUsd: Number(body.targetUsd), 
-          peggedUsd: Number(body.peggedUsd) 
-        } 
-      },
-      { upsert: true }
-    );
-    
-    return NextResponse.json({ success: true });
   } catch (e: any) {
     return NextResponse.json({ success: false, error: e.message });
   }

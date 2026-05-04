@@ -22,7 +22,7 @@ export async function GET() {
     const realJackpot = ticketStats.length > 0 ? ticketStats[0].totalAmount : 0;
     
     // 3. 티켓 가격 계산 (타겟 달러 / 파이 시세)
-    const ticketPricePi = Number((settings.targetUsd / settings.peggedUsd).toFixed(8));
+    const ticketPricePi = Number((settings.targetUsd / settings.peggedUsd).toFixed(5));
     
     return NextResponse.json({ 
       success: true, 

@@ -263,7 +263,7 @@ export default function MarpoLottoPage() {
       <WinnerBoard />
 
       <div className="w-full max-w-md mt-6">
-        <button onClick={handleCheckTickets} disabled={isChecking || myTickets.filter(t => t.status === 'COMPLETED').length === 0} className={`w-full py-5 rounded-2xl font-black text-xl tracking-[0.2em] uppercase transition-all shadow-lg ${isChecking ? 'bg-zinc-800 text-zinc-500' : 'bg-zinc-900 border border-zinc-700 text-white hover:border-yellow-500 hover:text-yellow-500'}`}>
+        <button onClick={handleCheckTickets} disabled={isChecking || myTickets.length === 0} className={`w-full py-5 rounded-2xl font-black text-xl tracking-[0.2em] uppercase transition-all shadow-lg ${(isChecking || myTickets.length === 0) ? 'bg-zinc-800 text-zinc-500' : 'bg-zinc-900 border border-zinc-700 text-white hover:border-yellow-500 hover:text-yellow-500'}`}>
           {isChecking ? 'SCANNING...' : 'CHECK MY TICKETS'}
         </button>
       </div>

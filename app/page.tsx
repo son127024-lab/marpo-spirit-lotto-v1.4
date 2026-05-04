@@ -17,10 +17,10 @@ export default function MarpoLottoPage() {
   const [myTickets, setMyTickets] = useState<any[]>([]);
   const [currentTime, setCurrentTime] = useState(new Date());
   
-  // 🟢 오라클 연동 상태 (초기값 $5 기준)
-  const [ticketPrice, setTicketPrice] = useState("0.13014055"); 
-  const [peggedUsd, setPeggedUsd] = useState(38.42);
-  const [jackpot, setJackpot] = useState("0.0000");
+  // 🚨 [근본적 해결] 모든 상태를 순수한 숫자(Number)로 유지합니다!
+  const [ticketPrice, setTicketPrice] = useState<number>(0.13014055); 
+  const [peggedUsd, setPeggedUsd] = useState<number>(38.42);
+  const [jackpot, setJackpot] = useState<number>(0);
 
   useEffect(() => {
     const fetchSettings = async () => {
@@ -28,9 +28,10 @@ export default function MarpoLottoPage() {
         const res = await fetch('/api/admin/settings');
         const json = await res.json();
         if (json.success && json.settings) {
-          setTicketPrice(Number(json.settings.ticketPricePi).toFixed(8));
-          setPeggedUsd(json.settings.peggedUsd);
-          setJackpot(Number(json.settings.realJackpot).toLocaleString(undefined, {minimumFractionDigits: 4}));
+          // 데이터도 순수한 숫자만 저장합니다. (에러 발생 확률 0%)
+          setTicketPrice(Number(json.settings.ticketPricePi) || 0);
+          setPeggedUsd(Number(json.settings.peggedUsd) || 0);
+          setJackpot(Number(json.settings.realJackpot) || 0);
         }
       } catch (e) { console.error("Oracle fetch error"); }
     };
@@ -83,10 +84,11 @@ export default function MarpoLottoPage() {
 
   const saveTicketToDB = async (txid: string) => {
     try {
+      // ticketPrice가 이미 숫자이므로 그대로 넘깁니다.
       const res = await fetch('/api/tickets', { 
         method: 'POST', 
         headers: { 'Content-Type': 'application/json' }, 
-        body: JSON.stringify({ numbers: { main: mainNumbers, spirit: spiritNumbers }, userId: user?.username, amount: Number(ticketPrice), transactionId: txid }) 
+        body: JSON.stringify({ numbers: { main: mainNumbers, spirit: spiritNumbers }, userId: user?.username, amount: ticketPrice, transactionId: txid }) 
       });
       if (res.ok) { 
         alert("MARPO VAULT: Ticket Sealed! 🏎️💨");
@@ -102,7 +104,7 @@ export default function MarpoLottoPage() {
     if (window.location.hostname === 'localhost') { await saveTicketToDB("DEV_TXID"); return; }
     try {
       const Pi = (window as any).Pi;
-      Pi.createPayment({ amount: Number(ticketPrice), memo: "Marpo Spirit Entry", metadata: { type: "lotto_ticket" } }, {
+      Pi.createPayment({ amount: ticketPrice, memo: "Marpo Spirit Entry", metadata: { type: "lotto_ticket" } }, {
         onReadyForServerApproval: async (pid: string) => fetch('/api/payments/approve', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ paymentId: pid }) }),
         onReadyForServerCompletion: async (pid: string, txid: string) => {
           await fetch('/api/payments/complete', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ paymentId: pid, txid }) });
@@ -136,14 +138,37 @@ export default function MarpoLottoPage() {
   return (
     <div className="min-h-screen bg-black text-white flex flex-col items-center p-4 font-sans relative pb-20 text-center">
       
+      <style jsx>{`
+        @keyframes slowGlow {
+          0%, 100% { opacity: 0.3; filter: brightness(0.8); }
+          50% { opacity: 1; filter: brightness(1.2); }
+        }
+        .animate-slow-glow {
+          animation: slowGlow 3s ease-in-out infinite;
+        }
+      `}</style>
+
       <div className="w-full max-w-md flex justify-between items-start pt-6 mb-6 px-2 relative mt-4">
         <div className="flex flex-col items-start text-left">
           <Image src="/marpo-group-logo.png" alt="MARPO GROUP" width={100} height={100} priority />
           <p className="mt-2 text-yellow-500 font-black text-xs tracking-widest uppercase">@{user?.username || "GUEST"}</p>
         </div>
-        <div className="bg-zinc-900/80 border border-zinc-800 rounded-xl px-4 py-2 flex flex-col items-end shadow-lg backdrop-blur-sm">
-          <p className="text-[8px] text-zinc-500 uppercase tracking-widest font-black mb-1 text-right">Global Pi Price</p>
-          <p className="text-sm font-black text-white tracking-wider text-right">$ {peggedUsd} <span className="text-zinc-500 text-[10px]">USD</span></p>
+
+        <div className="flex flex-col items-end gap-2">
+          <div className="bg-zinc-900/80 border border-zinc-800 rounded-xl px-4 py-2 flex flex-col items-end shadow-lg backdrop-blur-sm">
+            <p className="text-[8px] text-zinc-500 uppercase tracking-widest font-black mb-1 text-right">Global Pi Price</p>
+            {/* 🟢 출력할 때만 쉼표(toLocaleString)를 붙여줍니다 */}
+            <p className="text-sm font-black text-white tracking-wider text-right">$ {peggedUsd.toLocaleString()} <span className="text-zinc-500 text-[10px]">USD</span></p>
+          </div>
+          
+          <div className="flex flex-col items-end pr-1 animate-slow-glow">
+            <p className="text-[7px] text-zinc-500 leading-tight tracking-tighter text-right uppercase font-bold">
+              Price fluctuates based on Pi market value.
+            </p>
+            <p className="text-[8px] text-yellow-600 font-black leading-tight tracking-tighter text-right uppercase">
+              MARPO GROUP SUPPORTS <span className="text-yellow-500">GCV</span>
+            </p>
+          </div>
         </div>
       </div>
 
@@ -152,7 +177,8 @@ export default function MarpoLottoPage() {
 
       <section className="w-full max-w-md bg-gradient-to-b from-zinc-900 to-black p-8 rounded-[2.5rem] border border-yellow-500/30 mb-10 shadow-[0_20px_50px_rgba(234,179,8,0.1)]">
         <p className="text-zinc-500 text-[10px] uppercase tracking-[0.5em] font-black mb-3 text-red-500 animate-pulse">● Live Total Applied Prize</p>
-        <p className="text-6xl font-black text-white tracking-tighter mb-6">{jackpot} <span className="text-xl text-zinc-600">Pi</span></p>
+        {/* 🟢 출력할 때만 쉼표와 소수점 4자리 형식을 적용합니다 */}
+        <p className="text-6xl font-black text-white tracking-tighter mb-6">{jackpot.toLocaleString(undefined, {minimumFractionDigits: 4})} <span className="text-xl text-zinc-600">Pi</span></p>
         <div className="flex items-center justify-center gap-4 bg-zinc-800/40 py-3 px-6 rounded-2xl border border-zinc-700/30">
           <div className="text-left"><p className="text-[9px] text-zinc-500 uppercase font-black tracking-widest">Draw Date</p><p className="text-sm text-yellow-500 font-black uppercase italic">Friday, 20:00 KST</p></div>
           <div className="w-px h-8 bg-zinc-700/50"></div>
@@ -174,7 +200,8 @@ export default function MarpoLottoPage() {
       </section>
 
       <button onClick={() => setIsModalOpen(true)} disabled={mainNumbers.length !== 8 || spiritNumbers.length !== 2 || !user} className="w-full max-w-md py-5 rounded-2xl font-black text-2xl tracking-[0.1em] mb-16 bg-gradient-to-r from-yellow-600 to-yellow-500 text-black shadow-xl disabled:opacity-50 transition-all uppercase">
-        PLAY {ticketPrice} PI
+        {/* 🟢 버튼에 띄울 때만 8자리 고정 형식 적용 */}
+        PLAY {ticketPrice.toFixed(8)} PI
       </button>
 
       <WinnerBoard />
@@ -185,6 +212,12 @@ export default function MarpoLottoPage() {
         </button>
       </div>
 
+      <div className="w-full max-w-md mt-6 mb-4 text-center">
+        <Link href="/whitepaper" className="text-[11px] text-zinc-500 hover:text-yellow-500 font-bold tracking-[0.2em] uppercase transition-colors underline decoration-zinc-800 hover:decoration-yellow-500/50 underline-offset-8">
+          Read Marpo Whitepaper
+        </Link>
+      </div>
+
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/95 backdrop-blur-sm flex justify-center items-center z-50 p-6">
           <div className="bg-zinc-900 border-2 border-yellow-500/50 p-8 rounded-[2.5rem] w-full max-w-md relative shadow-2xl">
@@ -192,7 +225,7 @@ export default function MarpoLottoPage() {
             <h2 className="text-3xl font-black text-yellow-500 mb-6 uppercase italic">Confirm Play</h2>
             <div className="bg-zinc-800/50 border border-zinc-800 rounded-2xl p-6 mb-8">
               <p className="text-zinc-500 text-[10px] uppercase tracking-widest font-bold mb-2">Price for Entry</p>
-              <p className="text-4xl font-black text-white tracking-tighter">{ticketPrice} Pi</p>
+              <p className="text-4xl font-black text-white tracking-tighter">{ticketPrice.toFixed(8)} Pi</p>
             </div>
             <button onClick={handlePaymentSubmit} disabled={isStoring} className="w-full bg-gradient-to-r from-yellow-500 to-yellow-400 text-black font-black text-xl py-5 rounded-2xl uppercase tracking-widest shadow-lg">{isStoring ? 'STORING...' : 'PAY NOW'}</button>
           </div>

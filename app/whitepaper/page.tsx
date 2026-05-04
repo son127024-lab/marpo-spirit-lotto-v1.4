@@ -11,7 +11,7 @@ export default function WhitepaperPage() {
         <Link href="/" className="text-zinc-500 hover:text-yellow-500 transition-colors text-sm font-bold uppercase tracking-widest">
           ← Back to Vault
         </Link>
-        <span className="text-[10px] text-zinc-600 uppercase tracking-[0.3em]">Version 1.0</span>
+        <span className="text-[10px] text-zinc-600 uppercase tracking-[0.3em]">Version 1.1</span>
       </div>
 
       <div className="w-full max-w-2xl mx-auto space-y-12">
@@ -74,20 +74,34 @@ export default function WhitepaperPage() {
           </div>
         </section>
 
-        {/* 4. Liquidity & 5. Vision */}
+        {/* 4. Liquidity */}
         <section className="bg-zinc-900/40 p-8 rounded-3xl border border-zinc-800/50 hover:border-yellow-500/30 transition-all">
           <h2 className="text-xl font-black text-yellow-500 tracking-widest uppercase mb-4">4. Liquidity & Redistribution</h2>
-          <p className="text-sm leading-relaxed text-zinc-400 mb-8">
-            Beyond merely freezing capital, we adopt an advanced economic model that recirculates locked Pi back into the market via Pi/Marpo Liquidity Pools (LP) and strategic redistribution of secondary prizes.
+          <p className="text-sm leading-relaxed text-zinc-400">
+            Beyond merely freezing capital, we adopt an advanced economic model that recirculates locked Pi back into the market via Pi/Marpo Liquidity Pools (LP) and strategic redistribution of secondary prizes. This ensures a healthy, circulating ecosystem.
           </p>
+        </section>
 
-          <h2 className="text-xl font-black text-yellow-500 tracking-widest uppercase mb-4">5. Vision & Roadmap</h2>
+        {/* 5. Vision & Ecosystem Expansion (🚨 대폭 보강됨) */}
+        <section className="bg-zinc-900/40 p-8 rounded-3xl border border-zinc-800/50 hover:border-yellow-500/30 transition-all">
+          <h2 className="text-xl font-black text-yellow-500 tracking-widest uppercase mb-4">5. Ecosystem Expansion & Roadmap</h2>
+          <p className="text-sm leading-relaxed text-zinc-400 mb-8">
+            Marpo Spirit is just the genesis. MARPO GROUP is aggressively developing a comprehensive suite of Web3 applications utilizing our exclusive portfolio of Pi domains. Future releases include decentralized commerce platforms, interactive gaming hubs, and social community portals—all interconnected by the Marpo Token as the ultimate medium of exchange.
+          </p>
           <ol className="list-decimal list-inside space-y-2 text-sm text-zinc-300 marker:text-zinc-600 font-bold">
             <li><span className="font-normal">Launch of Marpo Spirit global jackpot.</span></li>
-            <li><span className="font-normal">Sequential launch of specialized DApps.</span></li>
-            <li><span className="font-normal">Completion of Marpo Token DeFi ecosystem.</span></li>
-            <li><span className="font-normal">Expansion into offline global businesses.</span></li>
+            <li><span className="font-normal">Sequential launch of specialized DApps (Commerce, Mini-games).</span></li>
+            <li><span className="font-normal">Completion of Marpo Token DeFi ecosystem & LP integration.</span></li>
+            <li><span className="font-normal">Expansion into offline global businesses via secured capital.</span></li>
           </ol>
+        </section>
+
+        {/* 6. Legal Disclaimer & Compliance (🚨 새로 추가됨) */}
+        <section className="bg-zinc-900/20 p-8 rounded-3xl border border-red-900/20 hover:border-red-500/30 transition-all">
+          <h2 className="text-xl font-black text-red-500/80 tracking-widest uppercase mb-4">6. Legal Disclaimer & Compliance</h2>
+          <p className="text-sm leading-relaxed text-zinc-500">
+            The Marpo Token and the Marpo Spirit platform are currently in the developmental phase. This whitepaper is intended for informational purposes only and does not constitute financial, investment, or legal advice. Participation in Marpo Spirit involves inherent risks, and users are strictly responsible for complying with their local jurisdictional laws regarding digital assets, cryptocurrencies, and lottery regulations. MARPO GROUP assumes no liability for any financial losses or legal repercussions incurred by users.
+          </p>
         </section>
 
         {/* 하단 고지사항 */}

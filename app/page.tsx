@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
+import Link from 'next/link'; // 🚨 Link 컴포넌트 추가 완료
 import WinnerBoard from '../components/WinnerBoard';
 
 // 🚨 에러 방어막: TypeScript 검사기 무시 명령어
@@ -266,6 +267,13 @@ export default function MarpoLottoPage() {
         <button onClick={handleCheckTickets} disabled={isChecking || myTickets.length === 0} className={`w-full py-5 rounded-2xl font-black text-xl tracking-[0.2em] uppercase transition-all shadow-lg ${(isChecking || myTickets.length === 0) ? 'bg-zinc-800 text-zinc-500' : 'bg-zinc-900 border border-zinc-700 text-white hover:border-yellow-500 hover:text-yellow-500'}`}>
           {isChecking ? 'SCANNING...' : 'CHECK MY TICKETS'}
         </button>
+      </div>
+
+      {/* 🚨 백서 이동 링크 버튼 추가 🚨 */}
+      <div className="w-full max-w-md mt-6 mb-4 text-center">
+        <Link href="/whitepaper" className="text-[11px] text-zinc-500 hover:text-yellow-500 font-bold tracking-[0.2em] uppercase transition-colors underline decoration-zinc-800 hover:decoration-yellow-500/50 underline-offset-8">
+          Read Marpo Whitepaper
+        </Link>
       </div>
 
       {isModalOpen && (

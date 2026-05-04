@@ -42,8 +42,8 @@ export default function WhitepaperPage() {
           </p>
           <ul className="space-y-3 text-sm text-zinc-300">
             <li className="flex items-start"><span className="text-yellow-500 mr-2">▶</span> <strong>Game Structure:</strong> Main Numbers (8/45) + Spirit Numbers (2/45)</li>
-            <li className="flex items-start"><span className="text-yellow-500 mr-2">▶</span> <strong>Entry Fee:</strong> 1 Pi (Global Standard)</li>
-            <li className="flex items-start"><span className="text-yellow-500 mr-2">▶</span> <strong>1st Prize Probability:</strong> Approx. 1 in 212.3 Billion (Designed for mega-rollover)</li>
+            <li className="flex items-start"><span className="text-yellow-500 mr-2">▶</span> <strong>Entry Fee:</strong> $5.00 Standard (Oracle Adjusted)</li>
+            <li className="flex items-start"><span className="text-yellow-500 mr-2">▶</span> <strong>1st Prize Probability:</strong> Approx. 1 in 212.3 Billion</li>
             <li className="flex items-start"><span className="text-yellow-500 mr-2">▶</span> <strong>Primary Objective:</strong> Absorbing global Pi liquidity</li>
           </ul>
         </section>
@@ -82,7 +82,7 @@ export default function WhitepaperPage() {
           </p>
         </section>
 
-        {/* 5. Vision & Ecosystem Expansion (🚨 대폭 보강됨) */}
+        {/* 5. Vision & Ecosystem Expansion */}
         <section className="bg-zinc-900/40 p-8 rounded-3xl border border-zinc-800/50 hover:border-yellow-500/30 transition-all">
           <h2 className="text-xl font-black text-yellow-500 tracking-widest uppercase mb-4">5. Ecosystem Expansion & Roadmap</h2>
           <p className="text-sm leading-relaxed text-zinc-400 mb-8">
@@ -96,7 +96,7 @@ export default function WhitepaperPage() {
           </ol>
         </section>
 
-        {/* 6. Legal Disclaimer & Compliance (🚨 새로 추가됨) */}
+        {/* 6. Legal Disclaimer & Compliance */}
         <section className="bg-zinc-900/20 p-8 rounded-3xl border border-red-900/20 hover:border-red-500/30 transition-all">
           <h2 className="text-xl font-black text-red-500/80 tracking-widest uppercase mb-4">6. Legal Disclaimer & Compliance</h2>
           <p className="text-sm leading-relaxed text-zinc-500">

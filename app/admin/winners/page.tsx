@@ -4,6 +4,10 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 
 export default function AdminWinnersPage() {
+  // 🚩 [핵심] 서버사이드 렌더링(SSR) 충돌 방어막
+  const [isMounted, setIsMounted] = useState(false);
+
+  // --- [1] 당첨 번호 발표 폼 상태 변수 ---
   const [drawRound, setDrawRound] = useState("");
   const [drawDate, setDrawDate] = useState("");
   const [winMain, setWinMain] = useState("");
@@ -13,10 +17,19 @@ export default function AdminWinnersPage() {
   const [prize3, setPrize3] = useState("");
   const [isPublishing, setIsPublishing] = useState(false);
 
+  // --- [2] 수령 신청 대기자 명단 상태 변수 ---
   const [claims, setClaims] = useState<any[]>([]);
   const [isLoadingClaims, setIsLoadingClaims] = useState(true);
 
+  // 🚩 화면이 유저의 브라우저에 완전히 켜진 후에만 작동하도록 설정
   useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  // 수령 신청 목록 불러오기 (방어막 통과 시에만 실행)
+  useEffect(() => {
+    if (!isMounted) return; // 서버에서는 통신을 절대 시도하지 않음
+
     const fetchClaims = async () => {
       try {
         const res = await fetch('/api/admin/claims');
@@ -31,7 +44,7 @@ export default function AdminWinnersPage() {
       }
     };
     fetchClaims();
-  }, []);
+  }, [isMounted]);
 
   const publishWinnerReport = async () => {
     if (!drawRound || !winMain) {
@@ -65,9 +78,19 @@ export default function AdminWinnersPage() {
     }
   };
 
+  // 🚩 서버가 미리 그릴 때 보여줄 로딩 화면 (에러 원천 차단)
+  if (!isMounted) {
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <p className="text-yellow-500 font-black tracking-widest animate-pulse">LOADING COMMAND CENTER...</p>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-black text-white p-6 font-sans pb-32">
       
+      {/* 🚀 헤더 영역 */}
       <header className="w-full max-w-2xl mx-auto flex justify-between items-end border-b border-zinc-800 pb-4 mb-8">
         <div>
           <p className="text-yellow-500 text-[10px] font-black tracking-[0.3em] mb-1">MARPO GROUP HEADQUARTERS</p>
@@ -80,6 +103,7 @@ export default function AdminWinnersPage() {
 
       <div className="w-full max-w-2xl mx-auto flex flex-col gap-10">
         
+        {/* 🏆 섹션 1: 공식 당첨 결과 발표 콘솔 */}
         <section className="bg-[#0a0a0a] border-2 border-red-900/40 p-8 rounded-[2rem] shadow-2xl">
           <p className="text-red-500 text-[10px] font-black uppercase tracking-[0.3em] mb-6">📢 Publish Official Result</p>
           
@@ -118,6 +142,7 @@ export default function AdminWinnersPage() {
           </button>
         </section>
 
+        {/* 🎁 섹션 2: 당첨자 수령 요청 확인 콘솔 */}
         <section className="bg-[#0a0a0a] border border-zinc-800 p-8 rounded-[2rem] shadow-2xl">
           <div className="flex justify-between items-center mb-6">
             <p className="text-blue-500 text-[10px] font-black uppercase tracking-[0.3em]">📥 Claim Requests</p>

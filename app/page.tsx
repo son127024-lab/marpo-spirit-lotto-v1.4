@@ -20,7 +20,7 @@ export default function MarpoLottoPage() {
   const [peggedUsd, setPeggedUsd] = useState<number>(38.42);
   const [jackpot, setJackpot] = useState<number>(0);
 
-  // 1. [오라클 데이터 호출] 30초마다 서버의 최신 가격 설정을 가져오는 함수
+  // 오라클 데이터 호출 (30초 주기)
   const fetchOracleSettings = useCallback(async () => {
     try {
       const res = await fetch('/api/admin/settings', { cache: 'no-store' });
@@ -31,12 +31,9 @@ export default function MarpoLottoPage() {
         setPeggedUsd(Number(json.settings.peggedUsd));
         setJackpot(Number(json.settings.realJackpot));
       }
-    } catch (e) {
-      console.error("Oracle Sync Error");
-    }
+    } catch (e) { console.error("Oracle Sync Error"); }
   }, []);
 
-  // 2. 티켓 자동 분류 및 30일 경과 삭제 로직
   const thirtyDaysInMs = 30 * 24 * 60 * 60 * 1000;
   const activeTickets = myTickets.filter(t => t.status === 'COMPLETED');
   const historyTickets = myTickets.filter(t => {
@@ -64,10 +61,9 @@ export default function MarpoLottoPage() {
     return `${days}D ${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
   };
 
-  // 초기 로드 및 오라클 폴링(30초) 타이머 세팅
   useEffect(() => {
     fetchOracleSettings(); 
-    const oracleTimer = setInterval(fetchOracleSettings, 30000); // 30초마다 동기화
+    const oracleTimer = setInterval(fetchOracleSettings, 30000);
     const clockTimer = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => { clearInterval(oracleTimer); clearInterval(clockTimer); };
   }, [fetchOracleSettings]);
@@ -169,15 +165,28 @@ export default function MarpoLottoPage() {
         <p className="text-yellow-500 font-black text-xl uppercase tracking-widest italic">Marpo Spirit</p>
       </div>
 
-      <section className="w-full max-w-md bg-zinc-900 border border-yellow-500/20 p-8 rounded-[2rem] mb-12 shadow-2xl">
+      {/* 🚀 [중요] 잭팟 및 파이 가격창 섹션 */}
+      <section className="w-full max-w-md bg-zinc-900 border border-yellow-500/20 p-8 rounded-[2rem] mb-12 shadow-2xl relative overflow-hidden">
           <p className="text-zinc-500 text-sm font-black uppercase tracking-[0.3em] mb-2">Live Jackpot</p>
-          <p className="text-5xl font-black text-white tracking-tighter">{jackpot.toLocaleString(undefined, {minimumFractionDigits: 4})} <span className="text-xl text-zinc-600">Pi</span></p>
-          <div className="mt-4 pt-4 border-t border-zinc-800 flex justify-between items-center px-2">
-            <span className="text-xs text-zinc-600 font-black uppercase">1 Pi Value</span>
-            <span className="text-sm text-zinc-400 font-black">$ {peggedUsd.toLocaleString()} USD</span>
+          <p className="text-5xl font-black text-white tracking-tighter mb-6">
+            {jackpot.toLocaleString(undefined, {minimumFractionDigits: 4})} <span className="text-xl text-zinc-600">Pi</span>
+          </p>
+
+          {/* 복구된 1 PI VALUE 라인 */}
+          <div className="pt-5 border-t border-zinc-800/50 flex justify-between items-center px-2">
+            <div className="flex flex-col items-start">
+              <span className="text-[10px] text-zinc-600 font-black uppercase tracking-widest mb-1">Current Oracle</span>
+              <span className="text-xs text-zinc-400 font-bold uppercase tracking-tighter">1 Pi Value</span>
+            </div>
+            <div className="text-right">
+              <p className="text-lg font-black text-white tracking-tight">
+                $ {peggedUsd.toLocaleString(undefined, {minimumFractionDigits: 3})} <span className="text-[10px] text-zinc-500">USD</span>
+              </p>
+            </div>
           </div>
       </section>
 
+      {/* 번호 선택 UI */}
       <section className="w-full max-w-md mb-14">
         <div className="flex justify-between items-center mb-4 px-1">
           <p className="text-lg font-black text-zinc-500 uppercase tracking-widest">Main Numbers</p>
@@ -185,7 +194,7 @@ export default function MarpoLottoPage() {
         </div>
         <div className="grid grid-cols-7 gap-2 mb-10">
           {Array.from({ length: 45 }, (_, i) => i + 1).map((n) => (
-            <button key={`m-${n}`} onClick={() => toggleMainNumber(n)} className={`h-11 w-11 rounded-full text-base font-black border transition-all ${mainNumbers.includes(n) ? 'bg-yellow-500 text-black border-yellow-500 scale-110 shadow-lg' : 'bg-zinc-800 text-zinc-400 border-zinc-700 hover:border-zinc-500'}`}>{n}</button>
+            <button key={`m-${n}`} onClick={() => toggleMainNumber(n)} className={`h-11 w-11 rounded-full text-base font-black border transition-all ${mainNumbers.includes(n) ? 'bg-yellow-500 text-black border-yellow-500 scale-110 shadow-lg' : 'bg-zinc-800 text-zinc-400 border-zinc-700'}`}>{n}</button>
           ))}
         </div>
         <div className="flex justify-between items-center mb-4 px-1">
@@ -194,32 +203,33 @@ export default function MarpoLottoPage() {
         </div>
         <div className="grid grid-cols-7 gap-2 mb-12">
           {Array.from({ length: 45 }, (_, i) => i + 1).map((n) => (
-            <button key={`s-${n}`} onClick={() => toggleSpiritNumber(n)} className={`h-11 w-11 rounded-full text-base font-black border transition-all ${spiritNumbers.includes(n) ? 'bg-red-600 text-white border-red-600 scale-110 shadow-lg' : 'bg-zinc-800 text-zinc-400 border-zinc-700 hover:border-zinc-500'}`}>{n}</button>
+            <button key={`s-${n}`} onClick={() => toggleSpiritNumber(n)} className={`h-11 w-11 rounded-full text-base font-black border transition-all ${spiritNumbers.includes(n) ? 'bg-red-600 text-white border-red-600 scale-110 shadow-lg' : 'bg-zinc-800 text-zinc-400 border-zinc-700'}`}>{n}</button>
           ))}
         </div>
       </section>
 
-      <button onClick={() => setIsModalOpen(true)} disabled={mainNumbers.length !== 8 || spiritNumbers.length !== 2 || !user} className="w-full max-w-md py-6 rounded-[2.2rem] font-black text-3xl mb-16 bg-gradient-to-r from-yellow-600 to-yellow-500 text-black shadow-[0_10px_40px_rgba(234,179,8,0.3)] disabled:opacity-30 disabled:shadow-none uppercase tracking-tighter">
+      <button onClick={() => setIsModalOpen(true)} disabled={mainNumbers.length !== 8 || spiritNumbers.length !== 2 || !user} className="w-full max-w-md py-6 rounded-[2.2rem] font-black text-3xl mb-16 bg-gradient-to-r from-yellow-600 to-yellow-500 text-black shadow-[0_10px_40px_rgba(234,179,8,0.3)] disabled:opacity-30 uppercase tracking-tighter">
         PLAY <span className="text-xl ml-2">{ticketPrice.toFixed(5)} PI</span>
       </button>
 
+      {/* 내 티켓 관리 (Active & History) */}
       {user && (
         <section className="w-full max-w-md mb-16">
-          <div className="mb-10">
+          <div className="mb-10 text-left">
             <h2 className="text-xl font-black text-yellow-500 tracking-widest uppercase italic mb-6 border-b-2 border-zinc-900 pb-2 flex justify-between items-center">
-              Active Tickets <span className="text-xs bg-zinc-800 px-3 py-1 rounded-full text-zinc-400 normal-case italic">Current Draw</span>
+              Active Tickets
             </h2>
             {activeTickets.length > 0 ? (
                 <div className="flex flex-col gap-4">
                     {activeTickets.map((ticket, i) => (
-                        <div key={i} className="bg-gradient-to-b from-zinc-900 to-black border border-zinc-800 rounded-[2rem] p-8 shadow-xl">
-                            <p className="text-xs text-yellow-500 font-black uppercase mb-4 tracking-[0.2em] animate-pulse">● Draw Countdown</p>
+                        <div key={i} className="bg-zinc-900 border border-zinc-800 rounded-[2rem] p-8 shadow-xl text-center">
+                            <p className="text-xs text-yellow-500 font-black uppercase mb-4 animate-pulse">● Draw Countdown</p>
                             <p className="text-4xl font-black text-white tracking-[0.1em]">{getTimeRemaining()}</p>
                         </div>
                     ))}
                 </div>
             ) : (
-                <div className="py-12 bg-zinc-900/30 rounded-[2rem] border border-dashed border-zinc-800">
+                <div className="py-12 bg-zinc-900/30 rounded-[2rem] border border-dashed border-zinc-800 text-center">
                   <p className="text-zinc-600 font-black uppercase tracking-widest">No active tickets.</p>
                 </div>
             )}
@@ -229,9 +239,9 @@ export default function MarpoLottoPage() {
             <div className="mt-14">
               <button 
                 onClick={() => setShowHistory(!showHistory)} 
-                className="w-full py-5 border-2 border-zinc-800 rounded-[1.5rem] text-zinc-500 font-black tracking-widest uppercase hover:text-white hover:border-zinc-500 transition-all active:scale-95 flex justify-center items-center gap-3"
+                className="w-full py-5 border-2 border-zinc-800 rounded-[1.5rem] text-zinc-500 font-black tracking-widest uppercase hover:text-white transition-all active:scale-95"
               >
-                {showHistory ? '▲ Hide Past Records' : '▼ View Records (Last 30 Days)'}
+                {showHistory ? '▲ Hide Records' : '▼ View Records (30 Days)'}
               </button>
 
               {showHistory && (
@@ -239,10 +249,10 @@ export default function MarpoLottoPage() {
                   {historyTickets.map((ticket, i) => {
                     const isWon = ticket?.status === 'WON' || ticket?.status === 'CLAIMED';
                     return (
-                        <div key={i} className={`bg-zinc-900 border rounded-[2rem] p-8 transition-all ${isWon ? 'border-yellow-500 shadow-[0_0_20px_rgba(234,179,8,0.2)]' : 'border-zinc-800 opacity-60'}`}>
+                        <div key={i} className={`bg-zinc-900 border rounded-[2rem] p-8 transition-all ${isWon ? 'border-yellow-500' : 'border-zinc-800 opacity-60'}`}>
                             <div className="flex justify-between items-center mb-6">
-                                <span className="text-xs font-black text-zinc-600 uppercase tracking-widest">{new Date(ticket.createdAt).toLocaleDateString()}</span>
-                                <span className={`text-sm font-black uppercase px-3 py-1 rounded-lg ${isWon ? 'bg-yellow-500 text-black' : 'text-zinc-500 border border-zinc-800'}`}>{ticket.status}</span>
+                                <span className="text-xs font-black text-zinc-600 uppercase">{new Date(ticket.createdAt).toLocaleDateString()}</span>
+                                <span className={`text-sm font-black uppercase px-3 py-1 rounded-lg ${isWon ? 'bg-yellow-500 text-black' : 'text-zinc-500'}`}>{ticket.status}</span>
                             </div>
                             <div className="flex flex-wrap gap-2 justify-center">
                                 {ticket?.selectedNumbers?.main?.map((n: number, j: number) => (
@@ -262,21 +272,21 @@ export default function MarpoLottoPage() {
       <WinnerBoard />
 
       <div className="w-full max-w-md mt-10">
-        <button onClick={handleCheckTickets} disabled={isChecking || myTickets.length === 0} className="w-full py-10 rounded-[2.5rem] font-black text-3xl border-2 border-zinc-800 hover:border-yellow-500 transition-all active:scale-95 text-zinc-400 hover:text-white shadow-2xl">
+        <button onClick={handleCheckTickets} disabled={isChecking || myTickets.length === 0} className="w-full py-8 rounded-[2rem] font-black text-2xl border-2 border-zinc-800 hover:border-yellow-500 transition-all text-zinc-400 active:scale-95">
           {isChecking ? 'SCANNING...' : 'CHECK MY TICKETS'}
         </button>
       </div>
 
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black/95 backdrop-blur-md flex justify-center items-center z-50 p-6">
-          <div className="bg-zinc-900 border-2 border-yellow-500/30 p-10 rounded-[3rem] w-full max-w-md relative shadow-2xl text-center">
-            <button onClick={() => setIsModalOpen(false)} className="absolute top-8 right-8 text-zinc-500 text-3xl hover:text-white transition-colors">✕</button>
-            <h2 className="text-4xl font-black text-yellow-500 mb-10 uppercase italic tracking-tighter">Confirm Entry</h2>
+        <div className="fixed inset-0 bg-black/95 backdrop-blur-md flex justify-center items-center z-50 p-6 text-center">
+          <div className="bg-zinc-900 border-2 border-yellow-500/30 p-10 rounded-[3rem] w-full max-w-md relative shadow-2xl">
+            <button onClick={() => setIsModalOpen(false)} className="absolute top-8 right-8 text-zinc-500 text-3xl">✕</button>
+            <h2 className="text-4xl font-black text-yellow-500 mb-10 uppercase italic">Confirm Play</h2>
             <div className="bg-black border border-zinc-800 rounded-3xl p-8 mb-10">
-              <p className="text-zinc-500 text-sm font-black uppercase tracking-widest mb-2">Total Amount</p>
+              <p className="text-zinc-500 text-sm font-black uppercase tracking-widest mb-2">Ticket Price</p>
               <p className="text-4xl font-black text-white">{ticketPrice.toFixed(5)} <span className="text-xl text-zinc-600">Pi</span></p>
             </div>
-            <button onClick={handlePaymentSubmit} disabled={isStoring} className="w-full bg-gradient-to-r from-yellow-500 to-yellow-400 text-black font-black text-3xl py-7 rounded-[1.5rem] uppercase tracking-widest shadow-xl active:scale-95 transition-transform">{isStoring ? 'STORING...' : 'PAY NOW'}</button>
+            <button onClick={handlePaymentSubmit} disabled={isStoring} className="w-full bg-yellow-500 text-black font-black text-3xl py-7 rounded-[1.5rem] uppercase tracking-widest shadow-xl active:scale-95">{isStoring ? 'STORING...' : 'PAY NOW'}</button>
           </div>
         </div>
       )}

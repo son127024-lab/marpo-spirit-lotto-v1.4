@@ -65,6 +65,7 @@ export default function MarpoLottoPage() {
   const [ticketPrice, setTicketPrice] = useState<number>(1.0); 
   const [peggedUsd, setPeggedUsd] = useState<number>(314.159);
   const [jackpot, setJackpot] = useState<number>(0);
+  const [jackpotRound, setJackpotRound] = useState<string>("1"); // 🚩 자동 회차 상태 추가
   const [mainNumbers, setMainNumbers] = useState<number[]>([]);
   const [spiritNumbers, setSpiritNumbers] = useState<number[]>([]);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
@@ -94,6 +95,7 @@ export default function MarpoLottoPage() {
           setTicketPrice(Number(Number(json.settings.ticketPricePi).toFixed(5)));
           setPeggedUsd(Number(json.settings.peggedUsd));
           setJackpot(Number(json.settings.realJackpot));
+          setJackpotRound(json.settings.currentRound || "1"); // 🚩 DB에서 현재 회차 정보 로드
         }
       }
     } catch (error) { console.error("Oracle Sync Fail"); }
@@ -154,7 +156,6 @@ export default function MarpoLottoPage() {
     return `${days}D ${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
   };
 
-  // 🚩 수령 신청 로직 (대표님이 만드신 기존 /api/claim 에 완벽 연결)
   const handleClaimPrize = async (ticket: any) => {
     if (!confirm(`당첨금 수령을 신청하시겠습니까?`)) return;
     try {
@@ -249,6 +250,13 @@ export default function MarpoLottoPage() {
       </div>
 
       <section className="w-full max-w-md bg-zinc-900 border border-yellow-500/20 p-8 rounded-[2.5rem] mb-12 shadow-2xl relative overflow-hidden">
+          {/* 🚩 우측 상단 자동 회차 뱃지 추가 */}
+          <div className="absolute top-6 right-8">
+            <span className="text-[10px] text-yellow-500 font-black border border-yellow-500/30 px-3 py-1.5 rounded-full uppercase tracking-widest bg-black/50">
+              Round #{jackpotRound}
+            </span>
+          </div>
+
           <p className="text-zinc-500 text-xs font-black uppercase tracking-[0.4em] mb-3">Live Jackpot Pool</p>
           <p className="text-5xl font-black text-white tracking-tighter mb-8">{jackpot.toLocaleString(undefined, {minimumFractionDigits: 4})} <span className="text-xl text-zinc-600 font-normal">π</span></p>
           <div className="pt-6 border-t border-zinc-800/80 flex justify-between items-end px-1">
@@ -297,7 +305,10 @@ export default function MarpoLottoPage() {
             <div className="flex flex-col gap-4">
               {activeTickets.map((t, i) => (
                 <div key={`active-${i}`} className="bg-zinc-900 border border-zinc-800 rounded-[2.5rem] p-8 text-center shadow-xl">
-                  <p className="text-[10px] text-yellow-500 font-black uppercase mb-3 animate-pulse tracking-[0.2em]">● Draw Countdown</p>
+                  <div className="flex justify-between items-center mb-3 px-1">
+                    <p className="text-[10px] text-yellow-500 font-black uppercase animate-pulse tracking-[0.2em]">● Draw Countdown</p>
+                    <p className="text-[9px] text-zinc-600 font-bold uppercase tracking-widest">Round #{jackpotRound}</p>
+                  </div>
                   <p className="text-4xl font-black text-white tracking-widest mb-6">{getTimeRemaining()}</p>
                   <div className="flex flex-wrap gap-1.5 justify-center pt-4 border-t border-zinc-800/50">
                     {t.selectedNumbers?.main?.map((n:number, idx:number) => <span key={`am-${idx}`} className="w-7 h-7 flex items-center justify-center rounded-full bg-zinc-800 text-[10px] font-black text-white">{n}</span>)}
@@ -324,8 +335,9 @@ export default function MarpoLottoPage() {
 
                     return (
                         <div key={`hist-${i}`} className={`bg-zinc-900 border rounded-[2rem] p-6 transition-all flex flex-col gap-4 ${isWinner ? 'border-yellow-500 shadow-[0_0_15px_rgba(234,179,8,0.2)]' : 'border-zinc-800 opacity-70'}`}>
-                            <div className="text-left">
+                            <div className="text-left flex justify-between items-center">
                                 <span className="text-[11px] text-zinc-500 font-black tracking-widest">{new Date(t.createdAt).toLocaleDateString()}</span>
+                                <span className="text-[9px] text-zinc-700 font-bold">R#{t.round || jackpotRound}</span>
                             </div>
                             <div className="flex justify-between items-center">
                                 <div className="flex flex-wrap gap-1.5 flex-1">

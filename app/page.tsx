@@ -6,10 +6,8 @@ import Link from 'next/link';
 
 // 🏆 [DB 연동 완료] 공식 당첨 리포트 컴포넌트
 const WinningReport = () => {
-  // DB에서 불러온 당첨 기록을 저장할 상태 변수
   const [winners, setWinners] = useState<any[]>([]);
 
-  // 화면이 켜질 때 백엔드 API(/api/history)를 통해 당첨 기록을 가져옵니다.
   useEffect(() => {
     const fetchHistory = async () => {
       try {
@@ -27,7 +25,6 @@ const WinningReport = () => {
     fetchHistory();
   }, []);
 
-  // 아직 관리자가 등록한 당첨 내역이 없다면 이 섹션을 숨깁니다.
   if (winners.length === 0) return null;
 
   return (
@@ -77,7 +74,6 @@ export default function MarpoLottoPage() {
   const [currentTime, setCurrentTime] = useState<Date>(new Date());
   const [showHistory, setShowHistory] = useState<boolean>(false);
 
-  // 1. API 호출 함수 (독립 선언)
   const fetchMyTickets = useCallback(async (userId: string) => {
     if (!userId) return;
     try {
@@ -158,27 +154,29 @@ export default function MarpoLottoPage() {
     return `${days}D ${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
   };
 
-  // 🚩 수령 신청 로직 독립 함수화
+  // 🚩 수령 신청 로직 (대표님이 만드신 기존 /api/claim 에 완벽 연결)
   const handleClaimPrize = async (ticket: any) => {
     if (!confirm(`당첨금 수령을 신청하시겠습니까?`)) return;
     try {
-      const response = await fetch('/api/tickets/claim', {
+      const response = await fetch('/api/claim', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ticketId: ticket._id || ticket.id, userId: user?.username })
+        body: JSON.stringify({ ticketId: ticket._id || ticket.id })
       });
-      if (response.ok) { 
-        alert("수령 신청 완료! 관리자에게 전송되었습니다."); 
+      
+      const data = await response.json();
+      
+      if (response.ok && data.success) { 
+        alert(data.message || "수령 프로세스가 시작되었습니다! 지갑을 확인해 주세요."); 
         if (user?.username) fetchMyTickets(user.username); 
       } else {
-        alert("신청 처리 중 오류가 발생했습니다.");
+        alert(data.message || "수령 가능한 티켓이 아니거나 기한이 만료되었습니다.");
       }
     } catch (error) { 
       alert("서버 통신 오류"); 
     }
   };
 
-  // 🚩 티켓 스캔 로직 독립 함수화
   const handleCheckTickets = async () => {
     setIsChecking(true);
     try { 
@@ -193,7 +191,6 @@ export default function MarpoLottoPage() {
     }
   };
 
-  // 🚩 결제 처리 로직 독립 함수화
   const handlePaymentSubmit = async () => {
     if (isStoring) return; 
     setIsStoring(true);
@@ -243,7 +240,6 @@ export default function MarpoLottoPage() {
   return (
     <div className="min-h-screen bg-black text-white flex flex-col items-center p-4 font-sans relative pb-40 text-center">
       
-      {/* 🚀 헤더 섹션 유지 */}
       <div className="w-full max-w-md flex flex-col items-center pt-8 mb-10">
         <Image src="/marpo-group-logo.png" alt="MARPO GROUP" width={170} height={170} priority />
         <p className="text-yellow-500 font-black text-2xl uppercase tracking-tighter italic mt-5">Marpo Spirit</p>
@@ -261,7 +257,6 @@ export default function MarpoLottoPage() {
           </div>
       </section>
 
-      {/* 🚀 번호 선택 섹션 유지 */}
       <section className="w-full max-w-md mb-14">
         <div className="flex justify-between items-center mb-4 px-1">
           <p className="text-sm font-black text-zinc-500 uppercase tracking-widest italic">Main Numbers</p>
@@ -294,7 +289,6 @@ export default function MarpoLottoPage() {
         PLAY <span className="text-lg ml-2">{ticketPrice.toFixed(5)} π</span>
       </button>
 
-      {/* 🚀 Active 및 History 섹션 유지 (번호 우측 상태표시 포함) */}
       {user && (
         <section className="w-full max-w-md mb-8 text-left px-1">
           <h2 className="text-xl font-black text-yellow-500 uppercase italic mb-6 border-b border-zinc-900 pb-2">My Active Tickets</h2>
@@ -361,7 +355,6 @@ export default function MarpoLottoPage() {
         </section>
       )}
 
-      {/* 🚀 당첨 리포트 (DB 연동) */}
       <WinningReport />
 
       <div className="w-full max-w-md mt-16 mb-16">
@@ -381,7 +374,6 @@ export default function MarpoLottoPage() {
          </Link>
       </div>
 
-      {/* 🚀 결제 모달 유지 */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/95 backdrop-blur-md flex justify-center items-center z-50 p-6 text-center">
           <div className="bg-zinc-900 border-2 border-yellow-500/30 p-10 rounded-[3rem] w-full max-w-md relative shadow-2xl">

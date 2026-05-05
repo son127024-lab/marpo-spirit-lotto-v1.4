@@ -245,7 +245,7 @@ export default function MarpoLottoPage() {
               {showHistory && (
                 <div className="mt-8 flex flex-col gap-6">
                   {historyTickets.map((t, i) => {
-                    const isWinner = t.status === 'WON';
+                    const isWinner = t.status === 'WON'|| t.status === 'COMPLETED';
                     const isClaimed = t.status === 'CLAIMED';
                     return (
                         <div key={i} className={`bg-zinc-900 border rounded-[2rem] p-7 transition-all ${isWinner ? 'border-yellow-500 shadow-lg' : 'border-zinc-800 opacity-60'}`}>

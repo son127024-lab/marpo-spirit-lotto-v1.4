@@ -4,12 +4,31 @@ import React, { useState, useEffect, useCallback } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 
-// 🏆 공식 당첨 리포트 컴포넌트
+// 🏆 [DB 연동 완료] 공식 당첨 리포트 컴포넌트
 const WinningReport = () => {
-  const winners = [
-    { draw: "#7", date: "5/4/2026", numbers: "8, 12, 20, 22, 31, 36, 41, 42", spirit: "11, 43", first: "450.25", second: "120.11", third: "45.05" },
-    { draw: "#6", date: "4/27/2026", numbers: "5, 10, 11, 15, 18, 23, 31, 39", spirit: "1, 23", first: "380.90", second: "95.40", third: "32.10" },
-  ];
+  // DB에서 불러온 당첨 기록을 저장할 상태 변수
+  const [winners, setWinners] = useState<any[]>([]);
+
+  // 화면이 켜질 때 백엔드 API(/api/history)를 통해 당첨 기록을 가져옵니다.
+  useEffect(() => {
+    const fetchHistory = async () => {
+      try {
+        const response = await fetch('/api/history', { cache: 'no-store' });
+        if (response.ok) {
+          const data = await response.json();
+          if (data.success && data.history) {
+            setWinners(data.history);
+          }
+        }
+      } catch (error) {
+        console.error("Winner history fetch error", error);
+      }
+    };
+    fetchHistory();
+  }, []);
+
+  // 아직 관리자가 등록한 당첨 내역이 없다면 이 섹션을 숨깁니다.
+  if (winners.length === 0) return null;
 
   return (
     <section className="w-full max-w-md mt-16 px-1">
@@ -24,12 +43,12 @@ const WinningReport = () => {
             </div>
             <p className="text-[10px] text-zinc-600 font-black uppercase mb-2 tracking-widest">Winning Numbers</p>
             <div className="flex flex-wrap gap-1.5 mb-6">
-               {w.numbers.split(', ').map((n, idx) => (
-                 <span key={`w-m-${idx}`} className="w-8 h-8 flex items-center justify-center rounded-full bg-zinc-800 text-[11px] font-black text-white border border-zinc-700">{n}</span>
+               {w.numbers?.split(',').map((n: string, idx: number) => (
+                 <span key={`w-m-${idx}`} className="w-8 h-8 flex items-center justify-center rounded-full bg-zinc-800 text-[11px] font-black text-white border border-zinc-700">{n.trim()}</span>
                ))}
                <span className="text-zinc-700 mx-1">|</span>
-               {w.spirit.split(', ').map((n, idx) => (
-                 <span key={`w-s-${idx}`} className="w-8 h-8 flex items-center justify-center rounded-full bg-red-900/30 text-[11px] font-black text-red-500 border border-red-900/50">{n}</span>
+               {w.spirit?.split(',').map((n: string, idx: number) => (
+                 <span key={`w-s-${idx}`} className="w-8 h-8 flex items-center justify-center rounded-full bg-red-900/30 text-[11px] font-black text-red-500 border border-red-900/50">{n.trim()}</span>
                ))}
             </div>
             <div className="grid grid-cols-3 gap-3 border-t border-zinc-800/50 pt-5">
@@ -58,7 +77,7 @@ export default function MarpoLottoPage() {
   const [currentTime, setCurrentTime] = useState<Date>(new Date());
   const [showHistory, setShowHistory] = useState<boolean>(false);
 
-  // 1. API 호출 함수
+  // 1. API 호출 함수 (독립 선언)
   const fetchMyTickets = useCallback(async (userId: string) => {
     if (!userId) return;
     try {
@@ -139,7 +158,7 @@ export default function MarpoLottoPage() {
     return `${days}D ${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
   };
 
-  // 🚩 [에러 해결 1] 수령 신청 로직 독립 함수화 (타입 에러 방지)
+  // 🚩 수령 신청 로직 독립 함수화
   const handleClaimPrize = async (ticket: any) => {
     if (!confirm(`당첨금 수령을 신청하시겠습니까?`)) return;
     try {
@@ -159,7 +178,7 @@ export default function MarpoLottoPage() {
     }
   };
 
-  // 🚩 [에러 해결 2] 티켓 확인 로직 독립 함수화 (빨간줄 완벽 제거)
+  // 🚩 티켓 스캔 로직 독립 함수화
   const handleCheckTickets = async () => {
     setIsChecking(true);
     try { 
@@ -174,7 +193,7 @@ export default function MarpoLottoPage() {
     }
   };
 
-  // 🚩 [에러 해결 3] 결제 처리 로직 독립 함수화 (복잡한 괄호 에러 원천 차단)
+  // 🚩 결제 처리 로직 독립 함수화
   const handlePaymentSubmit = async () => {
     if (isStoring) return; 
     setIsStoring(true);
@@ -342,7 +361,7 @@ export default function MarpoLottoPage() {
         </section>
       )}
 
-      {/* 🚀 당첨 리포트, 체크버튼, 백서 링크 유지 */}
+      {/* 🚀 당첨 리포트 (DB 연동) */}
       <WinningReport />
 
       <div className="w-full max-w-md mt-16 mb-16">
@@ -362,7 +381,7 @@ export default function MarpoLottoPage() {
          </Link>
       </div>
 
-      {/* 🚀 결제 모달 (독립 함수로 교체하여 에러 완벽 해결) */}
+      {/* 🚀 결제 모달 유지 */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/95 backdrop-blur-md flex justify-center items-center z-50 p-6 text-center">
           <div className="bg-zinc-900 border-2 border-yellow-500/30 p-10 rounded-[3rem] w-full max-w-md relative shadow-2xl">

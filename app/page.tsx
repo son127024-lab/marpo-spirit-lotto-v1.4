@@ -269,16 +269,11 @@ export default function MarpoLottoPage() {
   return (
     <div className="min-h-screen bg-black text-white flex flex-col items-center p-4 font-sans relative pb-40 text-center">
       
-      {/* 🚩 [업데이트 완료] 메인 헤더 글자 타이포그래피 볼륨업 및 서브 도메인 락인 */}
+      {/* 웅장한 메인 헤더 타이포그래피 (Marpo Spirit 50px & lottoworld.pi 서브 텍스트) */}
       <div className="w-full max-w-md flex flex-col items-center pt-8 mb-10">
         <Image src="/marpo-group-logo.png" alt="MARPO GROUP" width={170} height={170} priority />
-        
-        {/* 지시 사항 1: Marpo Spirit 글자 크기를 50px 규격으로 크게 빌드 */}
         <p className="text-yellow-500 font-black text-[50px] uppercase tracking-tighter italic mt-5 leading-none">Marpo Spirit</p>
-        
-        {/* 지시 사항 2: 그 하단에 윗글자 대비 30% 비율 크기(15px)로 lottoworld.pi 브랜딩 텍스트 배치 */}
         <p className="text-zinc-500 font-black text-[15px] lowercase tracking-widest mt-2">lottoworld.pi</p>
-        
         <div className="mt-4 px-5 py-1.5 bg-zinc-900 border border-zinc-800 rounded-full">
           <p className="text-[10px] text-zinc-400 font-bold tracking-widest uppercase">ID: <span className="text-yellow-500">{user?.username || "CONNECTING..."}</span></p>
         </div>
@@ -420,12 +415,11 @@ export default function MarpoLottoPage() {
          </Link>
       </div>
 
-      {/* 🚩 100% 테크/기여 소독 및 광고 대기 기능이 장착된 차세대 영문 배포용 모달 */}
+      {/* 🚩 글로벌 심사 가이드라인 대응 웅장한 영문 상시 고지 팝업창 */}
       {isNoticeOpen && (
         <div className="fixed inset-0 bg-black/98 backdrop-blur-lg flex justify-center items-center z-[100] p-6 text-center">
           <div className="bg-zinc-900 border-2 border-yellow-500/30 p-10 rounded-[3rem] w-full max-w-md relative shadow-2xl">
             
-            {/* 지시 사항 3: 첫 공지 맨 위 상단 타이틀 명칭을 Welcome to the Marpo Group으로 변경 완료 */}
             <h2 className="text-2xl font-black text-yellow-500 mb-1 uppercase italic tracking-tighter">Welcome to the Marpo Group</h2>
             <p className="text-[10px] text-zinc-500 font-black uppercase tracking-[0.3em] mb-6">Official Ecosystem Notice</p>
             
@@ -435,6 +429,16 @@ export default function MarpoLottoPage() {
                 <p className="text-xs text-zinc-400 font-medium leading-relaxed">
                   This platform is a community-driven Web3 application engineered by Marpo Group, specifically designed to stimulate the Pi Network ecosystem and validate decentralized technology architectures.
                 </p>
+              </div>
+
+              {/* 🚩 [업데이트 이식 완료] HOW TO PARTICIPATE (게임 플레이 가이드라인 기술) */}
+              <div>
+                <p className="text-[10px] text-emerald-500 font-black uppercase tracking-wider mb-1">■ HOW TO PARTICIPATE</p>
+                <div className="text-xs text-zinc-400 font-medium leading-relaxed space-y-1">
+                  <p>1. Select exactly <span className="text-yellow-500 font-bold">8 Main Numbers</span> and <span className="text-red-500 font-bold">2 Spirit Numbers</span> on the interactive matrix board.</p>
+                  <p>2. Tap the <span className="text-white font-bold">PLAY</span> button to initialize and secure your decentralized network entry.</p>
+                  <p>3. Validated contributions are automatically compiled into the Winner's Hall consensus report, which updates dynamically every <span className="text-emerald-500 font-bold">Friday at 20:00</span>.</p>
+                </div>
               </div>
               
               <div>
@@ -463,7 +467,7 @@ export default function MarpoLottoPage() {
               </div>
             </div>
 
-            {/* 🚩 광고 구동 로딩에 대응하는 동적 스마트 로킹 버튼 인터페이스 */}
+            {/* 광고 시청 중 로킹 연동 스마트 액션 버튼 */}
             <button 
               onClick={handleCloseNotice} 
               disabled={isAdLoading}

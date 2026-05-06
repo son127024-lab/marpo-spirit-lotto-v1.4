@@ -76,7 +76,7 @@ export default function MarpoLottoPage() {
   const [showHistory, setShowHistory] = useState<boolean>(false);
   
   // 🚩 최초 진입 글로벌 가이드 안내 팝업 상태
-  const [isNoticeOpen, setIsNoticeOpen] = useState<boolean>(false);
+  const [isNoticeOpen, setIsNoticeOpen] = useState<boolean>(true);
 
   const fetchMyTickets = useCallback(async (userId: string) => {
     if (!userId) return;
@@ -105,11 +105,7 @@ export default function MarpoLottoPage() {
   }, []);
 
   useEffect(() => {
-    // 🚩 진입 유저의 안내 확인 이력 확인
-    const hasAgreed = localStorage.getItem('marpo_notice_agreed');
-    if (!hasAgreed) {
-      setIsNoticeOpen(true);
-    }
+
 
     if (typeof window !== 'undefined') {
       const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
@@ -141,8 +137,7 @@ export default function MarpoLottoPage() {
   }, [fetchOracleSettings, fetchMyTickets]);
 
   const handleCloseNotice = () => {
-    localStorage.setItem('marpo_notice_agreed', 'true');
-    setIsNoticeOpen(false);
+    setIsNoticeOpen(false); // ◀ 메모리에 저장 안 하고 그냥 창만 닫음
   };
 
   const activeTickets = myTickets.filter(t => t.status === 'COMPLETED');

@@ -43,8 +43,12 @@ export default function WhitepaperPage() {
           <ul className="space-y-3 text-sm text-zinc-300">
             <li className="flex items-start"><span className="text-yellow-500 mr-2">▶</span> <strong>Game Structure:</strong> Main Numbers (8/45) + Spirit Numbers (2/45)</li>
             <li className="flex items-start"><span className="text-yellow-500 mr-2">▶</span> <strong>Entry Fee:</strong> $5.00 Standard (Oracle Adjusted)</li>
-            <li className="flex items-start"><span className="text-yellow-500 mr-2">▶</span> <strong>1st Prize Probability:</strong> Approx. 1 in 212.3 Billion</li>
-            <li className="flex items-start"><span className="text-yellow-500 mr-2">▶</span> <strong>Primary Objective:</strong> Absorbing global Pi liquidity</li>
+            
+            {/* 🚩 [수정 완료] 조합 연산 기반 정밀 티켓 확률 주입 */}
+            <li className="flex items-start"><span className="text-yellow-500 mr-2">▶</span> <strong>1st Prize Probability:</strong> 1 out of 213,397,663,050 Tickets (Approx. 1 in 213.4 Billion)</li>
+            
+            {/* 🚩 [수정 완료] 재분배 가치 밸류 체인 키워드 락인 */}
+            <li className="flex items-start"><span className="text-yellow-500 mr-2">▶</span> <strong>Primary Objective:</strong> Absorption and Redistribution of Global Pi Liquidity</li>
           </ul>
         </section>
 

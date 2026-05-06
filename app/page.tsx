@@ -4,7 +4,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 
-// 🌐 [글로벌 심사 프리패스] 8개 국어 무결성 소독 번역 데이터 사전
+// 🌐 [백서 V1.4 동기화 완료] 8개 국어 무결성 소독 번역 데이터 사전
 const translations: Record<string, {
   title: string;
   sub: string;
@@ -36,12 +36,13 @@ const translations: Record<string, {
     ),
     ageTitle: "■ AGE RESTRICTION",
     ageDesc: "In strict compliance with global security compliance and regulatory standards, only individual users aged 18 or older who have fully completed the official Pi KYC verification are permitted to participate.",
-    revTitle: "■ REVENUE ALLOCATION",
-    revDesc: "All platform assets generated through decentralized operations and ecosystem contributions will be transparently preserved and allocated solely for the following fundamental objectives:",
+    revTitle: "■ REVENUE ALLOCATION (Whitepaper V1.4)",
+    revDesc: "All platform traffic assets generated through decentralized operations are forcefully allocated based on the following automated protocol ratios:",
     revList: [
-      "Regular corporate donations to the Child Fund for child welfare",
-      "Supporting the technical infrastructure and growth of the Pi Open Mainnet",
-      "Long-term allocation and lock-up in the liquidity pool (LP) for the upcoming marpo token"
+      "80% Jackpot Protocol Rewards Pool: Distributed entirely as grand prizes",
+      "8% Pure House Edge: Allocated for corporate runway and infrastructure scaling",
+      "7% Deflationary Token Sink: Automated MARPO token buybacks and LP reinforcement",
+      "5% Global Child Fund: Corporate compliance charity donations for child welfare"
     ],
     paperDesc: <>Please refer to the official <span className="text-yellow-500 uppercase">Whitepaper</span> for comprehensive tokenomics and distribution regulations.</>,
     btnConfirm: "I AGREE & CONFIRM",
@@ -62,12 +63,13 @@ const translations: Record<string, {
     ),
     ageTitle: "■ 연령 제한 안내",
     ageDesc: "글로벌 보안 준수 및 각국 규제 표준의 엄격한 이행을 위해, 오직 공식 파이 KYC 인증을 완전히 완료한 만 18세 이상의 개별 유저만 진입 및 참여가 허용됩니다.",
-    revTitle: "■ 플랫폼 자산 분배 규정",
-    revDesc: "분산형 운영 및 에코시스템 기여를 통해 생성된 모든 플랫폼 자산은 투명하게 보존되며 오직 다음의 근본적인 목적을 위해서만 처리됩니다:",
+    revTitle: "■ 플랫폼 자산 분배 규정 (백서 V1.4 동기화)",
+    revDesc: "분산형 운영 및 에코시스템 기여를 통해 생성된 모든 플랫폼 자산은 투명하게 보존되며 다음의 분배 비율에 따라 온체인에서 자동 정산됩니다:",
     revList: [
-      "취약계층 아동 복지 증진을 위한 아동 기금(Child Fund) 정기 기부",
-      "파이 오픈 메인넷의 기술 인프라 고도화 및 확장 지원 개발 자금",
-      "추후 빌드될 차세대 마르포(marpo) 토큰의 유동성 풀(LP) 장기 배정 및 자생적 락업"
+      "80% 잭팟 프로토콜 당첨금 보상 풀: 생태계 참여자에게 당첨금으로 전액 환원",
+      "8% 실질 고정 운영 런웨이 자본: 마르포 그룹 인프라 고도화 및 고효율 운영비",
+      "7% 디플레이션 토큰 싱크 자산: 마르포(MARPO) 토큰 시장가 바이백 및 유동성 풀(LP) 주입",
+      "5% 글로벌 아동 복지 기금: 취약계층 아동 복지 증진을 위한 아동 기금 정기 기부"
     ],
     paperDesc: <>포괄적인 토큰노믹스 및 자산 분배 메커니즘은 공식 <span className="text-yellow-500 uppercase">백서(Whitepaper)</span>를 필히 참고해 주십시오.</>,
     btnConfirm: "동의 및 확인하기",
@@ -88,12 +90,13 @@ const translations: Record<string, {
     ),
     ageTitle: "■ 年龄限制",
     ageDesc: "严格遵守全球安全合规与监管标准，仅限年满 18 周岁且已完全通过官方 Pi KYC 认证的个人用户参与。",
-    revTitle: "■ 收益分配",
-    revDesc: "通过去中心化运营和生态贡献产生的所有平台资产将保持透明留存，并仅分配用于以下核心目标：",
+    revTitle: "■ 收益分配 (白皮书 V1.4)",
+    revDesc: "通过去中心化运营产生的所有平台资产将根据以下自动化协议比例进行强制结算和分配：",
     revList: [
-      "定期向儿童基金会（Child Fund）捐款以支持儿童福利",
-      "支持 Pi 开放主网（Pi Open Mainnet）的技术基础设施与成长",
-      "长期分配并锁定于即将推出的 marpo 代币流动性池（LP）"
+      "80% 奖池协议奖励：全部作为大奖分配给生态参与者",
+      "8% 纯企业运营资金：用于公司基础设施扩展和高效运营",
+      "7% 通缩代币库机制：自动执行 MARPO 代币回购与增强流动性池 (LP)",
+      "5% 全球儿童福利基金：定期向儿童基金会捐款以支持儿童福利"
     ],
     paperDesc: <>请参阅官方 <span className="text-yellow-500 uppercase">白皮书 (Whitepaper)</span> 以了解全面的代币经济学和分配规定。</>,
     btnConfirm: "我同意并确认",
@@ -103,7 +106,7 @@ const translations: Record<string, {
     title: "Welcome to the Marpo Group",
     sub: "公式エコシステム通知",
     projectTitle: "■ プロジェクト概要",
-    projectDesc: "本プラットフォームは、Marpo Groupによって構築されたコミュニティ駆動型のWeb3アプリケーションであり、Pi Networkエコシステムの活性化と分散型技術アーキテクチャの検証を目的として設計されています。",
+    projectDesc: "本プラットフォームは、Marpo Groupによって構築されたコミュニティ駆動型のWeb3アプリケーションであり、Pi Networkエコシステムの活性化と分散型技術アーキテクチャ의 검증을 목적으로 설계되었습니다.",
     howTitle: "■ 参加方法について",
     howDesc: (
       <>
@@ -114,12 +117,13 @@ const translations: Record<string, {
     ),
     ageTitle: "■ 年齢制限",
     ageDesc: "グローバルなセキュリティコンプライアンスおよび規制基準を厳格に遵守するため、公式のPi KYC認証を完全に完了した18歳以上の個人ユーザーのみが参加を許可されます。",
-    revTitle: "■ 資産配分規定",
-    revDesc: "分散型の運営およびエコシステムへの貢献を通じて生成されたすべての資産は透明に保全され、以下の根本的な目的のみに割り当てられます：",
+    revTitle: "■ 資産配分規定 (ホワイトペーパー V1.4)",
+    revDesc: "分散型の運営を通じて生成されたすべての資産は、以下の自動化プロトコル比率に基づいて強制的に決済・配分されます：",
     revList: [
-      "児童福祉のための児童基金（Child Fund）への定期的な企業寄付",
-      "Piオープンメインネットの技術インフラと成長の支援開発資金",
-      "今後のmarpoトークンの流動性プール（LP）への長期的な割り当ておよびロックアップ"
+      "80% 枠ジャックポット報酬プール: エコシステム参加者へ賞金として全額還元",
+      "8% 実質固定運営ランウェイ資本: マルポグループのインフラ高度化および運営費",
+      "7% デフレトークンシン크資産: MARPOトークンの市場価格バイバックおよびLP注入",
+      "5% グローバル児童福祉基金: 児童福祉のための児童基金への定期的な企業寄付"
     ],
     paperDesc: <>エコシステムに関する包括的な分配規定については、公式の<span className="text-yellow-500 uppercase">ホワイトペーパー(Whitepaper)</span>をご参照ください。</>,
     btnConfirm: "同意して確認する",
@@ -140,12 +144,13 @@ const translations: Record<string, {
     ),
     ageTitle: "■ LIMITASYON SA EDAD",
     ageDesc: "Sa mahigpit na pagsunod sa mga pandaigdigang pamantayan ng seguridad at regulasyon, ang mga indibidwal na user na may edad 18 pataas lamang na kumpletong nakapasa sa opisyal na Pi KYC verification ang pinapayagang lumahok.",
-    revTitle: "■ ALOKASYON NG KITA",
-    revDesc: "Ang lahat ng asset ng platform na nalikha sa pamamagitan ng mga desentralisadong operasyon at kontribusyon sa ecosystem ay malinaw na iingatan at ilalaan lamang para sa mga sumusunod na layunin:",
+    revTitle: "■ REVENUE ALLOCATION (Whitepaper V1.4)",
+    revDesc: "Ang lahat ng asset ng platform na nalikha sa pamamagitan ng mga desentralisadong operasyon ay awtomatikong ipapamahagi ayon sa mga sumusunod na ratio:",
     revList: [
-      "Regular na donasyon sa Child Fund para sa kapakanan ng mga bata",
-      "Pagsuporta sa teknikal na imprastraktura at paglago ng Pi Open Mainnet",
-      "Pangmatagalang alokasyon at lock-up sa liquidity pool (LP) para sa paparating na marpo token"
+      "80% Jackpot Protocol Rewards Pool: Ipinamamahagi nang buo bilang mga premyo",
+      "8% Pure House Edge: Inilaan para sa corporate runway at pagpapalawak ng imprastraktura",
+      "7% Deflationary Token Sink: Awtomatikong MARPO token buyback at LP reinforcement",
+      "5% Global Child Welfare Fund: Regular na donasyon sa Child Fund para sa kapakanan ng mga bata"
     ],
     paperDesc: <>Mangyaring sumangguni sa opisyal na <span className="text-yellow-500 uppercase">Whitepaper</span> para sa komprehensibong tokenomics at mga regulasyon sa pamamahagi.</>,
     btnConfirm: "SANG-AYON AKO & KUMPIRMADO",
@@ -159,19 +164,20 @@ const translations: Record<string, {
     howTitle: "■ भाग कैसे लें",
     howDesc: (
       <>
-        <p>1. इंटरैक्टिव बोर्ड पर ठीक <span className="text-yellow-500 font-bold">8 मुख्य नंबर</span> और <span className="text-red-500 font-bold">2 स्पिरिट नंबर</span> चुनें।</p>
+        <p>1. |इंटरैक्टिव बोर्ड पर ठीक <span className="text-yellow-500 font-bold">8 मुख्य नंबर</span> और <span className="text-red-500 font-bold">2 स्पिरिट नंबर</span> चुनें।</p>
         <p>2. अपनी प्रविष्टि को सुरक्षित करने के लिए <span className="text-white font-bold">PLAY</span> बटन दबाएं।</p>
         <p>3. सत्यापित योगदान स्वचालित रूप से विंटर्स हॉल रिपोर्ट में संकलित किए जाते हैं, जो हर <span className="text-emerald-500 font-bold">शुक्रवार 20:00</span> बजे अपडेट होती है।</p>
       </>
     ),
     ageTitle: "■ आयु सीमा",
     ageDesc: "वैश्विक सुरक्षा अनुपालन और नियामक मानकों के सख्त अनुपालन में, केवल 18 वर्ष या उससे अधिक आयु के व्यक्तिगत उपयोगकर्ता जिन्होंने आधिकारिक Pi KYC सत्यापन पूरा कर लिया है, उन्हें अनुमति है।",
-    revTitle: "■ राजस्व आवंटन",
-    revDesc: "विकेन्द्रीकृत संचालन और योगदान के माध्यम से उत्पन्न सभी संपत्तियों को पारदर्शी रूप से सुरक्षित रखा जाएगा और केवल निम्नलिखित उद्देश्यों के लिए आवंटित किया जाएगा:",
+    revTitle: "■ राजस्व आवंटन (Whitepaper V1.4)",
+    revDesc: "विकेन्द्रीकृत संचालन के माध्यम से उत्पन्न सभी संपत्तियों को निम्नलिखित स्वचालित प्रोटोकॉल अनुपातों के आधार पर संवितरित किया जाएगा:",
     revList: [
-      "बाल कल्याण के लिए चाइल्ड फंड (Child Fund) को नियमित कॉर्पोरेट दान",
-      "Pi ओपन मेननेट के तकनीकी बुनियादी ढांचे और विकास का समर्थन करना",
-      "आगामी मार्पो (marpo) टोकन के लिए लिक्विडिटी पूल (LP) में दीर्घकालिक आवंटन और锁-अप"
+      "80% जैकपॉट प्रोटोकॉल पुरस्कार पूल: पूरी तरह से भव्य पुरस्कारों के रूप में वितरित",
+      "8% शुद्ध कॉर्पोरेट रनवे फंड: बुनियादी ढांचे के विस्तार और कुशल संचालन के लिए",
+      "7% अपस्फीतिकारक टोकन सिंक प्रणाली: स्वचालित MARPO टोकन बायबैक और एलपी सुदृढीकरण",
+      "5% वैश्विक बाल कल्याण कोष: बाल कल्याण के लिए चाइल्ड फंड को नियमित कॉर्पोरेट दान"
     ],
     paperDesc: <>व्यापक टोकनॉमिक्स के लिए कृपया आधिकारिक <span className="text-yellow-500 uppercase">व्हाइटपेपर (Whitepaper)</span> देखें।</>,
     btnConfirm: "मैं सहमत हूँ और पुष्टि करता हूँ",
@@ -192,12 +198,13 @@ const translations: Record<string, {
     ),
     ageTitle: "■ ВОЗРАСТНЫЕ ОГРАНИЧЕНИЯ",
     ageDesc: "В строгом соответствии с глобальными стандартами безопасности и нормативными требованиями к участию допускаются только индивидуальные пользователи в возрасте 18 лет и старше, полностью прошедшие верификацию Pi KYC.",
-    revTitle: "■ РАСПРЕДЕЛЕНИЕ РЕСУРСОВ",
-    revDesc: "Все активы платформы, полученные в результате децентрализованных операций, будут прозрачно сохранены и направлены исключительно на следующие ключевые цели:",
+    revTitle: "■ РАСПРЕДЕЛЕНИЕ РЕСУРСОВ (Whitepaper V1.4)",
+    revDesc: "Все активы платформы, полученные в результате децентрализованных операций, автоматически распределяются на основе следующих пропорций:",
     revList: [
-      "Регулярные корпоративные пожертвования в Детский фонд (Child Fund) для обеспечения благополучия детей",
-      "Поддержка технической инфраструктуры и роста открытой сети Pi Open Mainnet",
-      "Долгосрочное распределение и блокировка в пуле ликвидности (LP) для будущего токена marpo"
+      "80% Призовой фонд протокола джекпота: Полностью распределяется в качестве главных призов",
+      "8% Чистый операционный капитал компании: Выделяется на расширение инфраструктуры",
+      "7% Дефляционный токен-синк: Автоматический обратный выкуп токенов MARPO и усиление LP",
+      "5% Всемирный детский фонд: Регулярные корпоративные пожертвования для обеспечения благополучия детей"
     ],
     paperDesc: <>Пожалуйста, обратитесь к официальной <span className="text-yellow-500 uppercase">Белой книге (Whitepaper)</span> для ознакомления с токеномикой.</>,
     btnConfirm: "Я СОГЛАСЕН И ПОДТВЕРЖДАЮ",
@@ -207,7 +214,7 @@ const translations: Record<string, {
     title: "Welcome to the Marpo Group",
     sub: "Avis Officiel de l'Écosystème",
     projectTitle: "■ DESCRIPTION DU PROJET",
-    projectDesc: "Cette plateforme est une application Web3 pilotée par la communauté et conçue par Marpo Group, spécifiquement développée pour stimuler l'écosystème du Pi Network et valider les architectures technologiques décentralisées.",
+    projectDesc: "Cette plateforme est une application Web3 pilotée par la communauté et conçue by Marpo Group, spécifiquement développée pour stimuler l'écosystème du Pi Network et valider les architectures technologiques décentralisées.",
     howTitle: "■ COMMENT PARTICIPER",
     howDesc: (
       <>
@@ -218,12 +225,13 @@ const translations: Record<string, {
     ),
     ageTitle: "■ RESTRICTION D'ÂGE",
     ageDesc: "En stricte conformité aux normes de sécurité mondiales et aux exigences réglementaires, seuls les utilisateurs âgés de 18 ans ou plus ayant entièrement complété la vérification officielle Pi KYC sont autorisés à participer.",
-    revTitle: "■ ALLOCATION DES REVENUS",
-    revDesc: "Tous les actifs de la plateforme générés par les opérations décentralisées seront préservés de manière transparente et alloués uniquement aux objectifs fondamentaux suivants :",
+    revTitle: "■ ALLOCATION DES REVENUS (Whitepaper V1.4)",
+    revDesc: "Tous les actifs de la plateforme générés par les opérations décentralisées sont automatiquement alloués selon les ratios suivants :",
     revList: [
-      "Dons corporatifs réguliers au Child Fund pour le bien-être des enfants",
-      "Soutien à l'infrastructure technique et à la croissance du Pi Open Mainnet",
-      "Allocation à long terme et blocage dans le pool de liquidité (LP) pour le futur jeton marpo"
+      "80% Pool de récompenses du protocole Jackpot: Redistribué entièrement sous forme de grands prix",
+      "8% Marge pure de l'entreprise: Allouée pour le runway de l'entreprise et l'évolutivité de l'infrastructure",
+      "7% Token Sink déflationniste: Rachat automatique de jetons MARPO et renforcement du pool de liquidité (LP)",
+      "5% Fonds mondial pour l'enfance: Dons caritatifs réguliers pour le bien-être des enfants"
     ],
     paperDesc: <>Veuillez vous référer au <span className="text-yellow-500 uppercase">Whitepaper</span> officiel pour des détails complets sur la tokenomics.</>,
     btnConfirm: "J'ACCEPTE & CONFIRME",
@@ -302,12 +310,14 @@ export default function MarpoLottoPage() {
   const [currentTime, setCurrentTime] = useState<Date>(new Date());
   const [showHistory, setShowHistory] = useState<boolean>(false);
   
-  // 🚩 앱 진입 시마다 상시 노출 상태 및 광고 상태 제어
+  // 앱 진입 고지 및 다국어 상태 제어
   const [isNoticeOpen, setIsNoticeOpen] = useState<boolean>(true);
   const [isAdLoading, setIsAdLoading] = useState<boolean>(false); 
-
-  // 🌐 [다국어 엔지니어링] 유저 선택 언어 상태 제어 (기본값: 영어)
   const [currentLang, setCurrentLang] = useState<string>('en');
+
+  // 🚩 [신규 UI 피처] 5회차 연속 출석 보상 시스템 스토리지 시뮬레이션 상태
+  const [consecutiveVisits, setConsecutiveVisits] = useState<number>(3); // 비주얼 확인을 위해 기본값 3 세팅
+  const [attendanceClaimed, setAttendanceClaimed] = useState<boolean>(false);
 
   const fetchMyTickets = useCallback(async (userId: string) => {
     if (!userId) return;
@@ -450,6 +460,18 @@ export default function MarpoLottoPage() {
     }
   };
 
+  // 🚩 출석 체크 액션 정산 처리 핸들러
+  const handleExecuteCheckIn = () => {
+    if (consecutiveVisits >= 5) return;
+    setConsecutiveVisits(prev => prev + 1);
+    alert("Round Attendance Verified! 🏎️🏁");
+  };
+
+  const handleClaimAttendanceReward = () => {
+    setAttendanceClaimed(true);
+    alert("1 Free Play Entry / Voucher Successfully Sealed in the Vault! 🎁");
+  };
+
   const handlePaymentSubmit = async () => {
     if (isStoring) return; 
     setIsStoring(true);
@@ -478,7 +500,7 @@ export default function MarpoLottoPage() {
               body: JSON.stringify({ numbers: { main: mainNumbers, spirit: spiritNumbers }, userId: user?.username, amount: safeAmount, transactionId: txid }) 
             });
             if (resReal.ok) { 
-              alert("Ticket Sealed! 🏎️💨"); 
+              alert("Ticket Sealed! 🏎️💨");
               if (user?.username) fetchMyTickets(user.username); 
             }
           },
@@ -496,7 +518,6 @@ export default function MarpoLottoPage() {
     }
   };
 
-  // 현재 선택된 다국어 팩 바인딩
   const content = translations[currentLang] || translations.en;
 
   return (
@@ -512,7 +533,8 @@ export default function MarpoLottoPage() {
         </div>
       </div>
 
-      <section className="w-full max-w-md bg-zinc-900 border border-yellow-500/20 p-8 rounded-[2.5rem] mb-12 shadow-2xl relative overflow-hidden">
+      {/* Live Jackpot Pool 카드 자산 */}
+      <section className="w-full max-w-md bg-zinc-900 border border-yellow-500/20 p-8 rounded-[2.5rem] mb-6 shadow-2xl relative overflow-hidden">
           <div className="absolute top-6 right-8">
             <span className="text-[10px] text-yellow-500 font-black border border-yellow-500/30 px-3 py-1.5 rounded-full uppercase tracking-widest bg-black/50">
               Round #{jackpotRound}
@@ -527,6 +549,61 @@ export default function MarpoLottoPage() {
           </div>
       </section>
 
+      {/* 🚩 [신규 레이아웃 이식] 5회차 연속 방문 충성도 주행 게이지 패널 (Loyalty Drive Gauge) */}
+      <section className="w-full max-w-md bg-zinc-900/40 border border-zinc-800 p-6 rounded-[2.5rem] mb-12 text-left relative overflow-hidden">
+        <div className="flex justify-between items-center mb-4">
+          <div>
+            <p className="text-[10px] text-emerald-500 font-black uppercase tracking-widest">■ MARPO LOYALTY DRIVE</p>
+            <p className="text-xs text-zinc-400 font-bold mt-0.5">5-Round Consecutive Check-in</p>
+          </div>
+          <span className="text-[11px] text-zinc-500 font-black bg-black border border-zinc-800 px-2.5 py-1 rounded-md">
+            {consecutiveVisits} / 5 WEEKS
+          </span>
+        </div>
+
+        {/* 패들 시프트 형태의 5단계 정밀 LED 게이지 바 */}
+        <div className="grid grid-cols-5 gap-2 mb-4">
+          {Array.from({ length: 5 }).map((_, idx) => {
+            const isActivated = idx < consecutiveVisits;
+            return (
+              <div key={`gauge-${idx}`} className="h-2.5 rounded-full relative bg-zinc-800 overflow-hidden border border-zinc-900">
+                <div className={`absolute inset-0 transition-all duration-500 ${
+                  isActivated ? 'bg-gradient-to-r from-emerald-600 to-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.5)]' : 'w-0'
+                }`} />
+              </div>
+            );
+          })}
+        </div>
+
+        <div className="flex justify-between items-center pt-2 border-t border-zinc-800/50">
+          <p className="text-[10px] text-zinc-500 leading-normal max-w-[240px]">
+            {consecutiveVisits >= 5 
+              ? "🎉 Boost Loaded! Claim your Oracle-Pegged Free Voucher now." 
+              : "Maintain momentum! Complete 5 consecutive rounds to secure 1 Free Entry."}
+          </p>
+
+          {consecutiveVisits >= 5 ? (
+            <button 
+              onClick={handleClaimAttendanceReward}
+              disabled={attendanceClaimed}
+              className={`text-[10px] font-black px-3 py-2 rounded-xl transition-transform active:scale-95 uppercase shadow-md ${
+                attendanceClaimed ? 'bg-zinc-800 text-zinc-600 cursor-not-allowed' : 'bg-emerald-500 text-black animate-bounce'
+              }`}
+            >
+              {attendanceClaimed ? "CLAIMED" : "GET REWARD"}
+            </button>
+          ) : (
+            <button 
+              onClick={handleExecuteCheckIn}
+              className="bg-zinc-800 hover:bg-zinc-700 text-zinc-300 border border-zinc-700 text-[10px] font-black px-3 py-2 rounded-xl active:scale-95 transition-transform uppercase"
+            >
+              CHECK-IN
+            </button>
+          )}
+        </div>
+      </section>
+
+      {/* 숫자 선택 매트릭스 대시보드 */}
       <section className="w-full max-w-md mb-14">
         <div className="flex justify-between items-center mb-4 px-1">
           <p className="text-sm font-black text-zinc-500 uppercase tracking-widest italic">Main Numbers</p>
@@ -648,7 +725,7 @@ export default function MarpoLottoPage() {
          </Link>
       </div>
 
-      {/* 🚩 8개 국어 동적 바인딩 시스템으로 롤업된 글로벌 규제 면책 방어 팝업 모달 */}
+      {/* 8개 국어 동적 바인딩 시스템 면책 공지 팝업 모달 */}
       {isNoticeOpen && (
         <div className="fixed inset-0 bg-black/98 backdrop-blur-lg flex justify-center items-center z-[100] p-6 text-center">
           <div className="bg-zinc-900 border-2 border-yellow-500/30 p-10 rounded-[3rem] w-full max-w-md relative shadow-2xl">
@@ -685,7 +762,7 @@ export default function MarpoLottoPage() {
               </div>
             </div>
 
-            {/* 어그리 버튼 바로 위에 배치된 글로벌 멀티 랭귀지 셀렉터 */}
+            {/* 글로벌 멀티 랭귀지 셀렉터 */}
             <div className="mb-5 text-left">
               <label className="text-[9px] text-zinc-500 font-black uppercase tracking-wider block mb-1.5">■ SELECT LANGUAGE / 언어 선택</label>
               <select 

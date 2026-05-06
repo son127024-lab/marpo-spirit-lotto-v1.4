@@ -75,7 +75,7 @@ export default function MarpoLottoPage() {
   const [currentTime, setCurrentTime] = useState<Date>(new Date());
   const [showHistory, setShowHistory] = useState<boolean>(false);
   
-  // 🚩 [수정 완료] 앱 진입 시마다 상시 노출되도록 true 초기화 및 광고 시청 대기 상태 추가
+  // 🚩 앱 진입 시마다 상시 노출되도록 true 초기화 및 광고 시청 대기 상태 추가
   const [isNoticeOpen, setIsNoticeOpen] = useState<boolean>(true);
   const [isAdLoading, setIsAdLoading] = useState<boolean>(false); 
 
@@ -117,7 +117,15 @@ export default function MarpoLottoPage() {
           try {
             const Pi = (window as any).Pi;
             if (Pi) {
-              await Pi.init({ version: "2.0", sandbox: true });
+              // 🚩 [정밀 수정 완료] 하드코딩된 sandbox: true 제거. 
+              // 내 컴퓨터(localhost)일 때만 sandbox 모드를 켜고, 연결된 파이 도메인 주소 체계에서는 자동으로 false 처리되어 실계정 로그인을 전면 개방합니다.
+              const isLocalEnv = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+              
+              await Pi.init({ 
+                version: "2.0", 
+                sandbox: isLocalEnv 
+              });
+              
               const auth = await Pi.authenticate(['username', 'payments'], async (p: any) => {
                 await fetch('/api/payments/complete', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ paymentId: p.identifier, txid: p.transaction?.txid || 'cleanup' }) });
               });
@@ -135,7 +143,7 @@ export default function MarpoLottoPage() {
     return () => { clearInterval(oracleTimer); clearInterval(clockTimer); };
   }, [fetchOracleSettings, fetchMyTickets]);
 
-  // 🚩 [수정 완료] 광고 송출 연동 및 완료 시점 제어 비동기(Async) 락 엔진 고도화
+  // 🚩 광고 송출 연동 및 완료 시점 제어 비동기(Async) 락 엔진 고도화
   const handleCloseNotice = async () => {
     setIsAdLoading(true);
     try {
@@ -451,7 +459,7 @@ export default function MarpoLottoPage() {
               </div>
             </div>
 
-            {/* 🚩 [업데이트 완료] 광고 구동 로딩에 대응하는 동적 스마트 로킹 버튼 인터페이스 */}
+            {/* 🚩 광고 구동 로딩에 대응하는 동적 스마트 로킹 버튼 인터페이스 */}
             <button 
               onClick={handleCloseNotice} 
               disabled={isAdLoading}

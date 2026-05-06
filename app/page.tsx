@@ -75,8 +75,9 @@ export default function MarpoLottoPage() {
   const [currentTime, setCurrentTime] = useState<Date>(new Date());
   const [showHistory, setShowHistory] = useState<boolean>(false);
   
-  // 🚩 최초 진입 글로벌 가이드 안내 팝업 상태
+  // 🚩 [수정 완료] 앱 진입 시마다 상시 노출되도록 true 초기화 및 광고 시청 대기 상태 추가
   const [isNoticeOpen, setIsNoticeOpen] = useState<boolean>(true);
+  const [isAdLoading, setIsAdLoading] = useState<boolean>(false); 
 
   const fetchMyTickets = useCallback(async (userId: string) => {
     if (!userId) return;
@@ -105,8 +106,6 @@ export default function MarpoLottoPage() {
   }, []);
 
   useEffect(() => {
-
-
     if (typeof window !== 'undefined') {
       const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
       if (isLocal) {
@@ -136,8 +135,24 @@ export default function MarpoLottoPage() {
     return () => { clearInterval(oracleTimer); clearInterval(clockTimer); };
   }, [fetchOracleSettings, fetchMyTickets]);
 
-  const handleCloseNotice = () => {
-    setIsNoticeOpen(false); // ◀ 메모리에 저장 안 하고 그냥 창만 닫음
+  // 🚩 [수정 완료] 광고 송출 연동 및 완료 시점 제어 비동기(Async) 락 엔진 고도화
+  const handleCloseNotice = async () => {
+    setIsAdLoading(true);
+    try {
+      const Pi = typeof window !== 'undefined' ? (window as any).Pi : null;
+      if (Pi && Pi.showAd) {
+        // 파이 네트워크 메인넷 공식 Ads API 호출 구동
+        await Pi.showAd(); 
+      } else {
+        // 로컬 개발 서버 및 비활성화 환경 방어용 3초 시뮬레이션 인터벌 대기
+        await new Promise((resolve) => setTimeout(resolve, 3000));
+      }
+    } catch (error) {
+      console.error("Ecosystem Ad error:", error);
+    } finally {
+      setIsAdLoading(false);
+      setIsNoticeOpen(false); 
+    }
   };
 
   const activeTickets = myTickets.filter(t => t.status === 'COMPLETED');
@@ -394,7 +409,7 @@ export default function MarpoLottoPage() {
          </Link>
       </div>
 
-      {/* 🚩 [긴급 수정] 'Raffle' 단어까지 전수 박멸하여 100% 테크/기여로 소독한 영문 모달 */}
+      {/* 🚩 100% 테크/기여 소독 및 광고 대기 기능이 장착된 차세대 영문 배포용 모달 */}
       {isNoticeOpen && (
         <div className="fixed inset-0 bg-black/98 backdrop-blur-lg flex justify-center items-center z-[100] p-6 text-center">
           <div className="bg-zinc-900 border-2 border-yellow-500/30 p-10 rounded-[3rem] w-full max-w-md relative shadow-2xl">
@@ -436,11 +451,25 @@ export default function MarpoLottoPage() {
               </div>
             </div>
 
+            {/* 🚩 [업데이트 완료] 광고 구동 로딩에 대응하는 동적 스마트 로킹 버튼 인터페이스 */}
             <button 
               onClick={handleCloseNotice} 
-              className="w-full bg-yellow-500 text-black font-black text-xl py-5 rounded-2xl uppercase shadow-lg active:scale-95 transition-transform tracking-widest"
+              disabled={isAdLoading}
+              className={`w-full text-black font-black text-xl py-5 rounded-2xl uppercase shadow-lg active:scale-95 transition-transform tracking-widest flex justify-center items-center gap-3 ${
+                isAdLoading ? 'bg-zinc-700 text-zinc-400 cursor-not-allowed' : 'bg-yellow-500 hover:bg-yellow-400'
+              }`}
             >
-              I AGREE & CONFIRM
+              {isAdLoading ? (
+                <>
+                  <svg className="animate-spin h-5 w-5 text-zinc-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  <span>Watching Ecosystem Ad...</span>
+                </>
+              ) : (
+                "I AGREE & CONFIRM"
+              )}
             </button>
             
           </div>

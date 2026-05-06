@@ -65,7 +65,7 @@ export default function MarpoLottoPage() {
   const [ticketPrice, setTicketPrice] = useState<number>(1.0); 
   const [peggedUsd, setPeggedUsd] = useState<number>(314.159);
   const [jackpot, setJackpot] = useState<number>(0);
-  const [jackpotRound, setJackpotRound] = useState<string>("1"); // 🚩 자동 회차 상태 추가
+  const [jackpotRound, setJackpotRound] = useState<string>("1"); 
   const [mainNumbers, setMainNumbers] = useState<number[]>([]);
   const [spiritNumbers, setSpiritNumbers] = useState<number[]>([]);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
@@ -74,6 +74,9 @@ export default function MarpoLottoPage() {
   const [myTickets, setMyTickets] = useState<any[]>([]);
   const [currentTime, setCurrentTime] = useState<Date>(new Date());
   const [showHistory, setShowHistory] = useState<boolean>(false);
+  
+  // 🚩 [이식 완료] 최초 진입 글로벌 가이드 안내 팝업 상태 및 쿠키 제어
+  const [isNoticeOpen, setIsNoticeOpen] = useState<boolean>(false);
 
   const fetchMyTickets = useCallback(async (userId: string) => {
     if (!userId) return;
@@ -95,13 +98,19 @@ export default function MarpoLottoPage() {
           setTicketPrice(Number(Number(json.settings.ticketPricePi).toFixed(5)));
           setPeggedUsd(Number(json.settings.peggedUsd));
           setJackpot(Number(json.settings.realJackpot));
-          setJackpotRound(json.settings.currentRound || "1"); // 🚩 DB에서 현재 회차 정보 로드
+          setJackpotRound(json.settings.currentRound || "1"); 
         }
       }
     } catch (error) { console.error("Oracle Sync Fail"); }
   }, []);
 
   useEffect(() => {
+    // 🚩 [이식 완료] 진입 유저의 안내 확인 이력 확인
+    const hasAgreed = localStorage.getItem('marpo_notice_agreed');
+    if (!hasAgreed) {
+      setIsNoticeOpen(true);
+    }
+
     if (typeof window !== 'undefined') {
       const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
       if (isLocal) {
@@ -130,6 +139,11 @@ export default function MarpoLottoPage() {
     const clockTimer = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => { clearInterval(oracleTimer); clearInterval(clockTimer); };
   }, [fetchOracleSettings, fetchMyTickets]);
+
+  const handleCloseNotice = () => {
+    localStorage.setItem('marpo_notice_agreed', 'true');
+    setIsNoticeOpen(false);
+  };
 
   const activeTickets = myTickets.filter(t => t.status === 'COMPLETED');
   const historyTickets = myTickets.filter(t => {
@@ -250,7 +264,6 @@ export default function MarpoLottoPage() {
       </div>
 
       <section className="w-full max-w-md bg-zinc-900 border border-yellow-500/20 p-8 rounded-[2.5rem] mb-12 shadow-2xl relative overflow-hidden">
-          {/* 🚩 우측 상단 자동 회차 뱃지 추가 */}
           <div className="absolute top-6 right-8">
             <span className="text-[10px] text-yellow-500 font-black border border-yellow-500/30 px-3 py-1.5 rounded-full uppercase tracking-widest bg-black/50">
               Round #{jackpotRound}
@@ -385,6 +398,59 @@ export default function MarpoLottoPage() {
             <span className="text-[10px] text-zinc-500 font-black uppercase tracking-widest">Whitepaper</span>
          </Link>
       </div>
+
+      {/* 🚩 [이식 완료] 글로벌 심사 통과용 영문 진입 규제 방어벽 팝업 모달 */}
+      {isNoticeOpen && (
+        <div className="fixed inset-0 bg-black/98 backdrop-blur-lg flex justify-center items-center z-[100] p-6 text-center">
+          <div className="bg-zinc-900 border-2 border-yellow-500/30 p-10 rounded-[3rem] w-full max-w-md relative shadow-2xl">
+            
+            <h2 className="text-2xl font-black text-yellow-500 mb-1 uppercase italic tracking-tighter">Welcome to Marpo Spirit</h2>
+            <p className="text-[10px] text-zinc-500 font-black uppercase tracking-[0.3em] mb-6">Official Ecosystem Notice</p>
+            
+            <div className="bg-black border border-zinc-800 rounded-2xl p-5 text-left space-y-4 mb-8 max-h-[320px] overflow-y-auto">
+              <div>
+                <p className="text-[10px] text-yellow-500 font-black uppercase tracking-wider mb-1">■ PROJECT DESCRIPTION</p>
+                <p className="text-xs text-zinc-400 font-medium leading-relaxed">
+                  This platform is a community-driven reward raffle space engineered by Marpo Group, specifically designed to stimulate the Pi Network ecosystem and validate decentralized Web3 architectures.
+                </p>
+              </div>
+              
+              <div>
+                <p className="text-[10px] text-red-500 font-black uppercase tracking-wider mb-1">■ AGE RESTRICTION</p>
+                <p className="text-xs text-zinc-400 font-medium leading-relaxed">
+                  In strict compliance with global security compliance and regulatory standards, only individual users aged **18 or older** who have fully completed the official Pi KYC verification are permitted to participate.
+                </p>
+              </div>
+
+              <div>
+                <p className="text-[10px] text-blue-500 font-black uppercase tracking-wider mb-1">■ REVENUE ALLOCATION</p>
+                <p className="text-xs text-zinc-400 font-medium leading-relaxed">
+                  All platform revenues generated through operations and ticket distributions will be transparently preserved and allocated solely for the following fundamental objectives:
+                </p>
+                <ul className="list-disc list-inside text-[11px] text-zinc-500 mt-1.5 space-y-1 ml-1 font-bold">
+                  <li>Regular corporate donations to the Child Fund for child welfare</li>
+                  <li>Supporting the technical infrastructure and growth of the Pi Open Mainnet</li>
+                  <li>Long-term allocation and lock-up in the liquidity pool (LP) for the upcoming marpo token</li>
+                </ul>
+              </div>
+
+              <div className="border-t border-zinc-800/80 pt-3 text-center">
+                <p className="text-[10px] text-zinc-500 font-bold">
+                  Please refer to the official <span className="text-yellow-500 uppercase">Whitepaper</span> for comprehensive tokenomics and distribution regulations.
+                </p>
+              </div>
+            </div>
+
+            <button 
+              onClick={handleCloseNotice} 
+              className="w-full bg-yellow-500 text-black font-black text-xl py-5 rounded-2xl uppercase shadow-lg active:scale-95 transition-transform tracking-widest"
+            >
+              I AGREE & CONFIRM
+            </button>
+            
+          </div>
+        </div>
+      )}
 
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/95 backdrop-blur-md flex justify-center items-center z-50 p-6 text-center">

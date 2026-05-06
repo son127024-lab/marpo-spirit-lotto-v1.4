@@ -1,9 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: 'export',      // 🚩 이 줄이 들어가야 빌드 시 'out' 폴더가 생성됩니다!
-  images: {
-    unoptimized: true,   // 정적 익스포트 시 익스포트 에러를 방지하기 위해 필수입니다.
-  },
+  /* output: 'export' 를 제거하여 
+    Next.js가 정적 파일이 아닌 실시간 API 서버를 가동할 수 있도록 복구합니다.
+  */
 };
 
 module.exports = nextConfig;

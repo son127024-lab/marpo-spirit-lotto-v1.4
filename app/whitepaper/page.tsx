@@ -11,7 +11,7 @@ export default function WhitepaperPage() {
         <Link href="/" className="text-zinc-500 hover:text-yellow-500 transition-colors text-sm font-bold uppercase tracking-widest">
           ← Back to Vault
         </Link>
-        <span className="text-[10px] text-zinc-600 uppercase tracking-[0.3em]">Version 1.2</span>
+        <span className="text-[10px] text-zinc-600 uppercase tracking-[0.3em]">Version 1.4</span>
       </div>
 
       <div className="w-full max-w-2xl mx-auto space-y-12">
@@ -52,7 +52,7 @@ export default function WhitepaperPage() {
         <section className="bg-zinc-900/40 p-8 rounded-3xl border border-zinc-800/50 hover:border-yellow-500/30 transition-all">
           <h2 className="text-xl font-black text-yellow-500 tracking-widest uppercase mb-4">3. Marpo Tokenomics</h2>
           <p className="text-sm leading-relaxed text-zinc-400 mb-6">
-            The Marpo Token is the primary medium of payment, reward, and value storage within the Marpo Ecosystem.
+            The Marpo Token is the primary medium of payment, reward, and value storage within the Marpo Ecosystem. Total supply is strictly hard-capped at 1 Billion (1,000,000,000) MARPO to ensure extreme scarcity.
           </p>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="bg-black p-5 rounded-2xl border border-zinc-800">
@@ -74,12 +74,29 @@ export default function WhitepaperPage() {
           </div>
         </section>
 
-        {/* 4. Liquidity */}
-        <section className="bg-zinc-900/40 p-8 rounded-3xl border border-zinc-800/50 hover:border-yellow-500/30 transition-all">
-          <h2 className="text-xl font-black text-yellow-500 tracking-widest uppercase mb-4">4. Liquidity & Redistribution</h2>
-          <p className="text-sm leading-relaxed text-zinc-400">
-            Beyond merely freezing capital, we adopt an advanced economic model that recirculates locked Pi back into the market via Pi/Marpo Liquidity Pools (LP) and strategic redistribution of secondary prizes. This ensures a healthy, circulating ecosystem.
+        {/* 🚩 [신규 추가] 4. 오라클 연동형 동적 분할 시스템 */}
+        <section className="bg-zinc-900/40 p-8 rounded-3xl border border-emerald-900/30 hover:border-emerald-500/50 transition-all relative overflow-hidden">
+          <div className="absolute top-0 right-0 bg-emerald-600 text-black text-[9px] font-black uppercase tracking-widest px-3 py-1 rounded-bl-xl">Core Defense Mechanism</div>
+          <h2 className="text-xl font-black text-emerald-500 tracking-widest uppercase mb-4">4. Oracle-Pegged Dynamic Fractionalization</h2>
+          <p className="text-sm leading-relaxed text-zinc-400 mb-5">
+            To prevent ecosystem stagnation during extreme bullish market conditions and token value hyper-appreciation, MARPO adopts an <span className="text-white font-bold">Oracle-Pegged Dynamic Fractional System</span>.
           </p>
+          <ul className="space-y-4 text-sm text-zinc-300">
+            <li className="flex items-start">
+              <span className="text-emerald-500 mr-3 mt-1">◈</span> 
+              <div>
+                <strong className="text-white">Value Decoupling (가치 탈고정):</strong> 
+                <p className="text-zinc-500 mt-1 text-xs">All platform goods and rewards are strictly pegged to standard fiat value (e.g., $5.00) rather than a fixed token quantity, ensuring permanent accessibility.</p>
+              </div>
+            </li>
+            <li className="flex items-start">
+              <span className="text-emerald-500 mr-3 mt-1">◈</span> 
+              <div>
+                <strong className="text-white">Micro-Fractional Adjustments (초정밀 소수점 분할):</strong> 
+                <p className="text-zinc-500 mt-1 text-xs">As the MARPO token's market value exponentially increases, real-time oracle engines automatically scale transaction costs down to micro-fractions (e.g., 0.001 MARPO). This guarantees infinite ecosystem sustainability regardless of hyper-inflationary token valuations.</p>
+              </div>
+            </li>
+          </ul>
         </section>
 
         {/* 5. Vision & Ecosystem Expansion */}

@@ -75,7 +75,7 @@ export default function MarpoLottoPage() {
   const [currentTime, setCurrentTime] = useState<Date>(new Date());
   const [showHistory, setShowHistory] = useState<boolean>(false);
   
-  // 🚩 [이식 완료] 최초 진입 글로벌 가이드 안내 팝업 상태 및 쿠키 제어
+  // 🚩 최초 진입 글로벌 가이드 안내 팝업 상태
   const [isNoticeOpen, setIsNoticeOpen] = useState<boolean>(false);
 
   const fetchMyTickets = useCallback(async (userId: string) => {
@@ -105,7 +105,7 @@ export default function MarpoLottoPage() {
   }, []);
 
   useEffect(() => {
-    // 🚩 [이식 완료] 진입 유저의 안내 확인 이력 확인
+    // 🚩 진입 유저의 안내 확인 이력 확인
     const hasAgreed = localStorage.getItem('marpo_notice_agreed');
     if (!hasAgreed) {
       setIsNoticeOpen(true);
@@ -399,7 +399,7 @@ export default function MarpoLottoPage() {
          </Link>
       </div>
 
-      {/* 🚩 [이식 완료] 글로벌 심사 통과용 영문 진입 규제 방어벽 팝업 모달 */}
+      {/* 🚩 [긴급 수정] 'Raffle' 단어까지 전수 박멸하여 100% 테크/기여로 소독한 영문 모달 */}
       {isNoticeOpen && (
         <div className="fixed inset-0 bg-black/98 backdrop-blur-lg flex justify-center items-center z-[100] p-6 text-center">
           <div className="bg-zinc-900 border-2 border-yellow-500/30 p-10 rounded-[3rem] w-full max-w-md relative shadow-2xl">
@@ -411,7 +411,7 @@ export default function MarpoLottoPage() {
               <div>
                 <p className="text-[10px] text-yellow-500 font-black uppercase tracking-wider mb-1">■ PROJECT DESCRIPTION</p>
                 <p className="text-xs text-zinc-400 font-medium leading-relaxed">
-                  This platform is a community-driven reward raffle space engineered by Marpo Group, specifically designed to stimulate the Pi Network ecosystem and validate decentralized Web3 architectures.
+                  This platform is a community-driven Web3 application engineered by Marpo Group, specifically designed to stimulate the Pi Network ecosystem and validate decentralized technology architectures.
                 </p>
               </div>
               
@@ -425,7 +425,7 @@ export default function MarpoLottoPage() {
               <div>
                 <p className="text-[10px] text-blue-500 font-black uppercase tracking-wider mb-1">■ REVENUE ALLOCATION</p>
                 <p className="text-xs text-zinc-400 font-medium leading-relaxed">
-                  All platform revenues generated through operations and ticket distributions will be transparently preserved and allocated solely for the following fundamental objectives:
+                  All platform assets generated through decentralized operations and ecosystem contributions will be transparently preserved and allocated solely for the following fundamental objectives:
                 </p>
                 <ul className="list-disc list-inside text-[11px] text-zinc-500 mt-1.5 space-y-1 ml-1 font-bold">
                   <li>Regular corporate donations to the Child Fund for child welfare</li>

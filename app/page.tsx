@@ -117,8 +117,6 @@ export default function MarpoLottoPage() {
           try {
             const Pi = (window as any).Pi;
             if (Pi) {
-              // 🚩 [정밀 수정 완료] 하드코딩된 sandbox: true 제거. 
-              // 내 컴퓨터(localhost)일 때만 sandbox 모드를 켜고, 연결된 파이 도메인 주소 체계에서는 자동으로 false 처리되어 실계정 로그인을 전면 개방합니다.
               const isLocalEnv = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
               
               await Pi.init({ 
@@ -149,10 +147,8 @@ export default function MarpoLottoPage() {
     try {
       const Pi = typeof window !== 'undefined' ? (window as any).Pi : null;
       if (Pi && Pi.showAd) {
-        // 파이 네트워크 메인넷 공식 Ads API 호출 구동
         await Pi.showAd(); 
       } else {
-        // 로컬 개발 서버 및 비활성화 환경 방어용 3초 시뮬레이션 인터벌 대기
         await new Promise((resolve) => setTimeout(resolve, 3000));
       }
     } catch (error) {
@@ -273,10 +269,17 @@ export default function MarpoLottoPage() {
   return (
     <div className="min-h-screen bg-black text-white flex flex-col items-center p-4 font-sans relative pb-40 text-center">
       
+      {/* 🚩 [업데이트 완료] 메인 헤더 글자 타이포그래피 볼륨업 및 서브 도메인 락인 */}
       <div className="w-full max-w-md flex flex-col items-center pt-8 mb-10">
         <Image src="/marpo-group-logo.png" alt="MARPO GROUP" width={170} height={170} priority />
-        <p className="text-yellow-500 font-black text-2xl uppercase tracking-tighter italic mt-5">Marpo Spirit</p>
-        <div className="mt-3 px-5 py-1.5 bg-zinc-900 border border-zinc-800 rounded-full">
+        
+        {/* 지시 사항 1: Marpo Spirit 글자 크기를 50px 규격으로 크게 빌드 */}
+        <p className="text-yellow-500 font-black text-[50px] uppercase tracking-tighter italic mt-5 leading-none">Marpo Spirit</p>
+        
+        {/* 지시 사항 2: 그 하단에 윗글자 대비 30% 비율 크기(15px)로 lottoworld.pi 브랜딩 텍스트 배치 */}
+        <p className="text-zinc-500 font-black text-[15px] lowercase tracking-widest mt-2">lottoworld.pi</p>
+        
+        <div className="mt-4 px-5 py-1.5 bg-zinc-900 border border-zinc-800 rounded-full">
           <p className="text-[10px] text-zinc-400 font-bold tracking-widest uppercase">ID: <span className="text-yellow-500">{user?.username || "CONNECTING..."}</span></p>
         </div>
       </div>
@@ -422,7 +425,8 @@ export default function MarpoLottoPage() {
         <div className="fixed inset-0 bg-black/98 backdrop-blur-lg flex justify-center items-center z-[100] p-6 text-center">
           <div className="bg-zinc-900 border-2 border-yellow-500/30 p-10 rounded-[3rem] w-full max-w-md relative shadow-2xl">
             
-            <h2 className="text-2xl font-black text-yellow-500 mb-1 uppercase italic tracking-tighter">Welcome to Marpo Spirit</h2>
+            {/* 지시 사항 3: 첫 공지 맨 위 상단 타이틀 명칭을 Welcome to the Marpo Group으로 변경 완료 */}
+            <h2 className="text-2xl font-black text-yellow-500 mb-1 uppercase italic tracking-tighter">Welcome to the Marpo Group</h2>
             <p className="text-[10px] text-zinc-500 font-black uppercase tracking-[0.3em] mb-6">Official Ecosystem Notice</p>
             
             <div className="bg-black border border-zinc-800 rounded-2xl p-5 text-left space-y-4 mb-8 max-h-[320px] overflow-y-auto">

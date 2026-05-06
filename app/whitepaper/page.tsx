@@ -11,7 +11,7 @@ export default function WhitepaperPage() {
         <Link href="/" className="text-zinc-500 hover:text-yellow-500 transition-colors text-sm font-bold uppercase tracking-widest">
           ← Back to Vault
         </Link>
-        <span className="text-[10px] text-zinc-600 uppercase tracking-[0.3em]">Version 1.1</span>
+        <span className="text-[10px] text-zinc-600 uppercase tracking-[0.3em]">Version 1.2</span>
       </div>
 
       <div className="w-full max-w-2xl mx-auto space-y-12">
@@ -43,11 +43,7 @@ export default function WhitepaperPage() {
           <ul className="space-y-3 text-sm text-zinc-300">
             <li className="flex items-start"><span className="text-yellow-500 mr-2">▶</span> <strong>Game Structure:</strong> Main Numbers (8/45) + Spirit Numbers (2/45)</li>
             <li className="flex items-start"><span className="text-yellow-500 mr-2">▶</span> <strong>Entry Fee:</strong> $5.00 Standard (Oracle Adjusted)</li>
-            
-            {/* 🚩 [수정 완료] 조합 연산 기반 정밀 티켓 확률 주입 */}
             <li className="flex items-start"><span className="text-yellow-500 mr-2">▶</span> <strong>1st Prize Probability:</strong> 1 out of 213,397,663,050 Tickets (Approx. 1 in 213.4 Billion)</li>
-            
-            {/* 🚩 [수정 완료] 재분배 가치 밸류 체인 키워드 락인 */}
             <li className="flex items-start"><span className="text-yellow-500 mr-2">▶</span> <strong>Primary Objective:</strong> Absorption and Redistribution of Global Pi Liquidity</li>
           </ul>
         </section>
@@ -60,20 +56,20 @@ export default function WhitepaperPage() {
           </p>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="bg-black p-5 rounded-2xl border border-zinc-800">
-              <h3 className="text-xs font-black text-white uppercase tracking-widest mb-2">Token Sink</h3>
-              <p className="text-xs text-zinc-500">Defends intrinsic value utilizing locked Pi assets as collateral.</p>
-            </div>
-            <div className="bg-black p-5 rounded-2xl border border-zinc-800">
               <h3 className="text-xs font-black text-white uppercase tracking-widest mb-2">House Edge (8%)</h3>
-              <p className="text-xs text-zinc-500">Allocated for system advancement and securing capital.</p>
+              <p className="text-xs text-zinc-500">Allocated for system advancement, global marketing infrastructure, and ensuring operational capital.</p>
+            </div>
+            <div className="bg-black p-5 rounded-2xl border border-zinc-800 border-b-2 border-b-yellow-500">
+              <h3 className="text-xs font-black text-yellow-500 uppercase tracking-widest mb-2">Token Sink (7%)</h3>
+              <p className="text-xs text-zinc-500">Diverted directly from ticket allocations to execute automatic marpo token buybacks and liquidity pool (LP) reinforcement.</p>
             </div>
             <div className="bg-black p-5 rounded-2xl border border-zinc-800">
               <h3 className="text-xs font-black text-white uppercase tracking-widest mb-2">Child Fund (5%)</h3>
-              <p className="text-xs text-zinc-500">Supports underprivileged children worldwide.</p>
+              <p className="text-xs text-zinc-500">Supports underprivileged children worldwide through transparent corporate charity donations.</p>
             </div>
-            <div className="bg-black p-5 rounded-2xl border border-zinc-800 border-b-2 border-b-yellow-500">
-              <h3 className="text-xs font-black text-yellow-500 uppercase tracking-widest mb-2">Jackpot Pool (87%)</h3>
-              <p className="text-xs text-zinc-500">Accumulated as global prize and LP base asset.</p>
+            <div className="bg-black p-5 rounded-2xl border border-zinc-800">
+              <h3 className="text-xs font-black text-white uppercase tracking-widest mb-2">Jackpot Pool (80%)</h3>
+              <p className="text-xs text-zinc-500">Accumulated entirely as the grand prize pool and core ecosystem redistribution protocol rewards.</p>
             </div>
           </div>
         </section>

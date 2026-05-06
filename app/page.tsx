@@ -121,7 +121,7 @@ const translations: Record<string, {
       "Piオープンメインネットの技術インフラと成長の支援開発資金",
       "今後のmarpoトークンの流動性プール（LP）への長期的な割り当ておよびロックアップ"
     ],
-    paperDesc: <>包括的なトークノミクスおよび分配規定については、公式の<span className="text-yellow-500 uppercase">ホワイトペーパー(Whitepaper)</span>をご参照ください。</>,
+    paperDesc: <>エコシステムに関する包括的な分配規定については、公式の<span className="text-yellow-500 uppercase">ホワイトペーパー(Whitepaper)</span>をご参照ください。</>,
     btnConfirm: "同意して確認する",
     btnWatching: "エコシステム広告を視聴中..."
   },
@@ -134,7 +134,7 @@ const translations: Record<string, {
     howDesc: (
       <>
         <p>1. Pumili ng eksaktong <span className="text-yellow-500 font-bold">8 Main Numbers</span> at <span className="text-red-500 font-bold">2 Spirit Numbers</span> sa interactive matrix board.</p>
-        <p>2. I-tap ang <span className="text-white font-bold">PLAY</span> button upang simulan at i-secure ang iyong desentralisadong network entry.</p>
+        <p>2. I-tap ang <span className="text-white font-bold">PLAY</span> button upang simulan and i-secure ang iyong desentralisadong network entry.</p>
         <p>3. Ang mga napatunayang kontribusyon ay awtomatikong isasama sa ulat ng Winner's Hall tuwing <span className="text-emerald-500 font-bold">Biyernes sa ganap na 20:00</span>.</p>
       </>
     ),
@@ -159,7 +159,7 @@ const translations: Record<string, {
     howTitle: "■ भाग कैसे लें",
     howDesc: (
       <>
-        <p>1. इंटरैक्टिव बोर्ड पर ठीक <span className="text-yellow-500 font-bold">8 मुख्य नंबर</span> और <span className="text-red-500 font-bold">2 स्पिरิต नंबर</span> चुनें।</p>
+        <p>1. इंटरैक्टिव बोर्ड पर ठीक <span className="text-yellow-500 font-bold">8 मुख्य नंबर</span> और <span className="text-red-500 font-bold">2 स्पिरिट नंबर</span> चुनें।</p>
         <p>2. अपनी प्रविष्टि को सुरक्षित करने के लिए <span className="text-white font-bold">PLAY</span> बटन दबाएं।</p>
         <p>3. सत्यापित योगदान स्वचालित रूप से विंटर्स हॉल रिपोर्ट में संकलित किए जाते हैं, जो हर <span className="text-emerald-500 font-bold">शुक्रवार 20:00</span> बजे अपडेट होती है।</p>
       </>
@@ -171,7 +171,7 @@ const translations: Record<string, {
     revList: [
       "बाल कल्याण के लिए चाइल्ड फंड (Child Fund) को नियमित कॉर्पोरेट दान",
       "Pi ओपन मेननेट के तकनीकी बुनियादी ढांचे और विकास का समर्थन करना",
-      "आगामी मार्पो (marpo) टोकन के लिए लिक्विडिटी पूल (LP) में दीर्घकालिक आवंटन और लॉक-अप"
+      "आगामी मार्पो (marpo) टोकन के लिए लिक्विडिटी पूल (LP) में दीर्घकालिक आवंटन और锁-अप"
     ],
     paperDesc: <>व्यापक टोकनॉमिक्स के लिए कृपया आधिकारिक <span className="text-yellow-500 uppercase">व्हाइटपेपर (Whitepaper)</span> देखें।</>,
     btnConfirm: "मैं सहमत हूँ और पुष्टि करता हूँ",
@@ -685,7 +685,7 @@ export default function MarpoLottoPage() {
               </div>
             </div>
 
-            {/* 🚩 [지시 사항 반영] 어그리 버튼 바로 위에 배치된 하이엔드 글로벌 멀티 랭귀지 셀렉터 */}
+            {/* 어그리 버튼 바로 위에 배치된 글로벌 멀티 랭귀지 셀렉터 */}
             <div className="mb-5 text-left">
               <label className="text-[9px] text-zinc-500 font-black uppercase tracking-wider block mb-1.5">■ SELECT LANGUAGE / 언어 선택</label>
               <select 

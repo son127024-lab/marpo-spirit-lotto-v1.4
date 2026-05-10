@@ -5,6 +5,7 @@ import MarpoSpiritPage from "../components/marpo-spirit-page";
 
 export default function Home() {
   const [hasEntered, setHasEntered] = useState(false);
+  const [currentLang, setCurrentLang] = useState('en');
 
   const handleEntry = () => {
     setHasEntered(true);
@@ -13,9 +14,13 @@ export default function Home() {
   return (
     <>
       {hasEntered ? (
-        <MarpoSpiritPage />
+        <MarpoSpiritPage lang={currentLang} />
       ) : (
-        <IntroductionPage onStartSession={handleEntry} />
+        <IntroductionPage 
+          onStartSession={handleEntry} 
+          currentLang={currentLang} 
+          setLang={setCurrentLang} 
+        />
       )}
     </>
   );

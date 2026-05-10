@@ -1,6 +1,6 @@
 "use client";
 import React, { useState } from 'react';
-import { Zap, Crown, Check, Shield } from 'lucide-react';
+import { Zap, Crown, Check, Shield, Loader2 } from 'lucide-react';
 
 interface SubscriptionModalProps {
   onSelect: (tier: string) => void;
@@ -12,26 +12,20 @@ export default function SubscriptionModal({ onSelect }: SubscriptionModalProps) 
   const handleSubscribe = async (tier: string, price: number) => {
     setLoading(tier);
     try {
-      if (price === 0) {
-        onSelect('BASIC');
+      const Pi = (window as any).Pi;
+      if (price > 0 && Pi?.createPayment) {
+        await Pi.createPayment({
+          amount: price,
+          memo: `Marpo Spirit ${tier} Tactical Subscription`,
+          metadata: { tier: tier }
+        }, {
+          onReadyForServerApproval: (pid: string) => {},
+          onReadyForServerCompletion: (pid: string, txid: string) => onSelect(tier),
+          onCancel: () => setLoading(null),
+          onError: (e: Error) => { alert(e.message); setLoading(null); }
+        });
       } else {
-        const Pi = (window as any).Pi;
-        if (Pi && Pi.createPayment) {
-          await Pi.createPayment({
-            amount: price,
-            memo: `Marpo Spirit ${tier} Subscription`,
-            metadata: { tier: tier }
-          }, {
-            onReadyForServerApproval: (paymentId: string) => { },
-            onReadyForServerCompletion: (paymentId: string, txid: string) => {
-              onSelect(tier); 
-            },
-            onCancel: () => setLoading(null),
-            onError: (error: Error) => { alert(error.message); setLoading(null); }
-          });
-        } else {
-          setTimeout(() => onSelect(tier), 1000);
-        }
+        setTimeout(() => onSelect(tier), 1200);
       }
     } catch (err) {
       setLoading(null);
@@ -39,49 +33,70 @@ export default function SubscriptionModal({ onSelect }: SubscriptionModalProps) 
   };
 
   return (
-    <div className="fixed inset-0 bg-[#0d1b3e]/95 backdrop-blur-md z-[200] flex items-center justify-center p-4 overflow-y-auto font-sans">
-      <div className="max-w-5xl w-full grid md:grid-cols-3 gap-6 py-10">
-        
-        {/* BASIC */}
-        <div className="bg-black/40 border border-zinc-800 p-8 rounded-[2.5rem] flex flex-col items-center text-center">
-          <div className="w-12 h-12 bg-zinc-800 rounded-2xl flex items-center justify-center mb-6"><Zap size={24} className="text-zinc-400" /></div>
-          <h3 className="text-xl font-bold mb-2 text-white">BASIC</h3>
-          <p className="text-3xl font-black mb-8 text-white">FREE</p>
-          <ul className="text-xs text-zinc-500 space-y-4 mb-10 text-left w-full">
-            <li className="flex gap-2"><Check size={14} className="text-zinc-600" /> 1 Energy / 3 Ads (Mining)</li>
-            <li className="flex gap-2"><Check size={14} className="text-zinc-600" /> Standard Match Access</li>
+    <div className="fixed inset-0 bg-[#050505]/98 backdrop-blur-2xl z-[500] flex items-center justify-center p-6 overflow-y-auto font-sans">
+      <div className="absolute inset-0 opacity-[0.03] pointer-events-none" 
+           style={{ backgroundImage: `radial-gradient(#f39c12 1px, transparent 1px)`, backgroundSize: '20px 20px' }}></div>
+      
+      <div className="max-w-6xl w-full grid md:grid-cols-3 gap-8 py-16 relative z-10">
+        <div className="group bg-[#0a0a0a] border border-zinc-800 p-10 rounded-[3rem] flex flex-col items-center text-center transition-all hover:border-zinc-600 shadow-2xl">
+          <div className="w-16 h-16 bg-zinc-900 rounded-2xl flex items-center justify-center mb-8 border border-zinc-800">
+            <Zap size={32} className="text-zinc-600" />
+          </div>
+          <h3 className="text-2xl font-black mb-1 text-white tracking-tighter uppercase italic">Basic Play</h3>
+          <p className="text-[10px] text-zinc-600 font-bold tracking-[0.2em] mb-4 uppercase">Free Draw Engine</p>
+          <p className="text-4xl font-black mb-10 text-white tracking-tighter">FREE</p>
+          <ul className="text-[11px] text-zinc-500 space-y-5 mb-12 text-left w-full font-bold uppercase tracking-widest">
+            <li className="flex gap-4 items-start"><Check size={18} className="text-zinc-800" /> <span>1 Energy / 3 Ads Mining</span></li>
+            <li className="flex gap-4 items-start"><Check size={18} className="text-zinc-800" /> <span>Standard Match Entry</span></li>
           </ul>
-          <button onClick={() => handleSubscribe('BASIC', 0)} className="w-full py-4 bg-zinc-800 text-white rounded-2xl font-bold mt-auto active:scale-95 transition-transform">GET STARTED</button>
-        </div>
-
-        {/* PREMIUM */}
-        <div className="bg-[#1a2a4e] border-2 border-[#f39c12]/30 p-8 rounded-[2.5rem] flex flex-col items-center text-center relative scale-105 shadow-2xl">
-          <div className="absolute -top-4 bg-[#f39c12] text-black text-[10px] font-black px-4 py-1 rounded-full uppercase">Most Efficient</div>
-          <div className="w-12 h-12 bg-[#f39c12] rounded-2xl flex items-center justify-center mb-6"><Shield size={24} className="text-black" /></div>
-          <h3 className="text-xl font-bold mb-2 text-white">PREMIUM</h3>
-          <p className="text-3xl font-black mb-8 text-white">1.0 <span className="text-lg text-zinc-500">π / mo</span></p>
-          <ul className="text-xs text-zinc-300 space-y-4 mb-10 text-left w-full">
-            <li className="flex gap-2"><Check size={14} className="text-[#f39c12]" /> 5 Auto-Energy Daily</li>
-            <li className="flex gap-2"><Check size={14} className="text-[#f39c12]" /> 1 Energy / 1 Ad (Instant)</li>
-            <li className="flex gap-2"><Check size={14} className="text-[#f39c12]" /> 30% Ad Reduction</li>
-          </ul>
-          <button disabled={!!loading} onClick={() => handleSubscribe('PREMIUM', 1.0)} className="w-full py-4 bg-[#f39c12] text-black rounded-2xl font-bold mt-auto shadow-lg active:scale-95 transition-transform font-sans">
-            {loading === 'PREMIUM' ? 'PROCESSING...' : 'SUBSCRIBE NOW'}
+          <button 
+            onClick={() => handleSubscribe('BASIC', 0)} 
+            className="w-full py-6 bg-zinc-900 text-zinc-500 rounded-[1.8rem] font-black text-xs uppercase tracking-[0.2em] mt-auto hover:bg-white hover:text-black transition-all active:scale-95 shadow-xl"
+          >
+            Start Free Draw
           </button>
         </div>
 
-        {/* VIP */}
-        <div className="bg-black/40 border border-zinc-800 p-8 rounded-[2.5rem] flex flex-col items-center text-center">
-          <div className="w-12 h-12 bg-purple-600/20 rounded-2xl flex items-center justify-center mb-6"><Crown size={24} className="text-purple-500" /></div>
-          <h3 className="text-xl font-bold mb-2 text-white">VIP</h3>
-          <p className="text-3xl font-black mb-8 text-white">3.0 <span className="text-lg text-zinc-500">π / mo</span></p>
-          <ul className="text-xs text-zinc-500 space-y-4 mb-10 text-left w-full">
-            <li className="flex gap-2"><Check size={14} className="text-purple-500" /> 10 Auto-Energy Daily</li>
-            <li className="flex gap-2"><Check size={14} className="text-purple-500" /> 90% Ad Reduction</li>
-            <li className="flex gap-2"><Check size={14} className="text-purple-500" /> Spirit Booster Access</li>
+        <div className="bg-[#0a0a0a] border-2 border-[#f39c12] p-10 rounded-[3rem] flex flex-col items-center text-center relative scale-110 shadow-[0_0_60px_rgba(243,156,18,0.15)] z-20">
+          <div className="absolute -top-5 bg-[#f39c12] text-black text-[11px] font-black px-8 py-2 rounded-full uppercase tracking-tighter shadow-lg shadow-[#f39c12]/20">Recommended</div>
+          <div className="w-16 h-16 bg-[#f39c12] rounded-2xl flex items-center justify-center mb-8 shadow-[0_0_30px_rgba(243,156,18,0.4)]">
+            <Shield size={32} className="text-black" />
+          </div>
+          <h3 className="text-2xl font-black mb-1 text-white tracking-tighter uppercase italic">Smart Strategy</h3>
+          <p className="text-[10px] text-[#f39c12] font-bold tracking-[0.2em] mb-4 uppercase">Tactical Utility Entry</p>
+          <p className="text-4xl font-black mb-10 text-white tracking-tighter">1.0 <span className="text-xl text-[#f39c12]">π</span></p>
+          <ul className="text-[11px] text-zinc-200 space-y-5 mb-12 text-left w-full font-bold uppercase tracking-widest">
+            <li className="flex gap-4 items-start"><Check size={18} className="text-[#f39c12]" /> <span>Auto 5 Energy Daily</span></li>
+            <li className="flex gap-4 items-start"><Check size={18} className="text-[#f39c12]" /> <span>1 Energy / 1 Ad Instant</span></li>
+            <li className="flex gap-4 items-start"><Check size={18} className="text-[#f39c12]" /> <span>30% Ad Reduction</span></li>
           </ul>
-          <button disabled={!!loading} onClick={() => handleSubscribe('VIP', 3.0)} className="w-full py-4 bg-purple-600 text-white rounded-2xl font-bold mt-auto active:scale-95 transition-transform">
-            {loading === 'VIP' ? 'PROCESSING...' : 'GET VIP STATUS'}
+          <button 
+            disabled={!!loading} 
+            onClick={() => handleSubscribe('PREMIUM', 1.0)} 
+            className="w-full py-6 bg-[#f39c12] text-black rounded-[1.8rem] font-black text-xs uppercase tracking-[0.2em] mt-auto shadow-[0_10px_20px_rgba(243,156,18,0.3)] active:scale-95 transition-all flex justify-center items-center"
+          >
+            {loading === 'PREMIUM' ? <Loader2 className="animate-spin" size={24} /> : 'Tactical Entry'}
+          </button>
+        </div>
+
+        <div className="group bg-[#0a0a0a] border border-purple-900/30 p-10 rounded-[3rem] flex flex-col items-center text-center transition-all hover:border-purple-600 shadow-2xl">
+          <div className="w-16 h-16 bg-purple-950/20 rounded-2xl flex items-center justify-center mb-8 border border-purple-900/50">
+            <Crown size={32} className="text-purple-500" />
+          </div>
+          <h3 className="text-2xl font-black mb-1 text-white tracking-tighter uppercase italic">Supreme Insider</h3>
+          <p className="text-[10px] text-purple-400 font-bold tracking-[0.2em] mb-4 uppercase">Elite Ecosystem Access</p>
+          <p className="text-4xl font-black mb-10 text-white tracking-tighter">3.0 <span className="text-xl text-purple-500">π</span></p>
+          <ul className="text-[11px] text-zinc-500 space-y-5 mb-12 text-left w-full font-bold uppercase tracking-widest">
+            <li className="flex gap-4 items-start"><Check size={18} className="text-purple-900" /> <span>Auto 10 Energy Daily</span></li>
+            <li className="flex gap-4 items-start"><Check size={18} className="text-purple-900" /> <span>90% Ultra-Ad Reduction</span></li>
+            <li className="flex gap-4 items-start"><Check size={18} className="text-purple-900" /> <span>Spirit Booster Access</span></li>
+          </ul>
+          <button 
+            disabled={!!loading} 
+            onClick={() => handleSubscribe('VIP', 3.0)} 
+            className="w-full py-6 bg-purple-600 text-white rounded-[1.8rem] font-black text-xs uppercase tracking-[0.2em] mt-auto hover:bg-purple-500 transition-all active:scale-95 shadow-lg shadow-purple-900/20 flex justify-center items-center"
+          >
+             {loading === 'VIP' ? <Loader2 className="animate-spin" size={24} /> : 'Elite Access'}
           </button>
         </div>
       </div>

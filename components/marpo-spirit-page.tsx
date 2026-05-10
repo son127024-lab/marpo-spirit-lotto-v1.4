@@ -1,6 +1,7 @@
 "use client";
 import React, { useState, useEffect } from 'react';
 import SubscriptionModal from './subscription-modal';
+import { CreditCard, Zap, Target, TrendingUp } from 'lucide-react';
 
 const uiText: Record<string, any> = {
   en: { pool: "Eco-Credit Matching Pool", reveal: "Insider Reveal", vault: "Vault Balance", energy: "Energy" },
@@ -18,15 +19,11 @@ export default function MarpoSpiritPage({ lang }: { lang: string }) {
   const text = uiText[lang] || uiText.en;
 
   useEffect(() => {
-    // 🚩 강제로 구독창을 띄우기 위해 기존 기록을 삭제합니다. (나중에 주석처리 가능)
-    localStorage.removeItem('marpo_tier'); 
-
     const savedTier = localStorage.getItem('marpo_tier');
     if (savedTier) {
       setCurrentTier(savedTier);
       setEnergy(savedTier === 'VIP' ? 10 : 5);
     }
-    // 확인이 끝났음을 표시
     setIsReady(true);
   }, []);
 
@@ -37,12 +34,15 @@ export default function MarpoSpiritPage({ lang }: { lang: string }) {
   };
 
   const handleAdWatch = async () => {
+    const Pi = (window as any).Pi;
+    if (Pi?.Ads?.showAd) await Pi.Ads.showAd("interstitial");
+
     if (currentTier === 'BASIC') {
       const nextCount = adCount + 1;
       if (nextCount >= 3) {
         setEnergy(prev => prev + 1);
         setAdCount(0);
-        alert("Energy Charged! (3/3 Ads)");
+        alert("Energy Charged! (3/3)");
       } else {
         setAdCount(nextCount);
       }
@@ -54,57 +54,66 @@ export default function MarpoSpiritPage({ lang }: { lang: string }) {
 
   const handleReveal = () => {
     if (marpoBalance < 1000) return alert("Insufficient MARPO.");
-    if (confirm("Burn 1,000 MARPO?")) {
-      setMarpoBalance(prev => prev - 1000);
-      setRevealedNumber(Math.floor(Math.random() * 45) + 1);
-    }
+    setMarpoBalance(prev => prev - 1000);
+    setRevealedNumber(Math.floor(Math.random() * 45) + 1);
   };
 
-  // 1. 아직 로딩 중이면 아무것도 보여주지 않음
   if (!isReady) return null;
+  if (!currentTier) return <SubscriptionModal onSelect={handleTierSelect} />;
 
-  // 2. 구독 정보가 없으면 무조건 구독 모달만 보여줌
-  if (!currentTier) {
-    return <SubscriptionModal onSelect={handleTierSelect} />;
-  }
-
-  // 3. 구독 정보가 있을 때만 메인 화면 출력
   return (
-    <div className="min-h-screen bg-[#0d1b3e] text-white p-4 pb-40 flex flex-col items-center font-sans">
-      <header className="w-full max-w-md flex justify-between items-center py-6 mb-4">
-        <div className="bg-black/40 px-4 py-2 rounded-xl border border-[#f39c12]/30">
-          <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">Tier</p>
-          <p className="text-[#f39c12] font-black tracking-tight">{currentTier}</p>
+    <div className="min-h-screen bg-[#050505] text-white p-4 pb-40 flex flex-col items-center font-sans relative overflow-hidden">
+      <div className="absolute inset-0 opacity-[0.02] pointer-events-none" 
+           style={{ backgroundImage: `radial-gradient(#f39c12 1px, transparent 1px)`, backgroundSize: '40px 40px' }}></div>
+
+      <header className="w-full max-w-md flex justify-between items-center py-8 relative z-10">
+        <div className="bg-zinc-900/50 px-5 py-3 rounded-2xl border border-[#f39c12]/30 shadow-[0_0_20px_rgba(243,156,18,0.05)]">
+          <p className="text-[9px] text-zinc-600 font-black uppercase tracking-[0.2em] mb-1">Tier Status</p>
+          <p className="text-[#f39c12] font-black text-sm italic uppercase">{currentTier}</p>
         </div>
-        <div className="bg-black/40 px-4 py-2 rounded-xl border border-emerald-500/30 text-right">
-          <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">{text.energy}</p>
-          <p className="text-white font-black">{energy} / {currentTier === 'VIP' ? '10' : '5'}</p>
+        <div className="bg-zinc-900/50 px-5 py-3 rounded-2xl border border-emerald-500/30 text-right shadow-[0_0_20px_rgba(16,185,129,0.05)]">
+          <p className="text-[9px] text-zinc-600 font-black uppercase tracking-[0.2em] mb-1">{text.energy}</p>
+          <div className="flex items-center justify-end gap-2">
+            <Zap size={14} className="text-emerald-500 animate-pulse" />
+            <p className="text-white font-black text-sm">{energy} <span className="text-zinc-600">/ {currentTier === 'VIP' ? '10' : '5'}</span></p>
+          </div>
         </div>
       </header>
 
-      <section className="w-full max-w-md bg-[#1a2a4e] p-8 rounded-[2.5rem] border border-[#f39c12]/20 mb-8 text-center shadow-2xl">
-        <p className="text-[10px] text-zinc-400 uppercase tracking-widest mb-2">{text.pool}</p>
-        <p className="text-4xl font-black">3,141.59 <span className="text-[#f39c12] text-2xl">π</span></p>
+      <section className="w-full max-w-md bg-gradient-to-br from-[#1a1a1a] to-[#0a0a0a] p-10 rounded-[3rem] border border-[#f39c12]/20 mb-10 text-center shadow-2xl relative">
+        <div className="absolute top-4 left-1/2 -translate-x-1/2 w-20 h-1 bg-[#f39c12]/20 rounded-full"></div>
+        <div className="flex justify-center mb-4 text-[#f39c12]/40"><TrendingUp size={20} /></div>
+        <p className="text-[10px] text-zinc-600 uppercase font-black tracking-[0.3em] mb-3">{text.pool}</p>
+        <p className="text-5xl font-black tracking-tighter text-white">3,141.59 <span className="text-[#f39c12] text-3xl font-black italic">π</span></p>
       </section>
 
-      <div className="w-full max-w-md mb-8">
-        <button onClick={handleReveal} className="w-full py-5 bg-black/40 border border-[#f39c12]/50 rounded-2xl flex flex-col items-center">
-          <p className="text-[#f39c12] font-black text-sm uppercase mb-1">{text.reveal}</p>
-          <p className="text-[10px] text-zinc-500 uppercase font-bold">Burn 1,000 MARPO</p>
+      <div className="w-full max-w-md mb-10">
+        <button onClick={handleReveal} className="w-full py-6 bg-zinc-900/40 border border-[#f39c12]/40 rounded-3xl flex flex-col items-center hover:bg-zinc-800 transition-all active:scale-95 group">
+          <div className="flex items-center gap-2 mb-1">
+            <Target size={16} className="text-[#f39c12] group-hover:rotate-90 transition-transform" />
+            <p className="text-[#f39c12] font-black text-xs uppercase tracking-[0.2em]">{text.reveal}</p>
+          </div>
+          <p className="text-[9px] text-zinc-600 font-bold uppercase">Burn 1,000 MARPO Token</p>
         </button>
-        {revealedNumber && <div className="mt-6 text-5xl font-black text-[#f39c12] animate-bounce text-center">{revealedNumber}</div>}
+        {revealedNumber && <div className="mt-8 text-7xl font-black text-white text-center italic drop-shadow-[0_0_30px_rgba(243,156,18,0.5)]">{revealedNumber}</div>}
       </div>
 
-      <div className="w-full max-w-md bg-black/30 border border-zinc-800 p-6 rounded-2xl mb-8 flex justify-between items-center text-left">
-        <div>
-          <p className="text-[10px] text-zinc-500 uppercase tracking-widest">{text.vault}</p>
-          <p className="text-xl font-black text-white">{marpoBalance.toLocaleString()} <span className="text-[#f39c12] text-sm">MARPO</span></p>
+      <div className="w-full max-w-md bg-zinc-900/20 border border-zinc-800/50 p-6 rounded-3xl mb-10 flex justify-between items-center text-left">
+        <div className="flex items-center gap-4">
+          <div className="p-3 bg-zinc-800/50 rounded-xl text-[#f39c12]"><CreditCard size={20} /></div>
+          <div>
+            <p className="text-[9px] text-zinc-600 font-black uppercase tracking-widest">{text.vault}</p>
+            <p className="text-xl font-black text-white tracking-tighter">{marpoBalance.toLocaleString()} <span className="text-[#f39c12] text-xs">MARPO</span></p>
+          </div>
         </div>
       </div>
 
-      <div className="w-full max-w-md mt-auto">
-        <button onClick={handleAdWatch} className="w-full py-4 rounded-2xl font-black text-sm border-2 border-zinc-800 text-zinc-400 uppercase tracking-widest active:scale-95 transition-transform">
-          {currentTier === 'BASIC' ? `MINE ENERGY (AD ${adCount}/3)` : 'QUICK CHARGE (WATCH AD)'}
+      <div className="w-full max-w-md mt-auto pb-6">
+        <button 
+          onClick={handleAdWatch} 
+          className="w-full py-5 rounded-2xl font-black text-xs border-2 border-zinc-800 text-zinc-500 uppercase tracking-[0.3em] hover:border-[#f39c12] hover:text-[#f39c12] transition-all active:scale-95 bg-black/40 shadow-xl"
+        >
+          {currentTier === 'BASIC' ? `Mine Energy [AD ${adCount}/3]` : 'Quick Charge [Watch Ad]'}
         </button>
       </div>
     </div>

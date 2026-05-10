@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Target, Send, RefreshCcw, Lock, Clock } from 'lucide-react';
 
-// 🚩 45개 원소 아이콘 매핑 (준비하신 파일명 기준)
+// 🚩 45개 원소 아이콘 매핑
 const iconMap: Record<number, string> = {
   1: "1-In.png", 2: "2-.png", 3: "3-.png", 4: "4-Y.png", 5: "5-.png",
   6: "6-As.png", 7: "7-.png", 8: "8-Th.png", 9: "9-Na.png", 10: "10-.png",
@@ -12,7 +12,7 @@ const iconMap: Record<number, string> = {
   26: "26-Se.png", 27: "27-Gu.png", 28: "28-.png", 29: "29-Te.png", 30: "30-Cd.png",
   31: "31-Ti.png", 32: "32-.png", 33: "33-Nb.png", 34: "34-H2.png", 35: "35-H2O.png",
   36: "36-.png", 37: "37-O2.png", 38: "38-H2O2.png", 39: "39-Li-ion.png",
-  40: "40-na-ion.png", 41: "41-Li-S.png", 42: "42-.png", 43: "43-.png",
+  40: "40-na-ion.png", 41: "41-Li-S.png", 42: "42-.png", 43: "43-LiCoO2.png",
   44: "44-.png", 45: "45-CH4+O2.png"
 };
 
@@ -21,12 +21,12 @@ const getElementIcon = (num: number) => `/elements/${iconMap[num] || `${num}-.pn
 // 🚩 시간 추격자 토끼 가이드 대사 로직
 const rabbitGuides: Record<string, any> = {
   ko: [
-    { stage: "Ω Gold Rush CENTURY", msg: "파이오니어님, Ω의 가치가 고갈되기 전에 잡으세요! 화성 에너지의 채굴 시간이 왔습니다!", color: "border-amber-500", text: "text-amber-500", fallback: "🐇" },
-    { stage: "Industrial Era", msg: "산업 혁명 가동! 인사이더 Reveal로 더 정교하게 Ω을 예측하세요.", color: "border-blue-500", text: "text-blue-400", fallback: "⚙️" },
-    { stage: "Web3 Protocol", msg: "진정한 경제적 저항의 시대입니다. MARPO 스왑으로 프로토콜의 주인이 되어 DEFI를 실현하세요.", color: "border-emerald-500", text: "text-emerald-400", fallback: "💻" }
+    { stage: "Ω Gold Rush", msg: "대표님, Ω의 가치가 고갈되기 전에 잡으세요! 금광의 시간은 흐릅니다!", color: "border-amber-500", text: "text-amber-500", fallback: "🐇" },
+    { stage: "Industrial Era", msg: "산업 혁명 가동! 인사이더 Reveal로 더 정교하게 Ω를 예측하세요.", color: "border-blue-500", text: "text-blue-400", fallback: "⚙️" },
+    { stage: "Web3 Protocol", msg: "진정한 경제적 저항의 시대입니다. MARPO 스왑으로 프로토콜의 주인이 되십시오.", color: "border-emerald-500", text: "text-emerald-400", fallback: "💻" }
   ],
   en: [
-    { stage: "Ω Gold Rush CENTURY", msg: "CEO, mine Ω before it depreciates! Time in the gold fields is ticking!", color: "border-amber-500", text: "text-amber-500", fallback: "🐇" },
+    { stage: "Ω Gold Rush", msg: "CEO, mine Ω before it depreciates! Time in the gold fields is ticking!", color: "border-amber-500", text: "text-amber-500", fallback: "🐇" },
     { stage: "Industrial Era", msg: "Industrial revolution active! Strategic precise logic with Insider Reveal.", color: "border-blue-500", text: "text-blue-400", fallback: "⚙️" },
     { stage: "Web3 Protocol", msg: "Web3 is the protocol. True economical resistance starts now. Prepare for MARPO Swap.", color: "border-emerald-500", text: "text-emerald-400", fallback: "💻" }
   ]
@@ -38,16 +38,13 @@ const uiText: Record<string, any> = {
 };
 
 export default function MarpoSpiritPage({ lang }: { lang: string }) {
-  // 상태 변수 선언 (에러의 원인이었던 adCount 포함)
   const [currentTier, setCurrentTier] = useState<string | null>(null);
-  const [adCount, setAdCount] = useState(0); // 🚩 여기서 광고 횟수를 추적합니다.
+  const [adCount, setAdCount] = useState(0); 
   const [ohmBalance, setOhmBalance] = useState(5300.0);
   const [revealedNumber, setRevealedNumber] = useState<number | null>(null);
   const [selectedNumbers, setSelectedNumbers] = useState<number[]>([]);
   
   const text = uiText[lang] || uiText.en;
-
-  // 토끼 진화 상태 계산
   const currentStageIndex = ohmBalance > 50000 ? 2 : ohmBalance > 10000 ? 1 : 0;
   const rabbit = rabbitGuides[lang === 'ko' ? 'ko' : 'en'][currentStageIndex];
 
@@ -58,7 +55,6 @@ export default function MarpoSpiritPage({ lang }: { lang: string }) {
 
   const isUnlocked = currentTier !== 'BASIC' || adCount >= 3;
 
-  // 🚩 에러가 났었던 바로 그 함수입니다. 이제 완벽하게 포함되었습니다.
   const handleAdWatch = () => {
     if (adCount < 3) {
       setAdCount(prev => prev + 1);
@@ -85,17 +81,14 @@ export default function MarpoSpiritPage({ lang }: { lang: string }) {
     <div className="min-h-screen bg-[#050505] text-white p-6 pb-48 flex flex-col items-center font-sans relative overflow-hidden">
       <div className="absolute inset-0 opacity-[0.03] pointer-events-none fixed" style={{ backgroundImage: `radial-gradient(#f39c12 1px, transparent 1px)`, backgroundSize: '40px 40px' }}></div>
 
-      {/* 시간 추격자 토끼 가이드 내비게이터 */}
+      {/* 캐릭터 가이드 영역 */}
       <div className="w-full max-w-md mt-4 mb-8 flex items-start gap-6 relative group z-20">
         <div className="relative w-28 h-28 shrink-0 bg-gradient-to-tr from-black to-zinc-900 rounded-full border-4 ${rabbit.color} shadow-[0_0_20px_rgba(243,156,18,0.3)] flex items-center justify-center overflow-hidden animate-bounce-slow">
            <div className="text-5xl select-none">{rabbit.fallback}</div> 
         </div>
-
-        {/* 토끼 전술 가이드 말풍선 */}
         <div className="relative flex-1 bg-zinc-900/60 border border-zinc-800 rounded-[2.5rem] p-7 shadow-2xl backdrop-blur-xl">
           <div className="absolute top-10 -left-4 w-0 h-0 border-t-[12px] border-t-transparent border-r-[20px] border-r-zinc-800 border-b-[12px] border-b-transparent"></div>
           <div className="absolute top-10 -left-[14px] w-0 h-0 border-t-[12px] border-t-transparent border-r-[20px] border-r-zinc-900/60 border-b-[12px] border-b-transparent"></div>
-          
           <div className="flex items-center gap-3 mb-2 px-2">
             <Clock size={16} className={rabbit.text} />
             <span className={`text-[10px] font-black uppercase tracking-[0.4em] ${rabbit.text}`}>{rabbit.stage}</span>
@@ -125,13 +118,17 @@ export default function MarpoSpiritPage({ lang }: { lang: string }) {
         </div>
       </section>
 
-      {/* 인사이더 리빌 */}
+      {/* 🚩 인사이더 리빌 버튼 (무한 블링킹 적용) */}
       <button onClick={handleReveal} className="w-full max-w-md py-7 bg-zinc-900/40 border border-[#f39c12]/40 rounded-3xl flex flex-col items-center mb-10 active:scale-95 transition-all">
-        <div className="flex items-center gap-3 mb-1"><Target size={20} className="text-[#f39c12]" /><p className="text-[#f39c12] font-black text-sm uppercase tracking-[0.2em]">{text.reveal}</p></div>
-        <p className="text-[10px] text-zinc-600 font-bold uppercase tracking-widest italic">Burn 1,000 Ω for a hint</p>
+        <div className="flex items-center gap-3 mb-1.5"><Target size={20} className="text-[#f39c12]" /><p className="text-[#f39c12] font-black text-sm uppercase tracking-[0.2em]">{text.reveal}</p></div>
+        
+        {/* 무한 깜빡임 로직: 'infinite' 속성으로 페이지 이탈 전까지 계속 번쩍입니다. */}
+        <p className="text-[15px] font-black uppercase tracking-widest italic text-lime-300 drop-shadow-[0_0_15px_rgba(163,230,53,0.9)] animate-infinite-blink">
+          Burn 1,000 Ω for a hint
+        </p>
       </button>
 
-      {/* 전술 드로우 보드 (원소 아이콘 적용) */}
+      {/* 드로우 보드 */}
       <div className={`w-full max-w-md bg-zinc-900/30 border border-zinc-800 rounded-[3.5rem] p-8 mb-12 relative shadow-2xl ${!isUnlocked && 'opacity-50 grayscale'}`}>
         {!isUnlocked && (
           <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black/70 backdrop-blur-md rounded-[3.5rem] p-8 text-center">
@@ -141,8 +138,8 @@ export default function MarpoSpiritPage({ lang }: { lang: string }) {
           </div>
         )}
         
-        <div className="flex justify-between items-center mb-10 px-2">
-          <h3 className="text-xs font-black text-[#f39c12] uppercase tracking-[0.3em] italic">{text.board}</h3>
+        <div className="flex justify-between items-center mb-10 px-2 text-sm">
+          <h3 className="font-black text-[#f39c12] uppercase tracking-[0.3em] italic">{text.board}</h3>
           <button onClick={() => setSelectedNumbers([])} className="text-zinc-700 hover:text-white"><RefreshCcw size={18} /></button>
         </div>
         
@@ -171,28 +168,37 @@ export default function MarpoSpiritPage({ lang }: { lang: string }) {
         </div>
       </div>
 
-      {/* 하단 금고 및 제출 */}
-      <div className="w-full max-w-md mt-auto bg-zinc-900/50 p-8 rounded-[3rem] border border-zinc-800 flex justify-between items-center shadow-2xl z-10">
+      {/* 하단 자산 영역 */}
+      <div className="w-full max-w-md mt-auto bg-zinc-900/50 p-8 rounded-[3rem] border border-zinc-800 flex justify-between items-center shadow-2xl z-10 text-2xl">
          <div className="flex items-center gap-6">
-           <div className="w-16 h-16 bg-zinc-900 rounded-2xl flex items-center justify-center border border-zinc-800"><p className="text-[#f39c12] font-black text-3xl italic">Ω</p></div>
+           <div className="w-16 h-16 bg-zinc-900 rounded-2xl flex items-center justify-center border border-zinc-800 text-[#f39c12] font-black italic">Ω</div>
            <div>
-             <p className="text-xs text-zinc-600 font-black mb-1 uppercase tracking-widest mb-1">{text.vault}</p>
-             <p className="text-2xl font-black text-white tracking-tighter">{ohmBalance.toLocaleString()} <span className="text-[#f39c12] text-sm underline font-black italic">OHM</span></p>
+             <p className="text-xs text-zinc-600 font-black mb-1 uppercase tracking-widest">{text.vault}</p>
+             <p className="font-black text-white tracking-tighter">{ohmBalance.toLocaleString()} <span className="text-[#f39c12] text-sm underline font-black italic">OHM</span></p>
            </div>
          </div>
-         <button disabled={selectedNumbers.length < 6} className={`flex items-center gap-3 px-10 py-4 rounded-3xl font-black text-base uppercase transition-all transform active:scale-95 ${selectedNumbers.length === 6 ? 'bg-[#f39c12] text-black shadow-2xl' : 'bg-zinc-800 text-zinc-700'}`}>
+         <button disabled={selectedNumbers.length < 6} className={`flex items-center gap-3 px-10 py-4 rounded-3xl font-black uppercase transition-all transform active:scale-95 ${selectedNumbers.length === 6 ? 'bg-[#f39c12] text-black shadow-2xl' : 'bg-zinc-800 text-zinc-700'}`}>
            <Send size={24} /> {text.submit}
          </button>
       </div>
 
-      {/* Floating 애니메이션 정의 */}
+      {/* 애니메이션 CSS (영구 지속 로직) */}
       <style jsx global>{`
         @keyframes bounce-slow {
           0%, 100% { transform: translateY(0); }
           50% { transform: translateY(-10px); }
         }
+        /* 🚩 영구적인 네온 깜빡임 정의 */
+        @keyframes neon-blink {
+          0%, 100% { opacity: 1; text-shadow: 0 0 15px rgba(163,230,53,1), 0 0 30px rgba(163,230,53,0.5); }
+          50% { opacity: 0.1; text-shadow: none; }
+        }
         .animate-bounce-slow {
           animation: bounce-slow 4s ease-in-out infinite;
+        }
+        /* 🚩 infinite 속성으로 페이지 머무는 동안 영원히 작동 */
+        .animate-infinite-blink {
+          animation: neon-blink 1s cubic-bezier(0.4, 0, 0.6, 1) infinite;
         }
       `}</style>
     </div>

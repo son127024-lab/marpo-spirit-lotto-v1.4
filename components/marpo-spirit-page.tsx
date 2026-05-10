@@ -13,15 +13,19 @@ export default function MarpoSpiritPage({ lang }: { lang: string }) {
   const [adCount, setAdCount] = useState(0);
   const [marpoBalance, setMarpoBalance] = useState(5300.0);
   const [revealedNumber, setRevealedNumber] = useState<number | null>(null);
-  
+  const [isReady, setIsReady] = useState(false); // 🚩 로딩 상태 추가
+
   const text = uiText[lang] || uiText.en;
 
   useEffect(() => {
+    // 접속 시 브라우저에서 구독 정보를 체크
+    localStorage.removeItem('marpo_tier');
     const savedTier = localStorage.getItem('marpo_tier');
     if (savedTier) {
       setCurrentTier(savedTier);
       setEnergy(savedTier === 'VIP' ? 10 : 5);
     }
+    setIsReady(true);
   }, []);
 
   const handleTierSelect = (tier: string) => {
@@ -31,6 +35,9 @@ export default function MarpoSpiritPage({ lang }: { lang: string }) {
   };
 
   const handleAdWatch = async () => {
+    const Pi = (window as any).Pi;
+    if (Pi?.Ads?.showAd) await Pi.Ads.showAd("interstitial");
+
     if (currentTier === 'BASIC') {
       const nextCount = adCount + 1;
       if (nextCount >= 3) {
@@ -39,7 +46,6 @@ export default function MarpoSpiritPage({ lang }: { lang: string }) {
         alert("Energy Charged! (3/3)");
       } else {
         setAdCount(nextCount);
-        alert(`Ad Watched (${nextCount}/3)`);
       }
     } else {
       setEnergy(prev => prev + 1);
@@ -49,20 +55,26 @@ export default function MarpoSpiritPage({ lang }: { lang: string }) {
 
   const handleReveal = () => {
     if (marpoBalance < 1000) return alert("Insufficient MARPO.");
-    if (confirm("Burn 1,000 MARPO to reveal 1 number?")) {
-      setMarpoBalance(prev => prev - 1000);
-      setRevealedNumber(Math.floor(Math.random() * 45) + 1);
-    }
+    setMarpoBalance(prev => prev - 1000);
+    setRevealedNumber(Math.floor(Math.random() * 45) + 1);
   };
 
-  return (
-    <div className="min-h-screen bg-[#0d1b3e] text-white p-4 pb-40 flex flex-col items-center font-sans">
-      {!currentTier && <SubscriptionModal onSelect={handleTierSelect} />}
+  // 🚩 구독 정보가 없으면 구독 모달만 단독 노출
+  if (!isReady) return null;
+  if (!currentTier) {
+    return <SubscriptionModal onSelect={handleTierSelect} />;
+  }
 
-      <header className="w-full max-w-md flex justify-between items-center py-6">
+  return (
+    <div className="min-h-screen bg-[#0d1b3e] text-white p-4 pb-40 flex flex-col items-center font-sans animate-in fade-in duration-700">
+      <header className="w-full max-w-md flex justify-between items-center py-6 mb-4">
         <div className="bg-black/40 px-4 py-2 rounded-xl border border-[#f39c12]/30">
-          <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">{text.energy}</p>
-          <p className="text-white font-black">{energy} / {currentTier === 'VIP' ? '10' : '5'}</p>
+          <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">Tier</p>
+          <p className="text-[#f39c12] font-black tracking-tight">{currentTier}</p>
+        </div>
+        <div className="bg-black/40 px-4 py-2 rounded-xl border border-emerald-500/30 text-right">
+          <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">Energy</p>
+          <p className="text-white font-black">{energy} <span className="text-xs text-zinc-500">/ {currentTier === 'VIP' ? '10' : '5'}</span></p>
         </div>
       </header>
 

@@ -1,161 +1,126 @@
 "use client";
-import React, { useState, useEffect } from 'react';
-import SubscriptionModal from './subscription-modal';
-import { CreditCard, Zap, Target, TrendingUp, Send, RefreshCcw } from 'lucide-react';
+import React, { useState } from 'react';
+import Image from 'next/image';
+import { Globe, ArrowRight, Zap, ShieldCheck, Loader2, BarChart3, Coins, FileText, X } from 'lucide-react';
 
-const uiText: Record<string, any> = {
-  en: { pool: "MAR-Ω Reward Pool", reveal: "Insider Reveal", vault: "Vault Balance", energy: "Energy", board: "Tactical Board", submit: "Submit Draw", reset: "Reset" },
-  ko: { pool: "MAR-Ω 보상 매칭 풀", reveal: "인사이더 공개", vault: "나의 Ω 금고", energy: "에너지", board: "전술 보드", submit: "번호 제출", reset: "초기화" }
+// 🚩 메인 페이지에서 보내는 명령들을 받을 수 있도록 설계를 수정했습니다.
+interface IntroProps {
+  onStartSession: () => void;
+  currentLang: string;
+  setLang: (lang: string) => void;
+}
+
+const translations: Record<string, any> = {
+  en: {
+    title: "MARPO SPIRIT DRAW",
+    sub: "5.3B MARPO TOKEN ECONOMY",
+    desc: "Strategic Ad-Reduction Utility (L.O.T.T.O) designed to maximize MAR-Ω liquidity and MARPO ecosystem efficiency.",
+    benefit1: "Phase 1: Accumulate MAR-Ω Credits",
+    benefit2: "Phase 2: Protocol Swap to MARPO Token",
+    btn: "AGREE & VIEW SUBSCRIPTION",
+    adWait: "Synchronizing MAR-Ω Data...",
+    agreePrefix: "I agree to the ",
+    agreeLink: "Terms & MAR-Ω Policy",
+    termsTitle: "TERMS OF SERVICE & MAR-Ω POLICY",
+    closeBtn: "CLOSE DOCUMENT"
+  },
+  ko: {
+    title: "마르포 스피릿 드로우",
+    sub: "53억 MARPO 토큰 경제 생태계",
+    desc: "마르포 그룹의 L.O.T.T.O 시스템은 MAR-Ω(옴) 유동성을 최적화하고 MARPO 토큰 생태계의 가치를 방어하는 전략적 유틸리티입니다.",
+    benefit1: "1단계: MAR-Ω(옴) 크레딧 축적",
+    benefit2: "2단계: MARPO 토큰 공식 스왑 지원",
+    btn: "동의 및 구독 플랜 확인",
+    adWait: "MAR-Ω 데이터 동기화 중...",
+    agreePrefix: "마르포 그룹의 ",
+    agreeLink: "이용 약관 및 MAR-Ω 정책",
+    agreeSuffix: "에 동의합니다",
+    termsTitle: "이용 약관 및 MAR-Ω 운영 정책",
+    closeBtn: "문서 닫기"
+  }
 };
 
-export default function MarpoSpiritPage({ lang }: { lang: string }) {
-  const [currentTier, setCurrentTier] = useState<string | null>(null);
-  const [energy, setEnergy] = useState(0);
-  const [adCount, setAdCount] = useState(0);
-  const [ohmBalance, setOhmBalance] = useState(5300.0); // MAR-Ω balance
-  const [revealedNumber, setRevealedNumber] = useState<number | null>(null);
-  const [selectedNumbers, setSelectedNumbers] = useState<number[]>([]);
-  const [isReady, setIsReady] = useState(false);
+// 🚩 약관 내용 (필요시 수정)
+const termsContent: Record<string, { title: string; text: string }[]> = {
+  en: [{ title: "Terms", text: "Policy details here..." }],
+  ko: [{ title: "약관", text: "상세 정책 내용..." }]
+};
 
-  const text = uiText[lang] || uiText.en;
+export default function IntroductionPage({ onStartSession, currentLang, setLang }: IntroProps) {
+  const [agreed, setAgreed] = useState(false);
+  const [isAdShowing, setIsAdShowing] = useState(false);
+  const [showTerms, setShowTerms] = useState(false);
+  
+  const content = translations[currentLang] || translations.en;
+  const terms = termsContent[currentLang] || termsContent.en;
 
-  useEffect(() => {
-    const savedTier = localStorage.getItem('marpo_tier');
-    if (savedTier) {
-      setCurrentTier(savedTier);
-      setEnergy(savedTier === 'VIP' ? 10 : 5);
-    }
-    setIsReady(true);
-  }, []);
-
-  const handleTierSelect = (tier: string) => {
-    localStorage.setItem('marpo_tier', tier);
-    setCurrentTier(tier);
-    setEnergy(tier === 'VIP' ? 10 : 5);
+  const handleEntry = async () => {
+    if (!agreed) return;
+    setIsAdShowing(true);
+    setTimeout(() => {
+      setIsAdShowing(false);
+      onStartSession(); // 🚩 메인 페이지에 시작을 알림
+    }, 2000); 
   };
-
-  const handleNumberToggle = (num: number) => {
-    if (selectedNumbers.includes(num)) {
-      setSelectedNumbers(selectedNumbers.filter(n => n !== num));
-    } else if (selectedNumbers.length < 6) {
-      setSelectedNumbers([...selectedNumbers, num].sort((a, b) => a - b));
-    }
-  };
-
-  const handleReveal = () => {
-    if (ohmBalance < 1000) return alert("Insufficient MAR-Ω.");
-    if (energy < 1) return alert("Low Energy.");
-    setOhmBalance(prev => prev - 1000);
-    setEnergy(prev => prev - 1);
-    setRevealedNumber(Math.floor(Math.random() * 45) + 1);
-  };
-
-  const handleSubmit = () => {
-    if (selectedNumbers.length < 6) return alert("Select 6 numbers.");
-    alert(`Draw Submitted Successfully! Your Numbers: ${selectedNumbers.join(', ')}`);
-  };
-
-  if (!isReady) return null;
-  if (!currentTier) return <SubscriptionModal onSelect={handleTierSelect} />;
 
   return (
-    <div className="min-h-screen bg-[#050505] text-white p-4 pb-40 flex flex-col items-center font-sans relative overflow-hidden">
-      <div className="absolute inset-0 opacity-[0.02] pointer-events-none fixed" 
-           style={{ backgroundImage: `radial-gradient(#f39c12 1px, transparent 1px)`, backgroundSize: '40px 40px' }}></div>
+    <div className="min-h-screen bg-[#050505] text-white p-6 flex flex-col items-center justify-center font-sans text-center relative overflow-hidden">
+      {/* 배경 장식 */}
+      <div className="absolute inset-0 opacity-[0.05] pointer-events-none" style={{ backgroundImage: `radial-gradient(#f39c12 1px, transparent 1px)`, backgroundSize: '30px 30px' }}></div>
 
-      <header className="w-full max-w-md flex justify-between items-center py-6 relative z-10">
-        <div className="bg-zinc-900/50 px-4 py-2 rounded-xl border border-[#f39c12]/30 shadow-lg">
-          <p className="text-[8px] text-zinc-600 font-black uppercase tracking-[0.2em] mb-1">Tier Status</p>
-          <p className="text-[#f39c12] font-black text-xs italic">{currentTier}</p>
-        </div>
-        <div className="bg-zinc-900/50 px-4 py-2 rounded-xl border border-emerald-500/30 text-right">
-          <p className="text-[8px] text-zinc-600 font-black uppercase tracking-[0.2em] mb-1">{text.energy}</p>
-          <p className="text-white font-black text-xs">{energy} / {currentTier === 'VIP' ? '10' : '5'}</p>
-        </div>
-      </header>
-
-      <section className="w-full max-w-md bg-gradient-to-br from-[#1a1a1a] to-[#050505] p-8 rounded-[3rem] border border-[#f39c12]/20 mb-6 shadow-2xl relative text-center">
-        <div className="flex justify-center mb-3 text-[#f39c12]/50"><TrendingUp size={20} /></div>
-        <p className="text-[9px] text-zinc-600 font-black uppercase tracking-[0.3em] mb-2">{text.pool}</p>
-        <div className="flex items-center justify-center gap-2">
-          <p className="text-4xl font-black text-white tracking-tighter">5,314,159</p>
-          <span className="text-[#f39c12] text-3xl font-black italic">Ω</span>
-        </div>
-      </section>
-
-      <div className="w-full max-w-md mb-6">
-        <button onClick={handleReveal} className="w-full py-5 bg-zinc-900/40 border border-[#f39c12]/40 rounded-2xl flex flex-col items-center hover:bg-zinc-800 transition-all active:scale-95 group">
-          <div className="flex items-center gap-2 mb-1">
-            <Target size={16} className="text-[#f39c12] group-hover:rotate-90 transition-transform" />
-            <p className="text-[#f39c12] font-black text-xs uppercase tracking-[0.2em]">{text.reveal}</p>
-          </div>
-          <p className="text-[9px] text-zinc-600 font-bold uppercase tracking-tighter italic">Burn 1,000 Ω to find a hint</p>
-        </button>
-        {revealedNumber && (
-          <div className="mt-4 flex items-center justify-center gap-4 bg-black/40 py-4 rounded-2xl border border-[#f39c12]/10 animate-in slide-in-from-top-2">
-            <span className="text-[9px] text-zinc-500 font-black uppercase tracking-tighter">Insider Hint Data:</span>
-            <span className="text-3xl font-black text-[#f39c12] drop-shadow-[0_0_10px_rgba(243,156,18,0.5)]">Ω {revealedNumber}</span>
-          </div>
-        )}
-      </div>
-
-      <div className="w-full max-w-md bg-zinc-900/20 border border-zinc-800 rounded-[2.5rem] p-6 mb-8 shadow-inner">
-        <div className="flex justify-between items-center mb-6">
-          <h3 className="text-[10px] font-black text-[#f39c12] uppercase tracking-[0.3em] italic">{text.board}</h3>
-          <button onClick={() => setSelectedNumbers([])} className="text-zinc-700 hover:text-zinc-300 transition-colors">
-            <RefreshCcw size={14} />
-          </button>
-        </div>
-        
-        <div className="flex justify-between gap-2 mb-8">
-          {[...Array(6)].map((_, i) => (
-            <div key={i} className={`w-11 h-11 rounded-xl border flex items-center justify-center text-sm font-black transition-all ${selectedNumbers[i] ? 'border-[#f39c12] bg-[#f39c12]/10 text-white shadow-[0_0_15px_rgba(243,156,18,0.2)]' : 'border-zinc-900 text-zinc-800 bg-black/20'}`}>
-              {selectedNumbers[i] || '?'}
+      {/* 약관 모달 */}
+      {showTerms && (
+        <div className="fixed inset-0 z-[1000] bg-[#050505]/95 backdrop-blur-md flex items-center justify-center p-6 animate-in fade-in zoom-in duration-200">
+          <div className="w-full max-w-lg bg-[#0a0a0a] border border-[#f39c12]/30 rounded-3xl flex flex-col max-h-[80vh] overflow-hidden text-left relative">
+            <div className="p-6 border-b border-zinc-800 flex justify-between items-center">
+              <h3 className="text-[#f39c12] font-black text-sm uppercase tracking-widest">{content.termsTitle}</h3>
+              <button onClick={() => setShowTerms(false)} className="text-zinc-500 hover:text-white"><X size={24} /></button>
             </div>
-          ))}
+            <div className="p-6 overflow-y-auto space-y-6 flex-1">
+              {terms.map((t, i) => (
+                <div key={i}><h4 className="text-white font-bold text-xs mb-2 border-l-2 border-[#f39c12] pl-2">{t.title}</h4><p className="text-[11px] text-zinc-400">{t.text}</p></div>
+              ))}
+            </div>
+            <div className="p-6 border-t border-zinc-800"><button onClick={() => setShowTerms(false)} className="w-full py-4 bg-zinc-800 text-zinc-300 rounded-xl font-black text-xs uppercase">{content.closeBtn}</button></div>
+          </div>
         </div>
+      )}
 
-        <div className="grid grid-cols-7 gap-2">
-          {[...Array(45)].map((_, i) => {
-            const num = i + 1;
-            const isSelected = selectedNumbers.includes(num);
-            const isHint = revealedNumber === num;
-            return (
-              <button
-                key={num}
-                onClick={() => handleNumberToggle(num)}
-                className={`aspect-square rounded-lg text-[10px] font-black transition-all ${
-                  isSelected 
-                  ? 'bg-[#f39c12] text-black shadow-lg scale-105' 
-                  : isHint 
-                  ? 'border-2 border-[#f39c12] text-[#f39c12] animate-pulse' 
-                  : 'bg-zinc-900/50 text-zinc-600 hover:text-zinc-300 hover:bg-zinc-800'
-                }`}
-              >
-                {num}
-              </button>
-            );
-          })}
-        </div>
+      {/* 로고 */}
+      <div className="relative z-10 mb-6 p-4 rounded-full border-2 border-[#f39c12]/20 shadow-[0_0_50px_rgba(243,156,18,0.1)]">
+        <Image src="/marpo-group-logo.png" alt="LOGO" width={110} height={110} priority />
+      </div>
+      
+      <h1 className="text-4xl font-black text-[#f39c12] italic uppercase tracking-tighter mb-1 drop-shadow-[0_0_15px_rgba(243,156,18,0.3)]">{content.title}</h1>
+      <div className="flex items-center gap-2 mb-8 bg-[#f39c12]/10 px-4 py-1 rounded-full border border-[#f39c12]/30"><Coins size={14} className="text-[#f39c12]" /><p className="text-[10px] text-[#f39c12] font-black uppercase tracking-[0.2em]">{content.sub}</p></div>
+
+      {/* 언어 선택 */}
+      <div className="mb-8 flex items-center gap-3 bg-zinc-900/50 border border-zinc-800 rounded-2xl px-5 py-2.5">
+        <Globe size={14} className="text-zinc-500" />
+        <select value={currentLang} onChange={(e) => setLang(e.target.value)} className="bg-transparent text-xs font-black text-zinc-300 focus:outline-none cursor-pointer uppercase">
+          <option value="en">English</option>
+          <option value="ko">한국어</option>
+        </select>
       </div>
 
-      <div className="w-full max-w-md mt-auto flex flex-col gap-4">
-        <div className="flex justify-between items-center bg-zinc-900/30 p-5 rounded-3xl border border-zinc-800 shadow-xl">
-           <div className="flex items-center gap-4">
-             <div className="p-3 bg-zinc-900 rounded-xl flex items-center justify-center"><p className="text-[#f39c12] font-black text-xl italic">Ω</p></div>
-             <div>
-               <p className="text-[9px] text-zinc-600 font-black uppercase tracking-widest mb-1">{text.vault}</p>
-               <p className="text-lg font-black text-white tracking-tighter">{ohmBalance.toLocaleString()} <span className="text-[#f39c12] text-[10px] italic underline">OHM</span></p>
-             </div>
-           </div>
-           <button 
-             onClick={handleSubmit}
-             disabled={selectedNumbers.length < 6}
-             className={`flex items-center gap-3 px-8 py-3 rounded-2xl font-black text-xs uppercase transition-all transform active:scale-95 ${selectedNumbers.length === 6 ? 'bg-[#f39c12] text-black shadow-[0_10px_20px_rgba(243,156,18,0.3)]' : 'bg-zinc-800 text-zinc-700'}`}
-           >
-             <Send size={16} /> {text.submit}
-           </button>
+      <div className="bg-zinc-900/30 border border-[#f39c12]/10 p-8 rounded-[2.5rem] max-w-md w-full mb-8 backdrop-blur-sm"><p className="text-xs leading-relaxed text-zinc-400 italic">"{content.desc}"</p></div>
+
+      <div className="w-full max-w-md space-y-3 mb-10 text-left">
+        <div className="flex items-center gap-4 bg-[#f39c12]/5 p-5 rounded-2xl border border-[#f39c12]/10 text-[11px] font-bold text-zinc-400 uppercase tracking-tight"><BarChart3 size={20} className="text-[#f39c12]" /> {content.benefit1}</div>
+        <div className="flex items-center gap-4 bg-emerald-500/5 p-5 rounded-2xl border border-emerald-500/10 text-[11px] font-bold text-zinc-400 uppercase tracking-tight"><ShieldCheck size={20} className="text-emerald-500" /> {content.benefit2}</div>
+      </div>
+
+      <div className="w-full max-w-md relative z-20">
+        <div className="flex items-center justify-center gap-3 mb-8 px-4">
+          <input type="checkbox" checked={agreed} onChange={(e) => setAgreed(e.target.checked)} className="w-5 h-5 rounded border-zinc-800 bg-black text-[#f39c12] focus:ring-[#f39c12]" />
+          <div className="text-[10px] font-black uppercase tracking-tight text-zinc-500">
+            {content.agreePrefix}<button onClick={() => setShowTerms(true)} className="text-[#f39c12] underline italic mx-1">{content.agreeLink}</button>{content.agreeSuffix}
+          </div>
         </div>
+
+        <button onClick={handleEntry} disabled={!agreed || isAdShowing} className={`w-full py-6 rounded-[2rem] font-black text-xl flex justify-center items-center gap-3 transition-all ${agreed && !isAdShowing ? 'bg-[#f39c12] text-black shadow-lg shadow-[#f39c12]/20' : 'bg-zinc-900 text-zinc-700'}`}>
+          {isAdShowing ? <><Loader2 className="animate-spin" size={24} /> <span className="text-xs uppercase">{content.adWait}</span></> : <><span className="italic uppercase">{content.btn}</span> <ArrowRight size={24} /></>}
+        </button>
       </div>
     </div>
   );

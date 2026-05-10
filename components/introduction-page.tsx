@@ -39,11 +39,28 @@ const translations: Record<string, any> = {
   }
 };
 
+const termsContent: Record<string, { title: string; text: string }[]> = {
+  en: [
+    { title: "Article 1 (Purpose)", text: "This agreement governs the use of MAR-Ω (MAR-OHM) units within the Marpo Spirit ecosystem provided by Marpo Group." },
+    { title: "Article 2 (MAR-Ω Definition)", text: "MAR-Ω is the internal strategic credit used for draw participation and insider reveals before the official MARPO Token liquidity launch." },
+    { title: "Article 3 (Token Swap)", text: "Accumulated MAR-Ω can be swapped for MARPO Tokens at a protocol-defined ratio upon the official ecosystem launch." },
+    { title: "Article 4 (Compliance)", text: "Users must adhere to all community standards. Exploitation of the draw system may result in account termination and asset forfeiture." }
+  ],
+  ko: [
+    { title: "제1조 (목적)", text: "본 약관은 마르포 그룹이 제공하는 생태계 내 MAR-Ω(옴) 단위의 이용 및 관리 규정을 목적으로 합니다." },
+    { title: "제2조 (MAR-Ω 정의)", text: "MAR-Ω는 MARPO 토큰 공식 상장 전, 앱 내 드로우 참여 및 인사이더 기능을 위해 사용되는 내부 전략 크레딧입니다." },
+    { title: "제3조 (토큰 스왑)", text: "축적된 MAR-Ω는 향후 MARPO 토큰 유동성 공급 시점에 정해진 비율에 따라 공식 토큰으로 전환(스왑) 가능합니다." },
+    { title: "제4조 (준수 사항)", text: "시스템 취약점을 악용한 부당 이익 취득 시, 마르포 그룹은 해당 계정의 자산 동결 및 서비스 제한 조치를 취할 수 있습니다." }
+  ]
+};
+
 export default function IntroductionPage({ onStartSession, currentLang, setLang }: IntroProps) {
   const [agreed, setAgreed] = useState(false);
   const [isAdShowing, setIsAdShowing] = useState(false);
   const [showTerms, setShowTerms] = useState(false);
+  
   const content = translations[currentLang] || translations.en;
+  const terms = termsContent[currentLang] || termsContent.en;
 
   const handleEntry = async () => {
     if (!agreed) return;
@@ -58,21 +75,39 @@ export default function IntroductionPage({ onStartSession, currentLang, setLang 
     <div className="min-h-screen bg-[#050505] text-white p-6 flex flex-col items-center justify-center font-sans text-center relative overflow-hidden">
       <div className="absolute inset-0 opacity-[0.05] pointer-events-none" style={{ backgroundImage: `radial-gradient(#f39c12 1px, transparent 1px)`, backgroundSize: '30px 30px' }}></div>
 
+      {/* 🚩 MAR-Ω 상세 약관 모달 복원 */}
       {showTerms && (
-        <div className="fixed inset-0 z-[1000] bg-[#050505]/95 backdrop-blur-md flex items-center justify-center p-6">
-          <div className="w-full max-w-lg bg-[#0a0a0a] border border-[#f39c12]/30 rounded-3xl flex flex-col max-h-[80vh] overflow-hidden text-left">
+        <div className="fixed inset-0 z-[1000] bg-[#050505]/95 backdrop-blur-md flex items-center justify-center p-6 animate-in fade-in zoom-in duration-200">
+          <div className="w-full max-w-lg bg-[#0a0a0a] border border-[#f39c12]/30 rounded-3xl flex flex-col max-h-[80vh] shadow-[0_0_50px_rgba(243,156,18,0.15)] overflow-hidden text-left relative">
             <div className="p-6 border-b border-zinc-800 flex justify-between items-center bg-zinc-900/50">
-              <h3 className="text-[#f39c12] font-black text-base uppercase">{content.termsTitle}</h3>
-              <button onClick={() => setShowTerms(false)}><X size={28} /></button>
+              <div className="flex items-center gap-3">
+                <FileText size={24} className="text-[#f39c12]" />
+                <h3 className="text-[#f39c12] font-black text-base uppercase tracking-widest">{content.termsTitle}</h3>
+              </div>
+              <button onClick={() => setShowTerms(false)} className="text-zinc-500 hover:text-white transition-colors">
+                <X size={32} />
+              </button>
             </div>
-            <div className="p-8 overflow-y-auto space-y-6 flex-1 text-sm text-zinc-400">
-               <p>MAR-Ω Protocol Details...</p>
+            
+            <div className="p-8 overflow-y-auto space-y-6 flex-1 custom-scrollbar">
+              {terms.map((term, index) => (
+                <div key={index} className="border-b border-zinc-800/50 pb-4">
+                  <h4 className="text-white font-bold text-sm uppercase tracking-widest mb-3 border-l-4 border-[#f39c12] pl-3">{term.title}</h4>
+                  <p className="text-sm text-zinc-400 leading-relaxed font-medium">{term.text}</p>
+                </div>
+              ))}
             </div>
-            <div className="p-6 border-t border-zinc-800"><button onClick={() => setShowTerms(false)} className="w-full py-5 bg-zinc-800 text-white rounded-xl font-black text-sm uppercase">{content.closeBtn}</button></div>
+            
+            <div className="p-6 border-t border-zinc-800 bg-zinc-900/30">
+              <button onClick={() => setShowTerms(false)} className="w-full py-5 bg-zinc-800 text-zinc-300 rounded-xl font-black text-sm uppercase tracking-widest hover:bg-[#f39c12] hover:text-black transition-all">
+                {content.closeBtn}
+              </button>
+            </div>
           </div>
         </div>
       )}
 
+      {/* 폰트 20% 확대 적용된 인트로 영역 */}
       <div className="relative z-10 mb-8 p-5 rounded-full border-2 border-[#f39c12]/20 shadow-[0_0_60px_rgba(243,156,18,0.15)]">
         <Image src="/marpo-group-logo.png" alt="LOGO" width={130} height={130} priority />
       </div>
@@ -83,18 +118,24 @@ export default function IntroductionPage({ onStartSession, currentLang, setLang 
       
       <div className="flex items-center gap-3 mb-10 bg-[#f39c12]/10 px-5 py-2 rounded-full border border-[#f39c12]/30">
         <Coins size={18} className="text-[#f39c12]" />
-        <p className="text-xs text-[#f39c12] font-black uppercase tracking-[0.2em]">{content.sub}</p>
+        <p className="text-xs text-[#f39c12] font-black uppercase tracking-[0.2em]">
+          {content.sub}
+        </p>
       </div>
 
-      <div className="mb-10 flex items-center gap-4 bg-zinc-900/50 border border-zinc-800 rounded-2xl px-6 py-3">
+      <div className="mb-10 flex items-center gap-4 bg-zinc-900/50 border border-zinc-800 rounded-2xl px-6 py-3.5">
         <Globe size={18} className="text-zinc-500" />
-        <select value={currentLang} onChange={(e) => setLang(e.target.value)} className="bg-transparent text-sm font-black text-zinc-300 focus:outline-none cursor-pointer uppercase">
-          <option value="en" className="bg-black">English</option>
-          <option value="ko" className="bg-black">한국어</option>
+        <select 
+          value={currentLang} 
+          onChange={(e) => setLang(e.target.value)} 
+          className="bg-transparent text-sm font-black text-zinc-300 focus:outline-none cursor-pointer uppercase tracking-widest"
+        >
+          <option value="en" className="bg-[#050505]">English</option>
+          <option value="ko" className="bg-[#050505]">한국어</option>
         </select>
       </div>
 
-      <div className="bg-zinc-900/30 border border-[#f39c12]/10 p-10 rounded-[3rem] max-w-md w-full mb-10 backdrop-blur-sm">
+      <div className="bg-zinc-900/30 border border-[#f39c12]/10 p-10 rounded-[3rem] max-w-md w-full mb-10 backdrop-blur-sm shadow-2xl">
         <p className="text-sm leading-relaxed text-zinc-400 italic font-medium">"{content.desc}"</p>
       </div>
 
@@ -109,16 +150,50 @@ export default function IntroductionPage({ onStartSession, currentLang, setLang 
 
       <div className="w-full max-w-md relative z-20">
         <div className="flex items-center justify-center gap-4 mb-10 px-4">
-          <input type="checkbox" checked={agreed} onChange={(e) => setAgreed(e.target.checked)} className="w-6 h-6 rounded border-zinc-800 bg-black text-[#f39c12] cursor-pointer" />
-          <div className="text-xs font-black uppercase tracking-tight text-zinc-500">
-            {content.agreePrefix}<button onClick={() => setShowTerms(true)} className="text-[#f39c12] underline italic mx-1">{content.agreeLink}</button>{content.agreeSuffix}
+          <input 
+            type="checkbox" 
+            checked={agreed} 
+            onChange={(e) => setAgreed(e.target.checked)} 
+            className="w-6 h-6 rounded border-zinc-800 bg-black text-[#f39c12] focus:ring-[#f39c12] cursor-pointer"
+          />
+          <div className="text-xs font-black leading-snug uppercase tracking-tight text-zinc-500">
+            {content.agreePrefix}
+            <button 
+              onClick={() => setShowTerms(true)} 
+              className="text-[#f39c12] underline underline-offset-4 hover:text-white transition-colors mx-1 italic"
+            >
+              {content.agreeLink}
+            </button>
+            {content.agreeSuffix}
           </div>
         </div>
 
-        <button onClick={handleEntry} disabled={!agreed || isAdShowing} className={`w-full py-7 rounded-[2.5rem] font-black text-2xl flex justify-center items-center gap-4 transition-all transform active:scale-95 ${agreed && !isAdShowing ? 'bg-[#f39c12] text-black shadow-2xl' : 'bg-zinc-900 text-zinc-700'}`}>
-          {isAdShowing ? <><Loader2 className="animate-spin" size={28} /> <span className="text-sm font-black uppercase">{content.adWait}</span></> : <><span className="italic uppercase">{content.btn}</span> <ArrowRight size={28} /></>}
+        <button 
+          onClick={handleEntry} 
+          disabled={!agreed || isAdShowing} 
+          className={`w-full py-7 rounded-[2.5rem] font-black text-2xl flex justify-center items-center gap-4 transition-all transform active:scale-95 ${
+            agreed && !isAdShowing 
+              ? 'bg-[#f39c12] text-black shadow-[0_15px_30px_rgba(243,156,18,0.2)]' 
+              : 'bg-zinc-900 text-zinc-700 cursor-not-allowed'
+          }`}
+        >
+          {isAdShowing ? (
+            <>
+              <Loader2 className="animate-spin" size={28} />
+              <span className="text-sm font-black tracking-[0.2em] uppercase">{content.adWait}</span>
+            </>
+          ) : (
+            <>
+              <span className="tracking-tighter italic uppercase">{content.btn}</span>
+              <ArrowRight size={28} />
+            </>
+          )}
         </button>
       </div>
+
+      <footer className="mt-14 text-[10px] text-zinc-800 font-black tracking-[0.4em] uppercase">
+        Marpo Group Assets Protection Division
+      </footer>
     </div>
   );
 }

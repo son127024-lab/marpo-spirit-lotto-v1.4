@@ -13,18 +13,20 @@ export default function MarpoSpiritPage({ lang }: { lang: string }) {
   const [adCount, setAdCount] = useState(0);
   const [marpoBalance, setMarpoBalance] = useState(5300.0);
   const [revealedNumber, setRevealedNumber] = useState<number | null>(null);
-  const [isReady, setIsReady] = useState(false); // 🚩 로딩 상태 추가
+  const [isReady, setIsReady] = useState(false);
 
   const text = uiText[lang] || uiText.en;
 
   useEffect(() => {
-    // 접속 시 브라우저에서 구독 정보를 체크
-    localStorage.removeItem('marpo_tier');
+    // 🚩 강제로 구독창을 띄우기 위해 기존 기록을 삭제합니다. (나중에 주석처리 가능)
+    localStorage.removeItem('marpo_tier'); 
+
     const savedTier = localStorage.getItem('marpo_tier');
     if (savedTier) {
       setCurrentTier(savedTier);
       setEnergy(savedTier === 'VIP' ? 10 : 5);
     }
+    // 확인이 끝났음을 표시
     setIsReady(true);
   }, []);
 
@@ -35,15 +37,12 @@ export default function MarpoSpiritPage({ lang }: { lang: string }) {
   };
 
   const handleAdWatch = async () => {
-    const Pi = (window as any).Pi;
-    if (Pi?.Ads?.showAd) await Pi.Ads.showAd("interstitial");
-
     if (currentTier === 'BASIC') {
       const nextCount = adCount + 1;
       if (nextCount >= 3) {
         setEnergy(prev => prev + 1);
         setAdCount(0);
-        alert("Energy Charged! (3/3)");
+        alert("Energy Charged! (3/3 Ads)");
       } else {
         setAdCount(nextCount);
       }
@@ -55,26 +54,31 @@ export default function MarpoSpiritPage({ lang }: { lang: string }) {
 
   const handleReveal = () => {
     if (marpoBalance < 1000) return alert("Insufficient MARPO.");
-    setMarpoBalance(prev => prev - 1000);
-    setRevealedNumber(Math.floor(Math.random() * 45) + 1);
+    if (confirm("Burn 1,000 MARPO?")) {
+      setMarpoBalance(prev => prev - 1000);
+      setRevealedNumber(Math.floor(Math.random() * 45) + 1);
+    }
   };
 
-  // 🚩 구독 정보가 없으면 구독 모달만 단독 노출
+  // 1. 아직 로딩 중이면 아무것도 보여주지 않음
   if (!isReady) return null;
+
+  // 2. 구독 정보가 없으면 무조건 구독 모달만 보여줌
   if (!currentTier) {
     return <SubscriptionModal onSelect={handleTierSelect} />;
   }
 
+  // 3. 구독 정보가 있을 때만 메인 화면 출력
   return (
-    <div className="min-h-screen bg-[#0d1b3e] text-white p-4 pb-40 flex flex-col items-center font-sans animate-in fade-in duration-700">
+    <div className="min-h-screen bg-[#0d1b3e] text-white p-4 pb-40 flex flex-col items-center font-sans">
       <header className="w-full max-w-md flex justify-between items-center py-6 mb-4">
         <div className="bg-black/40 px-4 py-2 rounded-xl border border-[#f39c12]/30">
           <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">Tier</p>
           <p className="text-[#f39c12] font-black tracking-tight">{currentTier}</p>
         </div>
         <div className="bg-black/40 px-4 py-2 rounded-xl border border-emerald-500/30 text-right">
-          <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">Energy</p>
-          <p className="text-white font-black">{energy} <span className="text-xs text-zinc-500">/ {currentTier === 'VIP' ? '10' : '5'}</span></p>
+          <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">{text.energy}</p>
+          <p className="text-white font-black">{energy} / {currentTier === 'VIP' ? '10' : '5'}</p>
         </div>
       </header>
 
@@ -84,9 +88,9 @@ export default function MarpoSpiritPage({ lang }: { lang: string }) {
       </section>
 
       <div className="w-full max-w-md mb-8">
-        <button onClick={handleReveal} className="w-full py-5 bg-black/40 border border-[#f39c12]/50 rounded-2xl flex flex-col items-center active:scale-95 transition-transform">
-          <p className="text-[#f39c12] font-black text-sm uppercase tracking-widest mb-1">{text.reveal}</p>
-          <p className="text-[10px] text-zinc-500 uppercase">Burn 1,000 MARPO</p>
+        <button onClick={handleReveal} className="w-full py-5 bg-black/40 border border-[#f39c12]/50 rounded-2xl flex flex-col items-center">
+          <p className="text-[#f39c12] font-black text-sm uppercase mb-1">{text.reveal}</p>
+          <p className="text-[10px] text-zinc-500 uppercase font-bold">Burn 1,000 MARPO</p>
         </button>
         {revealedNumber && <div className="mt-6 text-5xl font-black text-[#f39c12] animate-bounce text-center">{revealedNumber}</div>}
       </div>
@@ -99,7 +103,7 @@ export default function MarpoSpiritPage({ lang }: { lang: string }) {
       </div>
 
       <div className="w-full max-w-md mt-auto">
-        <button onClick={handleAdWatch} className="w-full py-4 rounded-2xl font-black text-sm border-2 border-zinc-800 text-zinc-400 uppercase tracking-widest hover:border-[#f39c12] hover:text-[#f39c12] transition-colors active:scale-95">
+        <button onClick={handleAdWatch} className="w-full py-4 rounded-2xl font-black text-sm border-2 border-zinc-800 text-zinc-400 uppercase tracking-widest active:scale-95 transition-transform">
           {currentTier === 'BASIC' ? `MINE ENERGY (AD ${adCount}/3)` : 'QUICK CHARGE (WATCH AD)'}
         </button>
       </div>

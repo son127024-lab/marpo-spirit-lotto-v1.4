@@ -1,24 +1,33 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
 
-/* 시스템 기본 배경을 순수 CSS로 강제 고정 (절대 에러 안 남) */
+/* 여기가 최신 Tailwind v4의 사령부입니다. 
+  이 변수들이 자동으로 bg-marpo-bg, text-marpo-amber 등의 클래스를 생성합니다.
+*/
+@theme {
+  --color-marpo-bg: #050505;
+  --color-marpo-amber: #f39c12;
+  --color-marpo-neon: #a3e235;
+  --color-marpo-zinc: #1a1a1b;
+  --font-urbanist: "Urbanist", sans-serif;
+}
+
+/* 시스템 강제 고정 (안전장치) */
 html, body {
-  background-color: #050505 !important;
-  color: #ffffff !important;
+  background-color: var(--color-marpo-bg);
+  color: #ffffff;
   margin: 0;
   padding: 0;
   overflow-x: hidden;
 }
 
-/* 커스텀 스크롤바 (선택 사항) */
+/* 커스텀 스크롤바 */
 ::-webkit-scrollbar {
   width: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #050505;
+  background: var(--color-marpo-bg);
 }
 ::-webkit-scrollbar-thumb {
-  background: #f39c12;
+  background: var(--color-marpo-amber);
   border-radius: 10px;
 }

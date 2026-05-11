@@ -142,8 +142,16 @@ export default function MarpoSpiritPage({ lang }: { lang: string }) {
       {gameState === 'result' && (
         <div className="fixed inset-0 z-[1000] bg-black/95 backdrop-blur-2xl flex flex-col items-center justify-center p-6 animate-in zoom-in duration-300">
           <div className="bg-zinc-900 border-2 border-amber-600 rounded-[4rem] p-12 w-full max-w-md text-center shadow-2xl">
+            {/* 👇 광부 이미지가 원형을 빈틈없이 꽉 채우도록 교정된 부분입니다 👇 */}
             <div className="w-28 h-28 bg-black rounded-full mx-auto mb-8 border-2 border-amber-500 flex items-center justify-center overflow-hidden">
-               <Image src="/miner-character.png" alt="Miner" width={100} height={100} unoptimized />
+               <Image 
+                 src="/miner-character.png" 
+                 alt="Miner" 
+                 width={112} 
+                 height={112} 
+                 className="w-full h-full object-cover" 
+                 unoptimized 
+               />
             </div>
             <h2 className="text-3xl font-black text-white mb-6 italic uppercase">Exploration Report!</h2>
             <div className="bg-black/60 rounded-3xl p-6 mb-10 border border-zinc-800 text-center">
@@ -175,7 +183,7 @@ export default function MarpoSpiritPage({ lang }: { lang: string }) {
         </div>
       </section>
 
-      {/* 인사이더 리빌 (함수 복구 완료) */}
+      {/* 인사이더 리빌 */}
       <button onClick={handleReveal} className="w-full max-w-md py-7 bg-zinc-900/40 border border-[#f39c12]/40 rounded-3xl flex flex-col items-center mb-10 active:scale-95 transition-all">
         <div className="flex items-center gap-3 mb-1.5"><Target size={20} className="text-[#f39c12]" /><p className="text-[#f39c12] font-black text-sm uppercase tracking-[0.2em]">Insider Reveal</p></div>
         <p className="text-[16px] font-black uppercase tracking-widest italic text-lime-300 animate-infinite-blink">
@@ -183,7 +191,7 @@ export default function MarpoSpiritPage({ lang }: { lang: string }) {
         </p>
       </button>
 
-      {/* 전술 보드 (함수 복구 완료) */}
+      {/* 전술 보드 */}
       <div className={`w-full max-w-md bg-zinc-900/30 border border-zinc-800 rounded-[3.5rem] p-8 mb-12 relative shadow-2xl ${!isUnlocked && 'opacity-50 grayscale'}`}>
         {!isUnlocked && (
           <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black/70 backdrop-blur-md rounded-[3.5rem] p-8 text-center">

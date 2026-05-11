@@ -1,25 +1,22 @@
-import './globals.css';
-import type { Metadata } from 'next';
-
-export const metadata: Metadata = {
-  title: 'Marpo Spirit - Lotto World',
-  description: 'Global Pi Network Jackpot',
-};
+// app/layout.tsx
+import './globals.css'
+import Script from 'next/script' // Next.js 스크립트 최적화 도구
 
 export default function RootLayout({
   children,
 }: {
-  children: React.ReactNode;
+  children: React.ReactNode
 }) {
   return (
-    <html lang="en">
+    <html lang="ko">
       <head>
-        {/* 🚀 파이 네트워크 공식 결제 엔진(SDK) 케이블 🚀 */}
-        <script src="https://sdk.minepi.com/pi-sdk.js" async></script>
+        {/* 파이 브라우저 연동을 위한 공식 SDK */}
+        <Script 
+          src="https://sdk.minepi.com/pi-sdk.js" 
+          strategy="beforeInteractive" 
+        />
       </head>
-      <body className="bg-black text-white">
-        {children}
-      </body>
+      <body>{children}</body>
     </html>
-  );
+  )
 }

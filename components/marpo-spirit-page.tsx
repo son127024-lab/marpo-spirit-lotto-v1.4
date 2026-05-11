@@ -1,9 +1,9 @@
 "use client";
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
-import { Target, Lock, Pickaxe, Flame, AlertTriangle } from 'lucide-react';
+import { Target, Lock, Pickaxe, Flame, AlertTriangle, Sparkles } from 'lucide-react';
 
-// 45개 원소 아이콘 매핑
+// 45개 원소 아이콘 매핑 (43번 고정 완료)
 const iconMap: Record<number, string> = {
   1: "1-In.png", 2: "2-.png", 3: "3-.png", 4: "4-Y.png", 5: "5-.png",
   6: "6-As.png", 7: "7-.png", 8: "8-Th.png", 9: "9-Na.png", 10: "10-.png",
@@ -25,8 +25,8 @@ const guideLines = [
   "디플레이션을 향한 여정, 샘플 선택 후 채굴 버튼을 누르세요!"
 ];
 
-// 🚩 실패 시퀀스를 위한 상태(State) 추가
-type GameState = 'idle' | 'mining' | 'success_punch' | 'success_malpo' | 'fail_punch' | 'fail_rabbit';
+// 🚩 전술 상태 타입 정의 수정 (폭죽 단계 추가)
+type GameState = 'idle' | 'mining' | 'success_punch' | 'success_fireworks' | 'success_malpo' | 'fail_punch' | 'fail_rabbit';
 
 export default function MarpoSpiritPage({ lang }: { lang: string }) {
   const [gameState, setGameState] = useState<GameState>('idle');
@@ -68,7 +68,7 @@ export default function MarpoSpiritPage({ lang }: { lang: string }) {
     setRevealedNumber(Math.floor(Math.random() * 45) + 1);
   };
 
-  // 🚩 채굴 로직: 성공과 실패의 완벽한 분기 처리
+  // 🚩 채굴 로직: 성공/실패 분기 처리
   const handleMining = () => {
     if (selectedNumbers.length < 6) return alert("원소 샘플 6개를 선택해주세요!");
     setGameState('mining');
@@ -88,12 +88,23 @@ export default function MarpoSpiritPage({ lang }: { lang: string }) {
       setWonAmount(reward);
       setOhmBalance(prev => prev + reward);
 
-      // 당첨 시 (성공 시퀀스)
+      // 🟢 당첨 시 (성공 시퀀스 - 수정)
       if (reward > 0) {
+        // 1단계: 인플레이션 펀치 (3초)
         setGameState('success_punch');
-        setTimeout(() => setGameState('success_malpo'), 3000);
+        
+        setTimeout(() => {
+          // 🚩 2단계: 화려한 폭죽 효과 (2초)
+          setGameState('success_fireworks');
+          
+          setTimeout(() => {
+            // 3단계: 말포 축하 모달
+            setGameState('success_malpo');
+          }, 2000); // 폭죽 효과 지속 시간 2초
+
+        }, 3000); // 펀치 시각 자료 지속 시간 3초
       } 
-      // 꽝일 시 (실패 시퀀스)
+      // 🔴 꽝일 시 (실패 시퀀스 - 기존 유지)
       else {
         setGameState('fail_punch');
         setTimeout(() => setGameState('fail_rabbit'), 3000);
@@ -160,9 +171,31 @@ export default function MarpoSpiritPage({ lang }: { lang: string }) {
         </div>
       )}
 
-      {/* 🟢 성공 시퀀스 2: 말포 축하창 */}
+      {/* 🚩 🟢 성공 시퀀스 2: 화려한 폭죽 효과 오버레이 (2초 - 신규 추가) */}
+      {gameState === 'success_fireworks' && (
+        <div className="fixed inset-0 z-[1200] bg-black/80 flex flex-col items-center justify-center animate-in fade-in duration-300">
+          
+          {/* 폭죽 애니메이션을 구현하는 div 부품들 (CSS keyframes 사용) */}
+          <div className="firework-container relative w-full h-full overflow-hidden">
+            {[...Array(20)].map((_, i) => (
+                <div key={i} className={`firework firework-${i+1}`}></div>
+            ))}
+          </div>
+
+          {/* 중앙 텍스트 */}
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10 text-center flex flex-col items-center gap-6">
+            <Sparkles size={100} className="text-amber-400 animate-pulse drop-shadow-[0_0_30px_rgba(243,156,18,0.8)]" />
+            <p className="text-6xl md:text-8xl font-black text-white uppercase italic tracking-tighter drop-shadow-[0_0_20px_rgba(255,255,255,0.5)] leading-none font-urbanist">
+              CELEBRATION
+            </p>
+            <p className="text-amber-500 font-bold italic text-2xl tracking-wide uppercase">화성에서 Ω 에너지를 완벽하게 추출했습니다!</p>
+          </div>
+        </div>
+      )}
+
+      {/* 🟢 성공 시퀀스 3: 말포 축하창 (마지막) */}
       {gameState === 'success_malpo' && (
-        <div className="fixed inset-0 z-[1200] bg-black/95 backdrop-blur-2xl flex flex-col items-center justify-center p-6 animate-in zoom-in duration-300">
+        <div className="fixed inset-0 z-[1300] bg-black/95 backdrop-blur-2xl flex flex-col items-center justify-center p-6 animate-in zoom-in duration-300">
           <div className="bg-gradient-to-b from-zinc-900 to-black border-4 border-lime-500 rounded-[4rem] p-12 w-full max-w-xl text-center shadow-[0_0_60px_rgba(163,230,53,0.3)] relative overflow-hidden">
             <div className="absolute inset-0 opacity-10 pointer-events-none" style={{ backgroundImage: `linear-gradient(#a3e235 1px, transparent 1px), linear-gradient(90deg, #a3e235 1px, transparent 1px)`, backgroundSize: '30px 30px' }}></div>
             <div className="w-40 h-40 mx-auto mb-8 relative animate-bounce-slow z-10">
@@ -202,7 +235,6 @@ export default function MarpoSpiritPage({ lang }: { lang: string }) {
       {gameState === 'fail_punch' && (
         <div className="fixed inset-0 z-[1100] bg-black flex items-center justify-center animate-in fade-in duration-500">
           <div className="relative w-full h-full">
-            {/* 파일명에 공백이 포함된 대표님의 원본 파일명 적용 */}
             <Image src="/인플레이션 펀치커버 .png" alt="Inflation Counterattack" fill className="object-cover" priority unoptimized />
             <div className="absolute top-20 left-0 w-full text-center z-10">
               <p className="text-5xl md:text-7xl font-black text-red-500 uppercase italic tracking-tighter drop-shadow-[0_0_30px_rgba(239,68,68,1)] animate-pulse">
@@ -224,18 +256,13 @@ export default function MarpoSpiritPage({ lang }: { lang: string }) {
         <div className="fixed inset-0 z-[1200] bg-black/95 backdrop-blur-2xl flex flex-col items-center justify-center p-6 animate-in zoom-in duration-300">
           <div className="bg-gradient-to-b from-zinc-900 to-black border-4 border-amber-600 rounded-[4rem] p-12 w-full max-w-xl text-center shadow-[0_0_60px_rgba(243,156,18,0.2)] relative overflow-hidden">
             <div className="absolute inset-0 opacity-10 pointer-events-none" style={{ backgroundImage: `linear-gradient(#f39c12 1px, transparent 1px), linear-gradient(90deg, #f39c12 1px, transparent 1px)`, backgroundSize: '30px 30px' }}></div>
-            
-            {/* 2단계 멋진 토끼 이미지 */}
             <div className="w-48 h-48 mx-auto mb-6 relative animate-bounce-slow z-10">
                <Image src="/marpo-stage-2.png" alt="Encouraging Rabbit" fill className="object-contain" unoptimized />
             </div>
-            
             <div className="inline-flex items-center gap-3 px-5 py-2 bg-amber-950/50 border border-amber-500 rounded-full mb-6 z-10 relative">
                 <AlertTriangle size={16} className="text-amber-500" />
                 <h2 className="text-sm font-black text-amber-400 mb-0 uppercase tracking-widest">Energy Extraction Failed</h2>
             </div>
-
-            {/* 대표님 요청 대사 (독려) */}
             <div className="relative mb-10 bg-black/50 border border-zinc-800 p-8 rounded-3xl z-10">
                 <div className="absolute -top-3 -left-3 text-amber-500 text-6xl font-serif">“</div>
                 <p className="text-2xl md:text-3xl font-black text-white leading-relaxed italic tracking-tight font-urbanist px-2 break-keep">
@@ -243,8 +270,6 @@ export default function MarpoSpiritPage({ lang }: { lang: string }) {
                 </p>
                 <div className="absolute -bottom-10 -right-3 text-amber-500 text-6xl font-serif">”</div>
             </div>
-
-            {/* 이번 턴에 채굴된 결과 번호 표시 (분석용) */}
             <div className="flex justify-center gap-2 mb-10 bg-black/60 p-4 rounded-xl border border-zinc-800 z-10 relative">
                 {minedNumbers.map(n => (
                   <div key={n} className="w-10 h-10 rounded-lg flex items-center justify-center text-sm font-black bg-zinc-800 text-zinc-600">
@@ -252,7 +277,6 @@ export default function MarpoSpiritPage({ lang }: { lang: string }) {
                   </div>
                 ))}
             </div>
-
             <button onClick={resetGame} className="w-full py-6 bg-amber-500 text-black rounded-2xl font-black text-xl uppercase shadow-[0_0_30px_rgba(243,156,18,0.3)] active:scale-95 transition-all relative z-10">
               Try Again
             </button>
@@ -315,9 +339,64 @@ export default function MarpoSpiritPage({ lang }: { lang: string }) {
          </button>
       </div>
 
+      {/* 🚩 폭죽 애니메이션을 구현하는 CSS 코드 */}
       <style jsx global>{`
         @import url('https://fonts.googleapis.com/css2?family=Urbanist:ital,wght@1,900&display=swap');
         .font-urbanist { font-family: 'Urbanist', sans-serif; }
+        
+        /* 🚩 폭죽 CSS 애니메이션 */
+        .firework {
+          position: absolute;
+          width: 5px;
+          height: 5px;
+          border-radius: 50%;
+          opacity: 0;
+          transform-origin: center;
+        }
+
+        /* 🚩 각 폭죽 부품들의 랜덤 색상 및 폭발 방향 설정 */
+        .firework-1 { background-color: #f39c12; animation: explode-1 2s ease-out forwards; top: 50%; left: 50%; }
+        .firework-2 { background-color: #ffffff; animation: explode-2 1.8s ease-out 0.2s forwards; top: 40%; left: 60%; }
+        .firework-3 { background-color: #a3e235; animation: explode-3 2.2s ease-out 0.1s forwards; top: 60%; left: 40%; }
+        .firework-4 { background-color: #f39c12; animation: explode-4 1.9s ease-out 0.3s forwards; top: 30%; left: 50%; }
+        .firework-5 { background-color: #ffffff; animation: explode-1 2.1s ease-out 0.2s forwards; top: 70%; left: 55%; }
+        /* ...필요에 따라 더 많은 랜덤 폭죽 패턴을 추가할 수 있습니다. (현재 20개 매핑) ... */
+        .firework-6 { background-color: #f39c12; animation: explode-2 2s ease-out 0.5s forwards; top: 50%; left: 20%; }
+        .firework-7 { background-color: #a3e235; animation: explode-3 1.7s ease-out 0.1s forwards; top: 20%; left: 80%; }
+        .firework-8 { background-color: #ffffff; animation: explode-4 2.3s ease-out 0.4s forwards; top: 80%; left: 30%; }
+        .firework-9 { background-color: #f39c12; animation: explode-1 2.0s ease-out 0.6s forwards; top: 60%; left: 70%; }
+        .firework-10 { background-color: #ffffff; animation: explode-2 1.9s ease-out 0.2s forwards; top: 30%; left: 30%; }
+        .firework-11 { background-color: #a3e235; animation: explode-3 2s ease-out forwards; top: 50%; left: 50%; }
+        .firework-12 { background-color: #ffffff; animation: explode-1 1.8s ease-out 0.2s forwards; top: 40%; left: 60%; }
+        .firework-13 { background-color: #f39c12; animation: explode-2 2.2s ease-out 0.1s forwards; top: 60%; left: 40%; }
+        .firework-14 { background-color: #a3e235; animation: explode-3 1.9s ease-out 0.3s forwards; top: 30%; left: 50%; }
+        .firework-15 { background-color: #ffffff; animation: explode-4 2.1s ease-out 0.2s forwards; top: 70%; left: 55%; }
+        .firework-16 { background-color: #a3e235; animation: explode-1 2s ease-out 0.5s forwards; top: 50%; left: 20%; }
+        .firework-17 { background-color: #f39c12; animation: explode-2 1.7s ease-out 0.1s forwards; top: 20%; left: 80%; }
+        .firework-18 { background-color: #ffffff; animation: explode-3 2.3s ease-out 0.4s forwards; top: 80%; left: 30%; }
+        .firework-19 { background-color: #a3e235; animation: explode-4 2.0s ease-out 0.6s forwards; top: 60%; left: 70%; }
+        .firework-20 { background-color: #ffffff; animation: explode-1 1.9s ease-out 0.2s forwards; top: 30%; left: 30%; }
+
+
+        /* 폭죽 폭발 키프레임 (다양한 방향) */
+        @keyframes explode-1 {
+          0% { transform: scale(1) translate(0, 0); opacity: 1; }
+          100% { transform: scale(0) translate(200px, -200px); opacity: 0; }
+        }
+        @keyframes explode-2 {
+          0% { transform: scale(1) translate(0, 0); opacity: 1; }
+          100% { transform: scale(0) translate(-250px, -150px); opacity: 0; }
+        }
+        @keyframes explode-3 {
+          0% { transform: scale(1) translate(0, 0); opacity: 1; }
+          100% { transform: scale(0) translate(150px, 250px); opacity: 0; }
+        }
+        @keyframes explode-4 {
+          0% { transform: scale(1) translate(0, 0); opacity: 1; }
+          100% { transform: scale(0) translate(-200px, 200px); opacity: 0; }
+        }
+
+        /* 기존 애니메이션 */
         @keyframes bounce-slow { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-12px); } }
         @keyframes neon-blink { 0%, 100% { opacity: 1; text-shadow: 0 0 15px rgba(163,230,53,1); } 50% { opacity: 0.1; } }
         @keyframes progress-3s { from { width: 0%; } to { width: 100%; } }

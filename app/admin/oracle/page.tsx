@@ -1,6 +1,5 @@
 "use client";
 import React from 'react';
-// 아래 경로들이 실제 파일명(대소문자 포함)과 100% 일치해야 합니다.
 import RevenueHud from './components/RevenueHud';
 import TokenomicsHud from './components/TokenomicsHud';
 import SubscriptionPolicyHud from './components/SubscriptionPolicyHud';
@@ -12,12 +11,18 @@ import WinnerVault from './components/WinnerVault';
 
 export default function OracleDashboard() {
   return (
-    <div className="min-h-screen bg-marpo-bg text-white p-10 font-sans relative">
+    <div className="min-h-screen bg-marpo-bg text-white p-10 font-sans relative overflow-x-hidden">
+      <div className="fixed inset-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: `radial-gradient(#f39c12 1px, transparent 1px)`, backgroundSize: '50px 50px' }}></div>
+      
       <header className="relative z-10 flex justify-between items-end mb-16 border-b border-marpo-zinc pb-8">
         <div>
-          <h1 className="text-6xl font-black tracking-tighter text-marpo-amber italic uppercase font-urbanist">
-            Marpo Oracle <span className="text-white font-light text-2xl ml-4 not-italic tracking-[0.5em]">Pi Command</span>
+          <h1 className="text-6xl font-black tracking-tighter text-marpo-amber italic uppercase">
+            Marpo Oracle <span className="text-white font-light text-2xl ml-4 not-italic tracking-[0.5em]">Command Center</span>
           </h1>
+          <p className="text-zinc-500 mt-3 font-bold uppercase tracking-[0.4em] text-sm">Pi Browser Integrated | Mining Governance</p>
+        </div>
+        <div className="text-right">
+          <p className="text-marpo-neon font-black text-lg animate-pulse tracking-widest">● LIVE</p>
         </div>
       </header>
 

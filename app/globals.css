@@ -2,18 +2,23 @@
 @tailwind components;
 @tailwind utilities;
 
-@layer base {
-  :root {
-    background-color: #050505;
-    color: #ffffff;
-  }
-  html, body {
-    @apply bg-marpo-bg text-white m-0 p-0 overflow-x-hidden;
-    background-color: #050505 !important;
-  }
+/* 시스템 기본 배경을 순수 CSS로 강제 고정 (절대 에러 안 남) */
+html, body {
+  background-color: #050505 !important;
+  color: #ffffff !important;
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
 }
 
-/* 전술적 유리 질감 (Glassmorphism) */
-.marpo-glass {
-  @apply bg-marpo-zinc/30 border border-marpo-zinc backdrop-blur-xl;
+/* 커스텀 스크롤바 (선택 사항) */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #050505;
+}
+::-webkit-scrollbar-thumb {
+  background: #f39c12;
+  border-radius: 10px;
 }

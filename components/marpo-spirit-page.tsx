@@ -12,7 +12,7 @@ const iconMap: Record<number, string> = {
   26: "26-Se.png", 27: "27-Gu.png", 28: "28-.png", 29: "29-Te.png", 30: "30-Cd.png",
   31: "31-Ti.png", 32: "32-.png", 33: "33-Nb.png", 34: "34-H2.png", 35: "35-H2O.png",
   36: "36-.png", 37: "37-O2.png", 38: "38-H2O2.png", 39: "39-Li-ion.png",
-  40: "40-na-ion.png", 41: "41-Li-S.png", 42: "42-.png", 43: "43-LiCoO2.png",
+  40: "40-na-ion.png", 41: "41-Li-S.png", 42: "42-.png", 43: "43-.png",
   44: "44-.png", 45: "45-CH4+O2.png"
 };
 
@@ -21,7 +21,7 @@ const getElementIcon = (num: number) => `/elements/${iconMap[num] || `${num}-.pn
 // 🚩 시간 추격자 토끼 가이드 대사 로직
 const rabbitGuides: Record<string, any> = {
   ko: [
-    { stage: "Ω Gold Rush", msg: "대표님, Ω의 가치가 고갈되기 전에 잡으세요! 금광의 시간은 흐릅니다!", color: "border-amber-500", text: "text-amber-500", fallback: "🐇" },
+    { stage: "Ω Gold Rush", msg: "파이오니어님, Ω의 가치가 고갈되기 전에 잡으세요! MAR 에너지를 채굴 할 시간 입니다!", color: "border-amber-500", text: "text-amber-500", fallback: "🐇" },
     { stage: "Industrial Era", msg: "산업 혁명 가동! 인사이더 Reveal로 더 정교하게 Ω를 예측하세요.", color: "border-blue-500", text: "text-blue-400", fallback: "⚙️" },
     { stage: "Web3 Protocol", msg: "진정한 경제적 저항의 시대입니다. MARPO 스왑으로 프로토콜의 주인이 되십시오.", color: "border-emerald-500", text: "text-emerald-400", fallback: "💻" }
   ],

@@ -95,7 +95,7 @@ export default function MarpoSpiritPage({ lang }: { lang: string }) {
           <div className="relative w-full max-w-lg aspect-square flex flex-col items-center justify-center">
              {/* 화성 배경 이미지 */}
              <div className="absolute inset-0 opacity-40">
-                <Image src="/mars-mining-bg.jpg" alt="Mars" fill className="object-cover" />
+                <Image src="/mars-mining-bg.png" alt="Mars" fill className="object-cover" />
              </div>
              
              {/* 🚩 움직이는 광부 (Spritesheet Animation) */}

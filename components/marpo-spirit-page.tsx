@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { Target, Send, RefreshCcw, Lock, Clock, Pickaxe, Loader2 } from 'lucide-react';
 
-// 🚩 45개 원소 아이콘 매핑 (대표님 수정 최종본 유지)
+// 🚩 45개 원소 아이콘 매핑 (43번 고정 완료)
 const iconMap: Record<number, string> = {
   1: "1-In.png", 2: "2-.png", 3: "3-.png", 4: "4-Y.png", 5: "5-.png",
   6: "6-As.png", 7: "7-.png", 8: "8-Th.png", 9: "9-Na.png", 10: "10-.png",
@@ -14,7 +14,7 @@ const iconMap: Record<number, string> = {
   31: "31-Ti.png", 32: "32-.png", 33: "33-Nb.png", 34: "34-H2.png", 35: "35-H2O.png",
   36: "36-.png", 37: "37-O2.png", 38: "38-H2O2.png", 39: "39-Li-ion.png",
   40: "40-na-ion.png", 41: "41-Li-S.png", 42: "42-.png", 
-  43: "43-.png", // 43번 매핑 고정
+  43: "43-.png", 
   44: "44-.png", 45: "45-CH4+O2.png"
 };
 
@@ -37,6 +37,9 @@ export default function MarpoSpiritPage({ lang }: { lang: string }) {
   const [matchCount, setMatchCount] = useState(0);
   const [wonAmount, setWonAmount] = useState(0);
   const [lineIdx, setLineIdx] = useState(0);
+  
+  // 🚩 누락되었던 힌트 번호 상태값 복구
+  const [revealedNumber, setRevealedNumber] = useState<number | null>(null);
 
   useEffect(() => {
     const interval = setInterval(() => setLineIdx((p) => (p + 1) % guideLines.length), 4000);
@@ -45,11 +48,36 @@ export default function MarpoSpiritPage({ lang }: { lang: string }) {
 
   const isUnlocked = adCount >= 3;
 
+  // 🚩 누락되었던 함수 1: 광고 시청
+  const handleAdWatch = () => {
+    if (adCount < 3) {
+      setAdCount(prev => prev + 1);
+      alert(`Ad Session Complete (${adCount + 1}/3)`);
+    }
+  };
+
+  // 🚩 누락되었던 함수 2: 번호 선택
+  const handleNumberToggle = (num: number) => {
+    if (!isUnlocked) return;
+    if (selectedNumbers.includes(num)) {
+      setSelectedNumbers(selectedNumbers.filter(n => n !== num));
+    } else if (selectedNumbers.length < 6) {
+      setSelectedNumbers([...selectedNumbers, num].sort((a, b) => a - b));
+    }
+  };
+
+  // 🚩 에러의 원인이었던 누락 함수 3: 인사이더 리빌 (힌트 보기)
+  const handleReveal = () => {
+    if (ohmBalance < 1000) return alert("Insufficient MAR-Ω.");
+    setOhmBalance(prev => prev - 1000);
+    setRevealedNumber(Math.floor(Math.random() * 45) + 1);
+  };
+
+  // 채굴 시작 (비디오 재생 로직 포함)
   const handleMining = () => {
     if (selectedNumbers.length < 6) return alert("원소 샘플 6개를 선택해주세요!");
     setGameState('mining');
 
-    // 영상 재생 시간에 맞춘 6초 대기
     setTimeout(() => {
       const results: number[] = [];
       while (results.length < 6) {
@@ -72,7 +100,7 @@ export default function MarpoSpiritPage({ lang }: { lang: string }) {
     <div className="min-h-screen bg-[#050505] text-white p-6 pb-48 flex flex-col items-center font-sans relative overflow-hidden">
       <div className="absolute inset-0 opacity-[0.03] pointer-events-none fixed" style={{ backgroundImage: `radial-gradient(#f39c12 1px, transparent 1px)`, backgroundSize: '40px 40px' }}></div>
 
-      {/* 가이드 내비게이터 */}
+      {/* 가이드 내비게이터 (토끼) */}
       <div className="w-full max-w-md mt-4 mb-8 flex items-start gap-6 relative z-20">
         <div className="relative w-28 h-28 shrink-0 bg-gradient-to-tr from-black to-zinc-900 rounded-full border-4 border-amber-500 shadow-[0_0_30px_rgba(243,156,18,0.3)] flex items-center justify-center overflow-hidden animate-bounce-slow">
            <Image src="/marpo-stage-1.png" alt="Rabbit" fill className="object-cover scale-110" priority unoptimized />
@@ -83,11 +111,10 @@ export default function MarpoSpiritPage({ lang }: { lang: string }) {
         </div>
       </div>
 
-      {/* 🚩 [핵심 수정] 시네마틱 채굴 영상 오버레이 */}
+      {/* 🚩 시네마틱 채굴 영상 오버레이 */}
       {gameState === 'mining' && (
         <div className="fixed inset-0 z-[1000] bg-black flex flex-col items-center justify-center p-0 animate-in fade-in duration-700">
           <div className="relative w-full h-full flex flex-col items-center justify-center">
-             {/* 🚩 채굴 비디오 재생 (자동재생, 무음, 반복) */}
              <video 
                autoPlay 
                muted 
@@ -98,7 +125,6 @@ export default function MarpoSpiritPage({ lang }: { lang: string }) {
                <source src="/mining-video.mp4" type="video/mp4" />
              </video>
              
-             {/* 영상 위 오버레이 효과 */}
              <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-black opacity-60"></div>
              
              <div className="relative z-10 flex flex-col items-center gap-6">
@@ -112,7 +138,7 @@ export default function MarpoSpiritPage({ lang }: { lang: string }) {
         </div>
       )}
 
-      {/* 결과 보고 모달 (이전과 동일) */}
+      {/* 결과 보고 모달 */}
       {gameState === 'result' && (
         <div className="fixed inset-0 z-[1000] bg-black/95 backdrop-blur-2xl flex flex-col items-center justify-center p-6 animate-in zoom-in duration-300">
           <div className="bg-zinc-900 border-2 border-amber-600 rounded-[4rem] p-12 w-full max-w-md text-center shadow-2xl">
@@ -140,7 +166,7 @@ export default function MarpoSpiritPage({ lang }: { lang: string }) {
         </div>
       )}
 
-      {/* 리워드 풀 & 드로우 보드 (기존 UI 유지) */}
+      {/* 리워드 풀 */}
       <section className="w-full max-w-md bg-gradient-to-br from-[#1a1a1a] to-[#050505] p-12 rounded-[3.5rem] border border-[#f39c12]/20 mb-10 shadow-2xl text-center">
         <p className="text-xs text-zinc-600 font-black uppercase tracking-[0.4em] mb-3">MAR-Ω Reward Pool Matching</p>
         <div className="flex items-center justify-center gap-4">
@@ -149,7 +175,7 @@ export default function MarpoSpiritPage({ lang }: { lang: string }) {
         </div>
       </section>
 
-      {/* 🚩 인사이더 리빌 (무한 깜빡임) */}
+      {/* 인사이더 리빌 (함수 복구 완료) */}
       <button onClick={handleReveal} className="w-full max-w-md py-7 bg-zinc-900/40 border border-[#f39c12]/40 rounded-3xl flex flex-col items-center mb-10 active:scale-95 transition-all">
         <div className="flex items-center gap-3 mb-1.5"><Target size={20} className="text-[#f39c12]" /><p className="text-[#f39c12] font-black text-sm uppercase tracking-[0.2em]">Insider Reveal</p></div>
         <p className="text-[16px] font-black uppercase tracking-widest italic text-lime-300 animate-infinite-blink">
@@ -157,21 +183,22 @@ export default function MarpoSpiritPage({ lang }: { lang: string }) {
         </p>
       </button>
 
-      {/* 전술 보드 */}
+      {/* 전술 보드 (함수 복구 완료) */}
       <div className={`w-full max-w-md bg-zinc-900/30 border border-zinc-800 rounded-[3.5rem] p-8 mb-12 relative shadow-2xl ${!isUnlocked && 'opacity-50 grayscale'}`}>
         {!isUnlocked && (
           <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black/70 backdrop-blur-md rounded-[3.5rem] p-8 text-center">
             <Lock size={56} className="text-[#f39c12] mb-6 animate-pulse" />
             <p className="text-[#f39c12] font-black text-lg uppercase mb-8">Watch 3 Ads to Unlock</p>
-            <button onClick={() => setAdCount(3)} className="px-10 py-5 bg-[#f39c12] text-black rounded-2xl font-black text-sm uppercase">Unlock (Debug)</button>
+            <button onClick={handleAdWatch} className="px-10 py-5 bg-[#f39c12] text-black rounded-2xl font-black text-sm uppercase">Watch Ad ({adCount}/3)</button>
           </div>
         )}
         <div className="grid grid-cols-6 gap-3">
           {[...Array(45)].map((_, i) => {
             const num = i + 1;
             const isSelected = selectedNumbers.includes(num);
+            const isHint = revealedNumber === num;
             return (
-              <button key={num} onClick={() => isUnlocked && setSelectedNumbers(prev => isSelected ? prev.filter(n => n !== num) : (prev.length < 6 ? [...prev, num].sort((a,b)=>a-b) : prev))} className={`relative aspect-square rounded-xl overflow-hidden transition-all duration-300 transform ${isSelected ? 'border-2 border-amber-500 scale-110 z-10' : 'border border-zinc-800'}`}>
+              <button key={num} onClick={() => handleNumberToggle(num)} className={`relative aspect-square rounded-xl overflow-hidden transition-all duration-300 transform ${isSelected ? 'border-2 border-amber-500 scale-110 z-10' : isHint ? 'border-2 border-[#f39c12] animate-pulse scale-105' : 'border border-zinc-800'}`}>
                 <div className={`absolute inset-0 bg-cover bg-center transition-opacity ${isSelected ? 'opacity-0' : 'opacity-100'}`} style={{ backgroundImage: `url('${getElementIcon(num)}')` }} />
                 <div className={`absolute inset-0 flex items-center justify-center bg-amber-500/20 ${isSelected ? 'opacity-100' : 'opacity-0'}`}>
                   <span className="text-2xl font-black text-amber-500">{num}</span>

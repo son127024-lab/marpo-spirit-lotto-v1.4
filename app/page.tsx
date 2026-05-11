@@ -1,6 +1,7 @@
 "use client";
 import React, { useState, useEffect } from 'react';
-// 👇 1. 잠들어있던 진짜 메인 게임 엔진을 불러옵니다. (경로가 다르면 에러가 날 수 있으니 확인 필요)
+
+// 👇 빨간 줄을 없애는 핵심: 정확한 폴더 경로에서 게임 엔진을 불러옵니다.
 import MarpoSpiritPage from '../components/marpo-spirit-page'; 
 
 export default function MainGameLobby() {
@@ -76,7 +77,7 @@ export default function MainGameLobby() {
     return (
       <div className="min-h-screen bg-marpo-bg text-white relative flex flex-col items-center">
         
-        {/* 상단 비상 탈출 네비게이션 (게임 위에 떠 있음) */}
+        {/* 상단 비상 탈출 네비게이션 */}
         <header className="w-full p-4 md:px-10 flex justify-between items-center z-50 bg-black/50 backdrop-blur-md sticky top-0 border-b border-marpo-zinc/50">
           <h2 className="text-lg font-black text-zinc-400 uppercase italic tracking-widest">Pi Network Connected</h2>
           <button 
@@ -90,7 +91,7 @@ export default function MainGameLobby() {
           </button>
         </header>
 
-        {/* 👇 2. 기존 빈 박스 자리에 진짜 마르포 스피릿 게임을 통째로 렌더링합니다! */}
+        {/* 빈 박스를 날리고 진짜 게임 화면 마운트 */}
         <main className="w-full flex-1 relative">
           <MarpoSpiritPage />
         </main>

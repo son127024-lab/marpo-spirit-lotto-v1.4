@@ -1,23 +1,23 @@
 "use client";
 import React, { useState, useEffect } from 'react';
+// 👇 1. 잠들어있던 진짜 메인 게임 엔진을 불러옵니다. (경로가 다르면 에러가 날 수 있으니 확인 필요)
+import MarpoSpiritPage from '../components/marpo-spirit-page'; 
 
 export default function MainGameLobby() {
   const [isReady, setIsReady] = useState(false);
-  // 3단계 화면 전환 로직 복구 (인트로 -> 결제 -> 메인 게임)
   const [view, setView] = useState<'intro' | 'subscription' | 'dashboard'>('intro');
 
   useEffect(() => {
     setIsReady(true);
-    // 세션 유지 로직: 이미 결제/로그인 기록이 있는 유저는 바로 메인 엔진으로 직행
     const savedSession = localStorage.getItem('marpo_session');
     if (savedSession === 'active') {
       setView('dashboard');
     }
   }, []);
 
-  if (!isReady) return null; // 화면 깜빡임(Hydration Error) 원천 차단
+  if (!isReady) return null;
 
-  // 🏁 1. 인트로 화면 (블록버스터급 대문)
+  // 🏁 1. 인트로 화면
   if (view === 'intro') {
     return (
       <div className="min-h-screen bg-marpo-bg text-white flex flex-col items-center justify-center p-6 relative overflow-hidden">
@@ -40,7 +40,7 @@ export default function MainGameLobby() {
     );
   }
 
-  // 💳 2. 구독/결제 화면 (파이 코인 연동 대기소)
+  // 💳 2. 구독/결제 화면
   if (view === 'subscription') {
     return (
       <div className="min-h-screen bg-marpo-bg text-white flex flex-col items-center justify-center p-6 relative">
@@ -71,40 +71,30 @@ export default function MainGameLobby() {
     );
   }
 
-  // 🎮 3. 메인 게임 대시보드 (말포 진화 및 로또 월드 구동)
+  // 🎮 3. 메인 게임 대시보드 (봉인 해제!)
   if (view === 'dashboard') {
     return (
-      <div className="min-h-screen bg-marpo-bg text-white p-6 md:p-10 relative flex flex-col items-center">
-        <header className="w-full max-w-6xl flex justify-between items-end border-b border-marpo-zinc pb-6 mb-10">
-          <div>
-            <h2 className="text-4xl font-black text-marpo-amber uppercase italic tracking-tighter">Lotto World</h2>
-            <p className="text-zinc-500 font-bold uppercase tracking-[0.3em] text-[10px] mt-2">Mal-Po Evolution System Active</p>
-          </div>
+      <div className="min-h-screen bg-marpo-bg text-white relative flex flex-col items-center">
+        
+        {/* 상단 비상 탈출 네비게이션 (게임 위에 떠 있음) */}
+        <header className="w-full p-4 md:px-10 flex justify-between items-center z-50 bg-black/50 backdrop-blur-md sticky top-0 border-b border-marpo-zinc/50">
+          <h2 className="text-lg font-black text-zinc-400 uppercase italic tracking-widest">Pi Network Connected</h2>
           <button 
             onClick={() => {
               localStorage.removeItem('marpo_session');
               setView('intro');
             }}
-            className="text-zinc-500 hover:text-marpo-amber text-xs font-bold uppercase tracking-widest transition-colors"
+            className="text-zinc-500 hover:text-marpo-amber text-[10px] font-bold uppercase tracking-widest transition-colors border border-zinc-800 px-3 py-1 rounded-full"
           >
             System Disconnect
           </button>
         </header>
 
-        {/* 향후 MarpoSpiritPage 컴포넌트가 마운트될 핵심 엔진 구역 */}
-        <main className="w-full max-w-6xl flex-1 flex flex-col items-center justify-center bg-marpo-zinc/20 border border-marpo-zinc border-dashed rounded-[3rem] p-10 text-center relative overflow-hidden group">
-          <div className="w-20 h-20 bg-marpo-amber/20 rounded-full flex items-center justify-center mb-6 animate-pulse shadow-[0_0_30px_rgba(243,156,18,0.2)]">
-             <span className="text-marpo-amber text-3xl font-black italic">M</span>
-          </div>
-          <h3 className="text-2xl font-black text-white uppercase italic tracking-widest mb-4">Mal-Po Engine Ready</h3>
-          <p className="text-zinc-400 max-w-lg text-sm leading-relaxed mb-8">
-            유저 데이터 연결 대기 중입니다.<br/>
-            골드러시부터 Web 3.0 시대까지 이어지는 6단계 진화 로직 컴포넌트를 이 영역에 마운트하십시오.
-          </p>
-          <div className="px-6 py-2 bg-black/50 border border-zinc-800 rounded-full">
-             <p className="text-[10px] text-marpo-neon font-mono uppercase tracking-widest animate-pulse">&lt;MarpoSpiritPage /&gt; Mount Area</p>
-          </div>
+        {/* 👇 2. 기존 빈 박스 자리에 진짜 마르포 스피릿 게임을 통째로 렌더링합니다! */}
+        <main className="w-full flex-1 relative">
+          <MarpoSpiritPage />
         </main>
+
       </div>
     );
   }

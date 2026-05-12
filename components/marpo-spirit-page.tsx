@@ -24,7 +24,6 @@ const guideLines = [
   "디플레이션을 향한 여정, 샘플 선택 후 채굴 버튼을 누르세요!"
 ];
 
-// 🚩 상태명 완벽 교정 (success_malpo -> success_marpo)
 type GameState = 'idle' | 'mining' | 'success_punch' | 'success_fireworks' | 'success_marpo' | 'fail_punch' | 'fail_rabbit' | 'ad_wall';
 type UserTier = 'basic' | 'premium' | 'vip';
 
@@ -42,7 +41,12 @@ export default function MarpoSpiritPage({ lang }: { lang: string }) {
   const [lineIdx, setLineIdx] = useState(0);
   const [revealedNumber, setRevealedNumber] = useState<number | null>(null);
 
+  // 🚩 핵심 연결: 결제창(app/page.tsx)에서 저장한 등급(tier)을 자동으로 불러옵니다.
   useEffect(() => {
+    const savedTier = localStorage.getItem('marpo_tier') as UserTier;
+    if (savedTier) {
+      setUserTier(savedTier);
+    }
     const interval = setInterval(() => setLineIdx((p) => (p + 1) % guideLines.length), 4000);
     return () => clearInterval(interval);
   }, []);
@@ -96,7 +100,7 @@ export default function MarpoSpiritPage({ lang }: { lang: string }) {
         setGameState('success_punch');
         setTimeout(() => {
           setGameState('success_fireworks');
-          setTimeout(() => setGameState('success_marpo'), 2000); // 🚩 수정 완료
+          setTimeout(() => setGameState('success_marpo'), 2000);
         }, 3000);
       } else {
         setGameState('fail_punch');
@@ -138,6 +142,7 @@ export default function MarpoSpiritPage({ lang }: { lang: string }) {
     <div className="min-h-screen bg-[#050505] text-white p-6 pb-48 flex flex-col items-center font-sans relative overflow-hidden">
       <div className="absolute inset-0 opacity-[0.03] pointer-events-none fixed" style={{ backgroundImage: "radial-gradient(#f39c12 1px, transparent 1px)", backgroundSize: "40px 40px" }}></div>
 
+      {/* 개발자 테스트 스위치 (필요 시 주석 처리 가능) */}
       <div className="absolute top-4 left-4 z-50 flex gap-2 bg-black/80 p-2 rounded-xl border border-zinc-800">
         <button onClick={() => {setUserTier('basic'); setDrawCount(0);}} className={`px-3 py-1 text-[10px] font-bold rounded-lg uppercase ${userTier==='basic' ? 'bg-zinc-600' : 'text-zinc-500'}`}>Basic</button>
         <button onClick={() => {setUserTier('premium'); setDrawCount(0);}} className={`px-3 py-1 text-[10px] font-bold rounded-lg uppercase ${userTier==='premium' ? 'bg-amber-600 text-black' : 'text-zinc-500'}`}>Premium</button>
@@ -194,12 +199,10 @@ export default function MarpoSpiritPage({ lang }: { lang: string }) {
         </div>
       )}
 
-      {/* 🟢 성공 3단계: 마르포 축하창 (철자 수정 완료) */}
       {gameState === 'success_marpo' && (
         <div className="fixed inset-0 z-[1300] bg-black/95 backdrop-blur-2xl flex flex-col items-center justify-center p-6 animate-in zoom-in duration-300">
           <div className="bg-gradient-to-b from-zinc-900 to-black border-4 border-lime-500 rounded-[4rem] p-12 w-full max-w-xl text-center shadow-[0_0_60px_rgba(163,230,53,0.3)] relative overflow-hidden">
             <div className="w-40 h-40 mx-auto mb-8 relative animate-bounce-slow z-10">
-               {/* 🚩 파일 이름 완벽 교정! */}
                <Image src="/marpo-celebrate.png" alt="Celebrating Marpo" fill className="object-contain" unoptimized />
                <Flame className="absolute -top-4 -right-4 text-lime-400 animate-pulse" size={32} />
             </div>

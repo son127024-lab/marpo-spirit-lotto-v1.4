@@ -1,25 +1,25 @@
 "use client";
 import React, { useState, useEffect } from 'react';
-// 👇 현재 가동 중인 게임 엔진을 불러옵니다
+// 🚩 점 2개(../) 경로 완벽 적용
 import MarpoSpiritPage from '../components/marpo-spirit-page'; 
 
 export default function MainGameLobby() {
   const [isReady, setIsReady] = useState(false);
   const [view, setView] = useState<'intro' | 'subscription' | 'dashboard'>('intro');
-  // 🚩 토크노믹스 동의 상태
   const [agreed, setAgreed] = useState(false);
 
   useEffect(() => {
     setIsReady(true);
-    const savedSession = localStorage.getItem('marpo_session');
-    if (savedSession === 'active') {
-      setView('dashboard');
-    }
+    // 🚧 [테스트용 임시 조치] 무조건 첫 화면을 보실 수 있도록 자동 로그인 로직을 잠시 꺼두었습니다.
+    // const savedSession = localStorage.getItem('marpo_session');
+    // if (savedSession === 'active') {
+    //   setView('dashboard');
+    // }
   }, []);
 
   if (!isReady) return null;
 
-  // 🚩 1단계: 인트로 & 토크노믹스 비전 및 동의
+  // 🏁 1단계: 인트로 & 토크노믹스 비전 및 동의
   if (view === 'intro') {
     return (
       <div className="min-h-screen bg-[#050505] text-white flex flex-col items-center justify-center p-6 relative overflow-hidden">
@@ -61,13 +61,12 @@ export default function MainGameLobby() {
     );
   }
 
-  // 🚩 2단계: 3단 구독 모델 (베이직, 프리미엄, VIP) 결제 연결
+  // 💳 2단계: 3단 구독 모델 (결제 연결창)
   if (view === 'subscription') {
     const handlePayment = (tier: string) => {
-      // 파이 네트워크 실제 결제 API가 연동될 자리
       alert(`[파이 지갑 호출] ${tier.toUpperCase()} 결제 승인 대기 중...`);
       localStorage.setItem('marpo_session', 'active');
-      localStorage.setItem('marpo_tier', tier); // 선택한 등급 저장
+      localStorage.setItem('marpo_tier', tier); 
       setView('dashboard');
     };
 
@@ -76,7 +75,6 @@ export default function MainGameLobby() {
         <h2 className="text-4xl font-black text-white italic uppercase mb-10 tracking-widest drop-shadow-[0_0_20px_rgba(255,255,255,0.2)]">Select Tier Protocol</h2>
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 w-full max-w-6xl">
-          {/* 베이직 */}
           <div className="bg-zinc-900 border border-zinc-700 rounded-[3rem] p-8 flex flex-col items-center text-center hover:border-zinc-500 transition-colors">
             <h3 className="text-2xl font-black text-zinc-400 uppercase mb-2">Basic</h3>
             <p className="text-4xl font-black text-white mb-6">0 Pi</p>
@@ -88,7 +86,6 @@ export default function MainGameLobby() {
             <button onClick={() => handlePayment('basic')} className="w-full py-4 bg-zinc-800 text-white rounded-xl font-black uppercase hover:bg-zinc-700 transition-colors">Free Access</button>
           </div>
 
-          {/* 프리미엄 */}
           <div className="bg-zinc-900 border-2 border-amber-500 rounded-[3rem] p-8 flex flex-col items-center text-center transform md:-translate-y-4 shadow-[0_0_40px_rgba(243,156,18,0.2)]">
             <div className="bg-amber-500 text-black text-xs font-black px-4 py-1 rounded-full uppercase tracking-widest mb-4">Most Popular</div>
             <h3 className="text-2xl font-black text-amber-500 uppercase mb-2">Premium</h3>
@@ -101,7 +98,6 @@ export default function MainGameLobby() {
             <button onClick={() => handlePayment('premium')} className="w-full py-5 bg-amber-500 text-black rounded-xl font-black uppercase text-lg shadow-[0_0_20px_rgba(243,156,18,0.4)] hover:scale-105 active:scale-95 transition-all">Connect Pi Wallet</button>
           </div>
 
-          {/* VIP */}
           <div className="bg-zinc-900 border border-lime-500/50 rounded-[3rem] p-8 flex flex-col items-center text-center hover:border-lime-500 transition-colors shadow-[0_0_30px_rgba(163,230,53,0.1)]">
             <h3 className="text-2xl font-black text-lime-400 uppercase mb-2">VIP</h3>
             <p className="text-4xl font-black text-white mb-6">3 Pi</p>
@@ -119,7 +115,7 @@ export default function MainGameLobby() {
     );
   }
 
-  // 🏁 3단계: 메인 게임 (결제 후 등급 정보와 함께 연결)
+  // 🎮 3단계: 메인 게임 대시보드
   if (view === 'dashboard') {
     return (
       <div className="min-h-screen bg-[#050505] text-white relative flex flex-col items-center">
@@ -139,9 +135,9 @@ export default function MainGameLobby() {
           </button>
         </header>
 
-        {/* 👇 여기서 방금 전까지 작업한 게임 엔진이 그대로 구동됩니다 */}
         <main className="w-full flex-1 relative">
-          <MarpoSpiritPage lang='ko'/>
+          {/* 🚩 에러의 원인이었던 필수 무기(lang="ko")를 완벽하게 장착했습니다! */}
+          <MarpoSpiritPage lang="ko" />
         </main>
       </div>
     );

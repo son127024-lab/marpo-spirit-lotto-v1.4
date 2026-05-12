@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
-import { Target, Lock, Pickaxe, Flame, AlertTriangle, Sparkles, RefreshCcw, PlaySquare, Crown, Star } from 'lucide-react';
+import { Target, Lock, Pickaxe, Flame, AlertTriangle, Sparkles, RefreshCcw, PlaySquare } from 'lucide-react';
 
 const iconMap: Record<number, string> = {
   1: "1-In.png", 2: "2-.png", 3: "3-.png", 4: "4-Y.png", 5: "5-.png",
@@ -24,16 +24,14 @@ const guideLines = [
   "디플레이션을 향한 여정, 샘플 선택 후 채굴 버튼을 누르세요!"
 ];
 
-// 🚩 ad_wall(광고 시청 벽) 상태 추가
 type GameState = 'idle' | 'mining' | 'success_punch' | 'success_fireworks' | 'success_malpo' | 'fail_punch' | 'fail_rabbit' | 'ad_wall';
 type UserTier = 'basic' | 'premium' | 'vip';
 
 export default function MarpoSpiritPage({ lang }: { lang: string }) {
   const [gameState, setGameState] = useState<GameState>('idle');
-  // 🚩 등급 및 채굴 횟수 트래킹 상태
   const [userTier, setUserTier] = useState<UserTier>('premium'); 
-  const [drawCount, setDrawCount] = useState(0); // 현재 수행한 드로우 횟수
-  const [adWallWatched, setAdWallWatched] = useState(0); // 광고 시청 횟수 카운트
+  const [drawCount, setDrawCount] = useState(0); 
+  const [adWallWatched, setAdWallWatched] = useState(0); 
 
   const [adCount, setAdCount] = useState(0); 
   const [ohmBalance, setOhmBalance] = useState(5300.0);
@@ -49,7 +47,7 @@ export default function MarpoSpiritPage({ lang }: { lang: string }) {
     return () => clearInterval(interval);
   }, []);
 
-  const isUnlocked = adCount >= 3 || userTier !== 'basic'; // 프리미엄/VIP는 기본 해제
+  const isUnlocked = adCount >= 3 || userTier !== 'basic'; 
 
   const handleAdWatch = () => {
     if (adCount < 3) {
@@ -78,7 +76,6 @@ export default function MarpoSpiritPage({ lang }: { lang: string }) {
     setGameState('mining');
     
     setTimeout(() => {
-      // 🚩 채굴(드로우) 횟수 증가
       setDrawCount(prev => prev + 1);
 
       const results: number[] = [];
@@ -108,40 +105,34 @@ export default function MarpoSpiritPage({ lang }: { lang: string }) {
     }, 6000);
   };
 
-  // 🚩 재도전 로직 세분화 (등급별 한도 체크)
   const handleRetry = () => {
     setSelectedNumbers([]);
     setRevealedNumber(null);
-    setAdWallWatched(0); // 광고 시청 기록 초기화
+    setAdWallWatched(0); 
 
-    // 1. 베이직: 매번 광고 선택창으로 이동
     if (userTier === 'basic') {
       setGameState('ad_wall');
     } 
-    // 2. 프리미엄: 5회 이상 시 광고 2회 요구
     else if (userTier === 'premium' && drawCount >= 5) {
       setGameState('ad_wall');
     } 
-    // 3. VIP: 10회 이상 시 광고 1회 요구
     else if (userTier === 'vip' && drawCount >= 10) {
       setGameState('ad_wall');
     } 
-    // 한도가 남았으면 즉시 재도전
     else {
       setGameState('idle');
     }
   };
 
-  // 🚩 광고 시청 버튼 로직 (가상 시뮬레이션)
+  // 🚩 광고 시청 버튼 로직 (프리미엄도 1회로 통일)
   const executeAdWatch = () => {
-    const targetAds = userTier === 'premium' ? 2 : 1; // 베이직/VIP는 1회, 프리미엄은 2회
+    const targetAds = 1; // 모든 등급 공통으로 광고 1회 시청
     const newCount = adWallWatched + 1;
     
     setAdWallWatched(newCount);
 
     if (newCount >= targetAds) {
       alert("✅ 광고 시청 확인 완료! 1회 추가 드로우가 승인되었습니다.");
-      // 1회 더 뽑을 수 있도록 카운트 조정 (프리미엄은 4로, VIP는 9로, 베이직은 무관)
       if (userTier === 'premium') setDrawCount(4);
       if (userTier === 'vip') setDrawCount(9);
       
@@ -153,7 +144,6 @@ export default function MarpoSpiritPage({ lang }: { lang: string }) {
     <div className="min-h-screen bg-[#050505] text-white p-6 pb-48 flex flex-col items-center font-sans relative overflow-hidden">
       <div className="absolute inset-0 opacity-[0.03] pointer-events-none fixed" style={{ backgroundImage: `radial-gradient(#f39c12 1px, transparent 1px)`, backgroundSize: '40px 40px' }}></div>
 
-      {/* ⚙️ 대표님 테스트 전용: 상단 등급 전환 스위치 (개발용) */}
       <div className="absolute top-4 left-4 z-50 flex gap-2 bg-black/80 p-2 rounded-xl border border-zinc-800">
         <button onClick={() => {setUserTier('basic'); setDrawCount(0);}} className={`px-3 py-1 text-[10px] font-bold rounded-lg uppercase ${userTier==='basic' ? 'bg-zinc-600' : 'text-zinc-500'}`}>Basic</button>
         <button onClick={() => {setUserTier('premium'); setDrawCount(0);}} className={`px-3 py-1 text-[10px] font-bold rounded-lg uppercase ${userTier==='premium' ? 'bg-amber-600 text-black' : 'text-zinc-500'}`}>Premium</button>
@@ -173,7 +163,6 @@ export default function MarpoSpiritPage({ lang }: { lang: string }) {
         </div>
       </div>
 
-      {/* 채굴 영상 */}
       {gameState === 'mining' && (
         <div className="fixed inset-0 z-[1000] bg-black flex flex-col items-center justify-center p-0 animate-in fade-in duration-700">
           <div className="relative w-full h-full flex flex-col items-center justify-center">
@@ -190,9 +179,7 @@ export default function MarpoSpiritPage({ lang }: { lang: string }) {
         </div>
       )}
 
-      {/* 성공 시퀀스 */}
       {gameState === 'success_punch' && (
-        /* 기존 성공 펀치 코드 유지 */
         <div className="fixed inset-0 z-[1100] bg-black flex items-center justify-center animate-in fade-in duration-500">
           <div className="relative w-full h-full">
             <Image src="/인플레이션 펀치.png" alt="Inflation Punch" fill className="object-cover" priority unoptimized />
@@ -212,7 +199,6 @@ export default function MarpoSpiritPage({ lang }: { lang: string }) {
       )}
 
       {gameState === 'success_fireworks' && (
-        /* 기존 폭죽 코드 유지 */
         <div className="fixed inset-0 z-[1200] bg-black/80 flex flex-col items-center justify-center animate-in fade-in duration-300">
           <div className="firework-container relative w-full h-full overflow-hidden">
             {[...Array(20)].map((_, i) => ( <div key={i} className={`firework firework-${i+1}`}></div> ))}
@@ -224,7 +210,6 @@ export default function MarpoSpiritPage({ lang }: { lang: string }) {
         </div>
       )}
 
-      {/* 성공 모달 */}
       {gameState === 'success_malpo' && (
         <div className="fixed inset-0 z-[1300] bg-black/95 backdrop-blur-2xl flex flex-col items-center justify-center p-6 animate-in zoom-in duration-300">
           <div className="bg-gradient-to-b from-zinc-900 to-black border-4 border-lime-500 rounded-[4rem] p-12 w-full max-w-xl text-center shadow-[0_0_60px_rgba(163,230,53,0.3)] relative overflow-hidden">
@@ -243,8 +228,6 @@ export default function MarpoSpiritPage({ lang }: { lang: string }) {
                     <p className="text-5xl font-black text-white tracking-tighter">+{wonAmount.toLocaleString()} <span className="text-amber-500 italic">Ω</span></p>
                 </div>
             </div>
-            
-            {/* 🚩 재도전(handleRetry) 연결 */}
             <button onClick={handleRetry} className="w-full flex items-center justify-center gap-3 py-6 bg-lime-500 text-black rounded-2xl font-black text-xl hover:scale-105 active:scale-95 transition-all relative z-10">
               <RefreshCcw size={24} /> 재도전 (새로운 원석 선택)
             </button>
@@ -252,9 +235,7 @@ export default function MarpoSpiritPage({ lang }: { lang: string }) {
         </div>
       )}
 
-      {/* 실패 시퀀스 */}
       {gameState === 'fail_punch' && (
-        /* 기존 실패 펀치 코드 유지 */
         <div className="fixed inset-0 z-[1100] bg-black flex items-center justify-center animate-in fade-in duration-500">
           <div className="relative w-full h-full">
             <Image src="/인플레이션 펀치커버 .png" alt="Inflation Counterattack" fill className="object-cover" priority unoptimized />
@@ -272,7 +253,6 @@ export default function MarpoSpiritPage({ lang }: { lang: string }) {
         </div>
       )}
 
-      {/* 실패 모달 */}
       {gameState === 'fail_rabbit' && (
         <div className="fixed inset-0 z-[1200] bg-black/95 backdrop-blur-2xl flex flex-col items-center justify-center p-6 animate-in zoom-in duration-300">
           <div className="bg-gradient-to-b from-zinc-900 to-black border-4 border-amber-600 rounded-[4rem] p-12 w-full max-w-xl text-center shadow-[0_0_60px_rgba(243,156,18,0.2)] relative overflow-hidden">
@@ -286,8 +266,6 @@ export default function MarpoSpiritPage({ lang }: { lang: string }) {
                 </p>
                 <div className="absolute -bottom-10 -right-3 text-amber-500 text-6xl font-serif">”</div>
             </div>
-            
-            {/* 🚩 재도전(handleRetry) 연결 */}
             <button onClick={handleRetry} className="w-full flex items-center justify-center gap-3 py-6 bg-amber-500 text-black rounded-2xl font-black text-xl hover:scale-105 active:scale-95 transition-all relative z-10">
               <RefreshCcw size={24} /> 재도전 (전술 재정비)
             </button>
@@ -295,36 +273,32 @@ export default function MarpoSpiritPage({ lang }: { lang: string }) {
         </div>
       )}
 
-      {/* 🚩 신규 로직: 광고 시청 페이월 (Ad Wall) 모달 */}
       {gameState === 'ad_wall' && (
         <div className="fixed inset-0 z-[2000] bg-black/95 backdrop-blur-2xl flex flex-col items-center justify-center p-6 animate-in zoom-in duration-300">
           <div className="bg-zinc-900 border-2 border-amber-500 rounded-[3rem] p-10 w-full max-w-md text-center shadow-2xl relative overflow-hidden">
-            
             <PlaySquare size={64} className="text-amber-500 mx-auto mb-6 animate-pulse" />
-            
             <h2 className="text-3xl font-black text-white mb-2 italic uppercase">System Alert</h2>
             <div className="h-1 w-20 bg-amber-500 mx-auto mb-8 rounded-full"></div>
             
-            {/* 등급별 맞춤형 안내 메시지 */}
             <div className="bg-black/50 p-6 rounded-2xl mb-10 border border-zinc-800 text-sm leading-relaxed text-zinc-300 font-bold break-keep">
               {userTier === 'basic' && (
                 <p><span className="text-zinc-400">베이직 유저 탐색 프로토콜</span><br/><br/>새로운 원소 채굴을 진행하시려면<br/>광고를 1회 시청해 주십시오.</p>
               )}
+              {/* 🚩 프리미엄 안내 텍스트 1회로 수정 */}
               {userTier === 'premium' && (
-                <p><span className="text-amber-500">프리미엄 4시간 내 5회 프리드로우 완료</span><br/><br/>추가 1회 드로우 권한을 획득하려면<br/>광고 2회를 시청해 주십시오.</p>
+                <p><span className="text-amber-500">프리미엄 4시간 내 5회 프리드로우 완료</span><br/><br/>추가 1회 드로우 권한을 획득하려면<br/>광고 1회를 시청해 주십시오.</p>
               )}
               {userTier === 'vip' && (
                 <p><span className="text-lime-500">VIP 10회 연속 프리드로우 완료</span><br/><br/>추가 1회 드로우 권한을 획득하려면<br/>짧은 광고 1회를 시청해 주십시오.</p>
               )}
             </div>
 
-            {/* 광고 시청 액션 버튼 */}
+            {/* 🚩 버튼 텍스트도 고정 1회로 수정 */}
             <button onClick={executeAdWatch} className="w-full flex items-center justify-center gap-3 py-5 bg-amber-500 text-black rounded-xl font-black text-lg shadow-[0_0_20px_rgba(243,156,18,0.3)] hover:scale-105 active:scale-95 transition-all mb-4">
               <PlaySquare size={20} fill="currentColor" />
-              광고 시청하기 ({adWallWatched} / {userTier === 'premium' ? 2 : 1})
+              광고 시청하기 ({adWallWatched} / 1)
             </button>
 
-            {/* 돌아가기 버튼 */}
             <button onClick={() => setGameState('idle')} className="text-zinc-500 text-xs font-bold underline hover:text-white transition-colors">
               나중에 하기 (로비로 이동)
             </button>
@@ -332,7 +306,6 @@ export default function MarpoSpiritPage({ lang }: { lang: string }) {
         </div>
       )}
 
-      {/* 하단 금고 & 채굴 시작 */}
       <div className="w-full max-w-md mt-auto bg-zinc-900/50 p-8 rounded-[3.5rem] border border-zinc-800 flex justify-between items-center shadow-2xl relative z-20">
          <div className="flex items-center gap-6">
            <div className="w-16 h-16 bg-zinc-900 rounded-2xl flex items-center justify-center border border-zinc-800 text-amber-500 font-black text-3xl">Ω</div>
@@ -358,7 +331,21 @@ export default function MarpoSpiritPage({ lang }: { lang: string }) {
         .firework-3 { background-color: #a3e235; animation: explode-3 2.2s ease-out 0.1s forwards; top: 60%; left: 40%; }
         .firework-4 { background-color: #f39c12; animation: explode-4 1.9s ease-out 0.3s forwards; top: 30%; left: 50%; }
         .firework-5 { background-color: #ffffff; animation: explode-1 2.1s ease-out 0.2s forwards; top: 70%; left: 55%; }
-        /* 생략: 20개 파티클 애니메이션 코드는 동일하게 작동합니다 */
+        .firework-6 { background-color: #f39c12; animation: explode-2 2s ease-out 0.5s forwards; top: 50%; left: 20%; }
+        .firework-7 { background-color: #a3e235; animation: explode-3 1.7s ease-out 0.1s forwards; top: 20%; left: 80%; }
+        .firework-8 { background-color: #ffffff; animation: explode-4 2.3s ease-out 0.4s forwards; top: 80%; left: 30%; }
+        .firework-9 { background-color: #f39c12; animation: explode-1 2.0s ease-out 0.6s forwards; top: 60%; left: 70%; }
+        .firework-10 { background-color: #ffffff; animation: explode-2 1.9s ease-out 0.2s forwards; top: 30%; left: 30%; }
+        .firework-11 { background-color: #a3e235; animation: explode-3 2s ease-out forwards; top: 50%; left: 50%; }
+        .firework-12 { background-color: #ffffff; animation: explode-1 1.8s ease-out 0.2s forwards; top: 40%; left: 60%; }
+        .firework-13 { background-color: #f39c12; animation: explode-2 2.2s ease-out 0.1s forwards; top: 60%; left: 40%; }
+        .firework-14 { background-color: #a3e235; animation: explode-3 1.9s ease-out 0.3s forwards; top: 30%; left: 50%; }
+        .firework-15 { background-color: #ffffff; animation: explode-4 2.1s ease-out 0.2s forwards; top: 70%; left: 55%; }
+        .firework-16 { background-color: #a3e235; animation: explode-1 2s ease-out 0.5s forwards; top: 50%; left: 20%; }
+        .firework-17 { background-color: #f39c12; animation: explode-2 1.7s ease-out 0.1s forwards; top: 20%; left: 80%; }
+        .firework-18 { background-color: #ffffff; animation: explode-3 2.3s ease-out 0.4s forwards; top: 80%; left: 30%; }
+        .firework-19 { background-color: #a3e235; animation: explode-4 2.0s ease-out 0.6s forwards; top: 60%; left: 70%; }
+        .firework-20 { background-color: #ffffff; animation: explode-1 1.9s ease-out 0.2s forwards; top: 30%; left: 30%; }
 
         @keyframes explode-1 { 0% { transform: scale(1) translate(0, 0); opacity: 1; } 100% { transform: scale(0) translate(200px, -200px); opacity: 0; } }
         @keyframes explode-2 { 0% { transform: scale(1) translate(0, 0); opacity: 1; } 100% { transform: scale(0) translate(-250px, -150px); opacity: 0; } }

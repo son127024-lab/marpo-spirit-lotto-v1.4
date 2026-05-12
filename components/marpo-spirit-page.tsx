@@ -17,7 +17,6 @@ const iconMap: Record<number, string> = {
 
 const getElementIcon = (num: number) => `/elements/${iconMap[num] || `${num}-.png`}`;
 
-// 🚩 1. 다국어 토끼 가이드 데이터베이스
 const guideData = {
   ko: [
     "파이오니어님 이제 MAR 에너지 채굴 탐색을 시작합니다.",
@@ -36,7 +35,6 @@ const guideData = {
 type GameState = 'idle' | 'mining' | 'success_punch' | 'success_fireworks' | 'success_marpo' | 'fail_punch' | 'fail_rabbit' | 'ad_wall';
 type UserTier = 'basic' | 'premium' | 'vip';
 
-// 🚩 2. lang 프로퍼티를 받아옵니다.
 export default function MarpoSpiritPage({ lang = 'ko' }: { lang?: 'ko' | 'en' }) {
   const [gameState, setGameState] = useState<GameState>('idle');
   const [userTier, setUserTier] = useState<UserTier>('premium'); 
@@ -53,14 +51,12 @@ export default function MarpoSpiritPage({ lang = 'ko' }: { lang?: 'ko' | 'en' })
   const [vipBonusHit, setVipBonusHit] = useState(false);
   const [vipTargetNumbers, setVipTargetNumbers] = useState<number[]>([]);
 
-  // 🚩 3. 선택된 언어의 가이드라인을 가져옵니다.
   const currentGuides = guideData[lang] || guideData.ko;
 
   useEffect(() => {
     const savedTier = localStorage.getItem('marpo_tier') as UserTier;
     if (savedTier) setUserTier(savedTier);
     
-    // 가이드 텍스트 자동 슬라이드 애니메이션
     const interval = setInterval(() => setLineIdx((p) => (p + 1) % currentGuides.length), 4000);
     return () => clearInterval(interval);
   }, [currentGuides]);
@@ -126,6 +122,7 @@ export default function MarpoSpiritPage({ lang = 'ko' }: { lang?: 'ko' | 'en' })
       setWonAmount(reward);
       setOhmBalance(prev => prev + reward);
 
+      // 🚩 펀치 타격 애니메이션 연결 구간
       if (reward > 0) {
         setGameState('success_punch');
         setTimeout(() => {
@@ -155,7 +152,7 @@ export default function MarpoSpiritPage({ lang = 'ko' }: { lang?: 'ko' | 'en' })
     <div className="min-h-screen bg-[#050505] text-white p-6 pb-48 flex flex-col items-center font-sans relative overflow-hidden">
       <div className="absolute inset-0 opacity-[0.03] pointer-events-none fixed" style={{ backgroundImage: "radial-gradient(#f39c12 1px, transparent 1px)", backgroundSize: "40px 40px" }}></div>
 
-      {/* 가이드 내비게이터 (언어 자동 변환 적용) */}
+      {/* 가이드 내비게이터 */}
       <div className="w-full max-w-md mt-14 mb-8 flex items-start gap-6 relative z-20">
         <div className="relative w-28 h-28 shrink-0 bg-gradient-to-tr from-black to-zinc-900 rounded-full border-4 border-amber-500 shadow-[0_0_30px_rgba(243,156,18,0.3)] flex items-center justify-center overflow-hidden animate-bounce-slow relative">
            <Image src="/marpo-stage-1.png" alt="Rabbit" fill className="object-cover scale-110" priority unoptimized />
@@ -163,7 +160,6 @@ export default function MarpoSpiritPage({ lang = 'ko' }: { lang?: 'ko' | 'en' })
         </div>
         <div className="relative flex-1 bg-zinc-900/70 border border-zinc-800 rounded-[2.5rem] p-7 shadow-2xl backdrop-blur-xl min-h-[120px] flex items-center">
           <div className="absolute top-10 -left-4 w-0 h-0 border-t-[12px] border-t-transparent border-r-[20px] border-r-zinc-800 border-b-[12px] border-b-transparent"></div>
-          {/* 🚩 여기서 언어에 맞는 가이드가 출력됩니다. */}
           <p className="text-[16px] md:text-[18px] font-bold text-zinc-200 leading-relaxed italic px-2">"{currentGuides[lineIdx]}"</p>
         </div>
       </div>
@@ -181,7 +177,40 @@ export default function MarpoSpiritPage({ lang = 'ko' }: { lang?: 'ko' | 'en' })
         </div>
       )}
 
-      {/* 성공 3단계: 마르포 축하창 (언어 변환) */}
+      {/* 🟢 성공 1단계: 인플레이션 펀치 */}
+      {gameState === 'success_punch' && (
+        <div className="fixed inset-0 z-[1100] bg-black flex items-center justify-center animate-in fade-in duration-500">
+          <div className="relative w-full h-full">
+            <Image src="/인플레이션 펀치.png" alt="Inflation Punch" fill className="object-cover" priority unoptimized />
+            <div className="absolute top-20 left-0 w-full text-center z-10">
+              <p className="text-5xl md:text-7xl font-black text-lime-400 uppercase italic tracking-tighter drop-shadow-[0_0_30px_rgba(163,230,53,1)] animate-pulse">
+                {lang === 'ko' ? 'Inflation Smashed!' : 'Inflation Smashed!'}
+              </p>
+            </div>
+            <div className="absolute bottom-10 left-1/2 -translate-x-1/2 w-full max-w-xl px-10 z-10">
+                <div className="w-full h-3 bg-zinc-800 rounded-full overflow-hidden border border-zinc-700">
+                  {/* 🚩 3초 진행 게이지 (복구 완료) */}
+                  <div className="h-full bg-lime-500 animate-progress-3s"></div>
+                </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 🟢 성공 2단계: 폭죽 애니메이션 */}
+      {gameState === 'success_fireworks' && (
+        <div className="fixed inset-0 z-[1200] bg-black/80 flex flex-col items-center justify-center animate-in fade-in duration-300">
+          <div className="firework-container relative w-full h-full overflow-hidden">
+            {[...Array(20)].map((_, i) => ( <div key={i} className={`firework firework-${i+1}`}></div> ))}
+          </div>
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10 text-center flex flex-col items-center gap-6">
+            <Sparkles size={100} className="text-amber-400 animate-pulse drop-shadow-[0_0_30px_rgba(243,156,18,0.8)]" />
+            <p className="text-6xl md:text-8xl font-black text-white uppercase italic tracking-tighter drop-shadow-[0_0_20px_rgba(255,255,255,0.5)] leading-none font-urbanist">CELEBRATION</p>
+          </div>
+        </div>
+      )}
+
+      {/* 🟢 성공 3단계: 마르포 축하창 */}
       {gameState === 'success_marpo' && (
         <div className="fixed inset-0 z-[1300] bg-black/95 backdrop-blur-2xl flex flex-col items-center justify-center p-6 animate-in zoom-in duration-300">
           <div className="bg-gradient-to-b from-zinc-900 to-black border-4 border-lime-500 rounded-[4rem] p-12 w-full max-w-xl text-center shadow-[0_0_60px_rgba(163,230,53,0.3)] relative overflow-hidden">
@@ -215,7 +244,27 @@ export default function MarpoSpiritPage({ lang = 'ko' }: { lang?: 'ko' | 'en' })
         </div>
       )}
 
-      {/* 실패 2단계: 토끼 독려창 (언어 변환) */}
+      {/* 🔴 실패 1단계: 인플레이션 역습 (펀치) */}
+      {gameState === 'fail_punch' && (
+        <div className="fixed inset-0 z-[1100] bg-black flex items-center justify-center animate-in fade-in duration-500">
+          <div className="relative w-full h-full">
+            <Image src="/인플레이션 펀치커버 .png" alt="Inflation Counterattack" fill className="object-cover" priority unoptimized />
+            <div className="absolute top-20 left-0 w-full text-center z-10">
+              <p className="text-5xl md:text-7xl font-black text-red-500 uppercase italic tracking-tighter drop-shadow-[0_0_30px_rgba(239,68,68,1)] animate-pulse">
+                {lang === 'ko' ? 'Inflation Strikes Back!' : 'Inflation Strikes Back!'}
+              </p>
+            </div>
+            <div className="absolute bottom-10 left-1/2 -translate-x-1/2 w-full max-w-xl px-10 z-10">
+                <div className="w-full h-3 bg-zinc-800 rounded-full overflow-hidden border border-zinc-700">
+                  {/* 🚩 3초 진행 게이지 (복구 완료) */}
+                  <div className="h-full bg-red-600 animate-progress-3s"></div>
+                </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 🔴 실패 2단계: 토끼 독려창 */}
       {gameState === 'fail_rabbit' && (
         <div className="fixed inset-0 z-[1200] bg-black/95 backdrop-blur-2xl flex flex-col items-center justify-center p-6 animate-in zoom-in duration-300">
           <div className="bg-gradient-to-b from-zinc-900 to-black border-4 border-amber-600 rounded-[4rem] p-12 w-full max-w-xl text-center shadow-[0_0_60px_rgba(243,156,18,0.2)] relative overflow-hidden">
@@ -237,7 +286,7 @@ export default function MarpoSpiritPage({ lang = 'ko' }: { lang?: 'ko' | 'en' })
         </div>
       )}
 
-      {/* 광고 시청 요구 모달 (언어 변환) */}
+      {/* 광고 모달 */}
       {gameState === 'ad_wall' && (
         <div className="fixed inset-0 z-[2000] bg-black/95 backdrop-blur-2xl flex flex-col items-center justify-center p-6 animate-in zoom-in duration-300">
           <div className="bg-zinc-900 border-2 border-amber-500 rounded-[3rem] p-10 w-full max-w-md text-center shadow-2xl relative overflow-hidden">
@@ -268,14 +317,6 @@ export default function MarpoSpiritPage({ lang = 'ko' }: { lang?: 'ko' | 'en' })
         </div>
       </section>
 
-      {/* 인사이더 힌트 */}
-      <button onClick={handleReveal} className="w-full max-w-md py-7 bg-zinc-900/40 border border-[#f39c12]/40 rounded-3xl flex flex-col items-center mb-10 active:scale-95 transition-all relative z-20">
-        <div className="flex items-center gap-3 mb-1.5"><Target size={20} className="text-[#f39c12]" /><p className="text-[#f39c12] font-black text-sm uppercase tracking-[0.2em]">Insider Reveal</p></div>
-        <p className="text-[16px] font-black uppercase tracking-widest italic text-lime-300 animate-infinite-blink">
-          {lang === 'ko' ? "1,000 Ω 소모하여 힌트 보기" : "Burn 1,000 Ω for a hint"}
-        </p>
-      </button>
-
       {/* 전술 보드판 */}
       <div className={`w-full max-w-md bg-zinc-900/30 border border-zinc-800 rounded-[3.5rem] p-8 mb-12 relative shadow-2xl z-20 ${!isUnlocked && 'opacity-50 grayscale'}`}>
         {!isUnlocked && (
@@ -289,9 +330,8 @@ export default function MarpoSpiritPage({ lang = 'ko' }: { lang?: 'ko' | 'en' })
           {[...Array(45)].map((_, i) => {
             const num = i + 1;
             const isSelected = selectedNumbers.includes(num);
-            const isHint = revealedNumber === num;
             return (
-              <button key={num} onClick={() => handleNumberToggle(num)} className={`relative aspect-square rounded-xl overflow-hidden transition-all duration-300 transform ${isSelected ? 'border-2 border-amber-500 scale-110 z-10' : isHint ? 'border-2 border-[#f39c12] animate-pulse scale-105' : 'border border-zinc-800'}`}>
+              <button key={num} onClick={() => handleNumberToggle(num)} className={`relative aspect-square rounded-xl overflow-hidden transition-all duration-300 transform ${isSelected ? 'border-2 border-amber-500 scale-110 z-10' : 'border border-zinc-800'}`}>
                 <div className={`absolute inset-0 bg-cover bg-center transition-opacity ${isSelected ? 'opacity-0' : 'opacity-100'}`} style={{ backgroundImage: `url('${getElementIcon(num)}')` }} />
                 <div className={`absolute inset-0 flex items-center justify-center bg-amber-500/20 ${isSelected ? 'opacity-100' : 'opacity-0'}`}>
                   <span className="text-2xl font-black text-amber-500">{num}</span>
@@ -316,12 +356,34 @@ export default function MarpoSpiritPage({ lang = 'ko' }: { lang?: 'ko' | 'en' })
          </button>
       </div>
 
+      {/* 🌟 날아갔던 핵심 CSS 완벽 복원 🌟 */}
       <style jsx global>{`
         @import url('https://fonts.googleapis.com/css2?family=Urbanist:ital,wght@1,900&display=swap');
         .font-urbanist { font-family: 'Urbanist', sans-serif; }
+        
+        .firework { position: absolute; width: 5px; height: 5px; border-radius: 50%; opacity: 0; transform-origin: center; }
+        .firework-1 { background-color: #f39c12; animation: explode-1 2s ease-out forwards; top: 50%; left: 50%; }
+        .firework-2 { background-color: #ffffff; animation: explode-2 1.8s ease-out 0.2s forwards; top: 40%; left: 60%; }
+        .firework-3 { background-color: #a3e235; animation: explode-3 2.2s ease-out 0.1s forwards; top: 60%; left: 40%; }
+        .firework-4 { background-color: #f39c12; animation: explode-4 1.9s ease-out 0.3s forwards; top: 30%; left: 50%; }
+        .firework-5 { background-color: #ffffff; animation: explode-1 2.1s ease-out 0.2s forwards; top: 70%; left: 55%; }
+        .firework-6 { background-color: #f39c12; animation: explode-2 2s ease-out 0.5s forwards; top: 50%; left: 20%; }
+        .firework-7 { background-color: #a3e235; animation: explode-3 1.7s ease-out 0.1s forwards; top: 20%; left: 80%; }
+        .firework-8 { background-color: #ffffff; animation: explode-4 2.3s ease-out 0.4s forwards; top: 80%; left: 30%; }
+        .firework-9 { background-color: #f39c12; animation: explode-1 2.0s ease-out 0.6s forwards; top: 60%; left: 70%; }
+        .firework-10 { background-color: #ffffff; animation: explode-2 1.9s ease-out 0.2s forwards; top: 30%; left: 30%; }
+
+        @keyframes explode-1 { 0% { transform: scale(1) translate(0, 0); opacity: 1; } 100% { transform: scale(0) translate(200px, -200px); opacity: 0; } }
+        @keyframes explode-2 { 0% { transform: scale(1) translate(0, 0); opacity: 1; } 100% { transform: scale(0) translate(-250px, -150px); opacity: 0; } }
+        @keyframes explode-3 { 0% { transform: scale(1) translate(0, 0); opacity: 1; } 100% { transform: scale(0) translate(150px, 250px); opacity: 0; } }
+        @keyframes explode-4 { 0% { transform: scale(1) translate(0, 0); opacity: 1; } 100% { transform: scale(0) translate(-200px, 200px); opacity: 0; } }
+
         @keyframes bounce-slow { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-12px); } }
-        .animate-bounce-slow { animation: bounce-slow 4s ease-in-out infinite; }
+        @keyframes progress-3s { from { width: 0%; } to { width: 100%; } }
         @keyframes neon-blink { 0%, 100% { opacity: 1; text-shadow: 0 0 15px rgba(163,230,53,1); } 50% { opacity: 0.1; } }
+
+        .animate-bounce-slow { animation: bounce-slow 4s ease-in-out infinite; }
+        .animate-progress-3s { animation: progress-3s 3s linear forwards; }
         .animate-infinite-blink { animation: neon-blink 1s linear infinite; }
       `}</style>
     </div>

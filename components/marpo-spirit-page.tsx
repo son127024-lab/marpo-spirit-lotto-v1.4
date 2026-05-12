@@ -32,7 +32,6 @@ export default function MarpoSpiritPage({ lang }: { lang: string }) {
   const [userTier, setUserTier] = useState<UserTier>('premium'); 
   const [drawCount, setDrawCount] = useState(0); 
   const [adWallWatched, setAdWallWatched] = useState(0); 
-
   const [adCount, setAdCount] = useState(0); 
   const [ohmBalance, setOhmBalance] = useState(5300.0);
   const [selectedNumbers, setSelectedNumbers] = useState<number[]>([]);
@@ -52,7 +51,7 @@ export default function MarpoSpiritPage({ lang }: { lang: string }) {
   const handleAdWatch = () => {
     if (adCount < 3) {
       setAdCount(prev => prev + 1);
-      if(adCount + 1 === 3) alert("시스템 잠금이 해제되었습니다. 전술판을 가동합니다.");
+      if(adCount + 1 === 3) alert("시스템 잠금이 해제되었습니다.");
     }
   };
 
@@ -112,14 +111,11 @@ export default function MarpoSpiritPage({ lang }: { lang: string }) {
 
     if (userTier === 'basic') {
       setGameState('ad_wall');
-    } 
-    else if (userTier === 'premium' && drawCount >= 5) {
+    } else if (userTier === 'premium' && drawCount >= 5) {
       setGameState('ad_wall');
-    } 
-    else if (userTier === 'vip' && drawCount >= 10) {
+    } else if (userTier === 'vip' && drawCount >= 10) {
       setGameState('ad_wall');
-    } 
-    else {
+    } else {
       setGameState('idle');
     }
   };
@@ -127,34 +123,32 @@ export default function MarpoSpiritPage({ lang }: { lang: string }) {
   const executeAdWatch = () => {
     const targetAds = 1;
     const newCount = adWallWatched + 1;
-    
     setAdWallWatched(newCount);
 
     if (newCount >= targetAds) {
-      alert("✅ 광고 시청 확인 완료! 1회 추가 드로우가 승인되었습니다.");
+      alert("✅ 광고 시청 확인 완료! 추가 드로우가 승인되었습니다.");
       if (userTier === 'premium') setDrawCount(4);
       if (userTier === 'vip') setDrawCount(9);
-      
       setGameState('idle');
     }
   };
 
   return (
     <div className="min-h-screen bg-[#050505] text-white p-6 pb-48 flex flex-col items-center font-sans relative overflow-hidden">
-      <div className="absolute inset-0 opacity-[0.03] pointer-events-none fixed" style={{ backgroundImage: `radial-gradient(#f39c12 1px, transparent 1px)`, backgroundSize: '40px 40px' }}></div>
+      <div className="absolute inset-0 opacity-[0.03] pointer-events-none fixed" style={{ backgroundImage: "radial-gradient(#f39c12 1px, transparent 1px)", backgroundSize: "40px 40px" }}></div>
 
+      {/* 개발자 테스트용 등급 스위치 */}
       <div className="absolute top-4 left-4 z-50 flex gap-2 bg-black/80 p-2 rounded-xl border border-zinc-800">
         <button onClick={() => {setUserTier('basic'); setDrawCount(0);}} className={`px-3 py-1 text-[10px] font-bold rounded-lg uppercase ${userTier==='basic' ? 'bg-zinc-600' : 'text-zinc-500'}`}>Basic</button>
         <button onClick={() => {setUserTier('premium'); setDrawCount(0);}} className={`px-3 py-1 text-[10px] font-bold rounded-lg uppercase ${userTier==='premium' ? 'bg-amber-600 text-black' : 'text-zinc-500'}`}>Premium</button>
         <button onClick={() => {setUserTier('vip'); setDrawCount(0);}} className={`px-3 py-1 text-[10px] font-bold rounded-lg uppercase ${userTier==='vip' ? 'bg-lime-500 text-black' : 'text-zinc-500'}`}>VIP</button>
       </div>
 
+      {/* 가이드 내비게이터 */}
       <div className="w-full max-w-md mt-14 mb-8 flex items-start gap-6 relative z-20">
         <div className="relative w-28 h-28 shrink-0 bg-gradient-to-tr from-black to-zinc-900 rounded-full border-4 border-amber-500 shadow-[0_0_30px_rgba(243,156,18,0.3)] flex items-center justify-center overflow-hidden animate-bounce-slow relative">
            <Image src="/marpo-stage-1.png" alt="Rabbit" fill className="object-cover scale-110" priority unoptimized />
-           <div className="absolute bottom-1 right-1 bg-amber-500 text-black text-[10px] font-black px-2 py-0.5 rounded-full z-10">
-             {userTier.toUpperCase()}
-           </div>
+           <div className="absolute bottom-1 right-1 bg-amber-500 text-black text-[10px] font-black px-2 py-0.5 rounded-full z-10">{userTier.toUpperCase()}</div>
         </div>
         <div className="relative flex-1 bg-zinc-900/70 border border-zinc-800 rounded-[2.5rem] p-7 shadow-2xl backdrop-blur-xl min-h-[120px] flex items-center">
           <div className="absolute top-10 -left-4 w-0 h-0 border-t-[12px] border-t-transparent border-r-[20px] border-r-zinc-800 border-b-[12px] border-b-transparent"></div>
@@ -162,41 +156,36 @@ export default function MarpoSpiritPage({ lang }: { lang: string }) {
         </div>
       </div>
 
+      {/* 채굴 중 오버레이 */}
       {gameState === 'mining' && (
         <div className="fixed inset-0 z-[1000] bg-black flex flex-col items-center justify-center p-0 animate-in fade-in duration-700">
           <div className="relative w-full h-full flex flex-col items-center justify-center">
-             <video autoPlay muted loop playsInline className="absolute inset-0 w-full h-full object-cover opacity-80">
-               <source src="/mining-video.mp4" type="video/mp4" />
-             </video>
+             <video autoPlay muted loop playsInline className="absolute inset-0 w-full h-full object-cover opacity-80"><source src="/mining-video.mp4" type="video/mp4" /></video>
              <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-black opacity-60"></div>
              <div className="relative z-10 flex flex-col items-center gap-6">
                 <div className="w-24 h-24 border-4 border-amber-500 border-t-transparent rounded-full animate-spin"></div>
                 <p className="text-4xl font-black text-amber-500 uppercase tracking-[0.4em] drop-shadow-[0_0_20px_rgba(243,156,18,0.8)]">Mining</p>
-                <p className="text-zinc-400 font-bold italic animate-pulse text-lg">Ω 에너지를 정밀 추출 중입니다...</p>
              </div>
           </div>
         </div>
       )}
 
+      {/* 🟢 성공 1단계: 인플레이션 격파 */}
       {gameState === 'success_punch' && (
         <div className="fixed inset-0 z-[1100] bg-black flex items-center justify-center animate-in fade-in duration-500">
           <div className="relative w-full h-full">
             <Image src="/인플레이션 펀치.png" alt="Inflation Punch" fill className="object-cover" priority unoptimized />
             <div className="absolute top-20 left-0 w-full text-center z-10">
-              <p className="text-5xl md:text-7xl font-black text-lime-400 uppercase italic tracking-tighter drop-shadow-[0_0_30px_rgba(163,230,53,1)] animate-pulse">
-                Inflation Smashed!
-              </p>
+              <p className="text-5xl md:text-7xl font-black text-lime-400 uppercase italic tracking-tighter drop-shadow-[0_0_30px_rgba(163,230,53,1)] animate-pulse">Inflation Smashed!</p>
             </div>
             <div className="absolute bottom-10 left-1/2 -translate-x-1/2 w-full max-w-xl px-10 z-10">
-                <div className="w-full h-3 bg-zinc-800 rounded-full overflow-hidden border border-zinc-700">
-                    <div className="h-full bg-lime-500 animate-progress-3s"></div>
-                </div>
-                <p className="text-center text-lime-400 text-xs mt-3 font-bold uppercase tracking-widest">Preparing Celebration...</p>
+                <div className="w-full h-3 bg-zinc-800 rounded-full overflow-hidden border border-zinc-700"><div className="h-full bg-lime-500 animate-progress-3s"></div></div>
             </div>
           </div>
         </div>
       )}
 
+      {/* 🟢 성공 2단계: 폭죽 효과 */}
       {gameState === 'success_fireworks' && (
         <div className="fixed inset-0 z-[1200] bg-black/80 flex flex-col items-center justify-center animate-in fade-in duration-300">
           <div className="firework-container relative w-full h-full overflow-hidden">
@@ -209,6 +198,7 @@ export default function MarpoSpiritPage({ lang }: { lang: string }) {
         </div>
       )}
 
+      {/* 🟢 성공 3단계: 말포 축하창 */}
       {gameState === 'success_malpo' && (
         <div className="fixed inset-0 z-[1300] bg-black/95 backdrop-blur-2xl flex flex-col items-center justify-center p-6 animate-in zoom-in duration-300">
           <div className="bg-gradient-to-b from-zinc-900 to-black border-4 border-lime-500 rounded-[4rem] p-12 w-full max-w-xl text-center shadow-[0_0_60px_rgba(163,230,53,0.3)] relative overflow-hidden">
@@ -234,24 +224,22 @@ export default function MarpoSpiritPage({ lang }: { lang: string }) {
         </div>
       )}
 
+      {/* 🔴 실패 1단계: 인플레이션 역습 */}
       {gameState === 'fail_punch' && (
         <div className="fixed inset-0 z-[1100] bg-black flex items-center justify-center animate-in fade-in duration-500">
           <div className="relative w-full h-full">
             <Image src="/인플레이션 펀치커버 .png" alt="Inflation Counterattack" fill className="object-cover" priority unoptimized />
             <div className="absolute top-20 left-0 w-full text-center z-10">
-              <p className="text-5xl md:text-7xl font-black text-red-500 uppercase italic tracking-tighter drop-shadow-[0_0_30px_rgba(239,68,68,1)] animate-pulse">
-                Inflation Strikes Back!
-              </p>
+              <p className="text-5xl md:text-7xl font-black text-red-500 uppercase italic tracking-tighter drop-shadow-[0_0_30px_rgba(239,68,68,1)] animate-pulse">Inflation Strikes Back!</p>
             </div>
             <div className="absolute bottom-10 left-1/2 -translate-x-1/2 w-full max-w-xl px-10 z-10">
-                <div className="w-full h-3 bg-zinc-800 rounded-full overflow-hidden border border-zinc-700">
-                    <div className="h-full bg-red-600 animate-progress-3s"></div>
-                </div>
+                <div className="w-full h-3 bg-zinc-800 rounded-full overflow-hidden border border-zinc-700"><div className="h-full bg-red-600 animate-progress-3s"></div></div>
             </div>
           </div>
         </div>
       )}
 
+      {/* 🔴 실패 2단계: 토끼 독려창 */}
       {gameState === 'fail_rabbit' && (
         <div className="fixed inset-0 z-[1200] bg-black/95 backdrop-blur-2xl flex flex-col items-center justify-center p-6 animate-in zoom-in duration-300">
           <div className="bg-gradient-to-b from-zinc-900 to-black border-4 border-amber-600 rounded-[4rem] p-12 w-full max-w-xl text-center shadow-[0_0_60px_rgba(243,156,18,0.2)] relative overflow-hidden">
@@ -272,6 +260,7 @@ export default function MarpoSpiritPage({ lang }: { lang: string }) {
         </div>
       )}
 
+      {/* ⚠️ 광고 시청 요구 모달 */}
       {gameState === 'ad_wall' && (
         <div className="fixed inset-0 z-[2000] bg-black/95 backdrop-blur-2xl flex flex-col items-center justify-center p-6 animate-in zoom-in duration-300">
           <div className="bg-zinc-900 border-2 border-amber-500 rounded-[3rem] p-10 w-full max-w-md text-center shadow-2xl relative overflow-hidden">
@@ -280,30 +269,20 @@ export default function MarpoSpiritPage({ lang }: { lang: string }) {
             <div className="h-1 w-20 bg-amber-500 mx-auto mb-8 rounded-full"></div>
             
             <div className="bg-black/50 p-6 rounded-2xl mb-10 border border-zinc-800 text-sm leading-relaxed text-zinc-300 font-bold break-keep">
-              {userTier === 'basic' && (
-                <p><span className="text-zinc-400">베이직 유저 탐색 프로토콜</span><br/><br/>새로운 원소 채굴을 진행하시려면<br/>광고를 1회 시청해 주십시오.</p>
-              )}
-              {userTier === 'premium' && (
-                <p><span className="text-amber-500">프리미엄 4시간 내 5회 프리드로우 완료</span><br/><br/>추가 1회 드로우 권한을 획득하려면<br/>광고 1회를 시청해 주십시오.</p>
-              )}
-              {userTier === 'vip' && (
-                <p><span className="text-lime-500">VIP 10회 연속 프리드로우 완료</span><br/><br/>추가 1회 드로우 권한을 획득하려면<br/>짧은 광고 1회를 시청해 주십시오.</p>
-              )}
+              {userTier === 'basic' && <p><span className="text-zinc-400">베이직 유저 탐색 프로토콜</span><br/><br/>새로운 원소 채굴을 진행하시려면<br/>광고를 1회 시청해 주십시오.</p>}
+              {userTier === 'premium' && <p><span className="text-amber-500">프리미엄 4시간 내 5회 프리드로우 완료</span><br/><br/>추가 1회 드로우 권한을 획득하려면<br/>광고 1회를 시청해 주십시오.</p>}
+              {userTier === 'vip' && <p><span className="text-lime-500">VIP 10회 연속 프리드로우 완료</span><br/><br/>추가 1회 드로우 권한을 획득하려면<br/>짧은 광고 1회를 시청해 주십시오.</p>}
             </div>
 
             <button onClick={executeAdWatch} className="w-full flex items-center justify-center gap-3 py-5 bg-amber-500 text-black rounded-xl font-black text-lg shadow-[0_0_20px_rgba(243,156,18,0.3)] hover:scale-105 active:scale-95 transition-all mb-4">
-              <PlaySquare size={20} fill="currentColor" />
-              광고 시청하기 ({adWallWatched} / 1)
+              <PlaySquare size={20} fill="currentColor" /> 광고 시청하기 ({adWallWatched} / 1)
             </button>
-
-            <button onClick={() => setGameState('idle')} className="text-zinc-500 text-xs font-bold underline hover:text-white transition-colors">
-              나중에 하기 (로비로 이동)
-            </button>
+            <button onClick={() => setGameState('idle')} className="text-zinc-500 text-xs font-bold underline hover:text-white transition-colors">나중에 하기 (로비로 이동)</button>
           </div>
         </div>
       )}
 
-      {/* 🚩 복구된 부분 1: 리워드 풀 */}
+      {/* 🎯 복구 완료: 중앙 리워드 풀 */}
       <section className="w-full max-w-md bg-gradient-to-br from-[#1a1a1a] to-[#050505] p-12 rounded-[3.5rem] border border-[#f39c12]/20 mb-10 shadow-2xl text-center relative z-20">
         <p className="text-xs text-zinc-600 font-black uppercase tracking-[0.4em] mb-3">MAR-Ω Reward Pool Matching</p>
         <div className="flex items-center justify-center gap-4">
@@ -312,13 +291,13 @@ export default function MarpoSpiritPage({ lang }: { lang: string }) {
         </div>
       </section>
 
-      {/* 🚩 복구된 부분 2: 인사이더 리빌 (힌트 보기) */}
+      {/* 🎯 복구 완료: 인사이더 힌트 버튼 */}
       <button onClick={handleReveal} className="w-full max-w-md py-7 bg-zinc-900/40 border border-[#f39c12]/40 rounded-3xl flex flex-col items-center mb-10 active:scale-95 transition-all relative z-20">
         <div className="flex items-center gap-3 mb-1.5"><Target size={20} className="text-[#f39c12]" /><p className="text-[#f39c12] font-black text-sm uppercase tracking-[0.2em]">Insider Reveal</p></div>
         <p className="text-[16px] font-black uppercase tracking-widest italic text-lime-300 animate-infinite-blink">Burn 1,000 Ω for a hint</p>
       </button>
 
-      {/* 🚩 복구된 부분 3: 45개 원소 전술 보드 */}
+      {/* 🎯 복구 완료: 45개 원소 전술 보드판 */}
       <div className={`w-full max-w-md bg-zinc-900/30 border border-zinc-800 rounded-[3.5rem] p-8 mb-12 relative shadow-2xl z-20 ${!isUnlocked && 'opacity-50 grayscale'}`}>
         {!isUnlocked && (
           <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black/70 backdrop-blur-md rounded-[3.5rem] p-8 text-center">
@@ -334,4 +313,60 @@ export default function MarpoSpiritPage({ lang }: { lang: string }) {
             const isHint = revealedNumber === num;
             return (
               <button key={num} onClick={() => handleNumberToggle(num)} className={`relative aspect-square rounded-xl overflow-hidden transition-all duration-300 transform ${isSelected ? 'border-2 border-amber-500 scale-110 z-10' : isHint ? 'border-2 border-[#f39c12] animate-pulse scale-105' : 'border border-zinc-800'}`}>
-                <div className={`absolute inset-0 bg-cover bg-center transition-opacity ${isSelected ? 'opacity-0' : 'opacity-100'}`} style={{ backgroundImage: `url('${getElementIcon(num)}')
+                <div className={`absolute inset-0 bg-cover bg-center transition-opacity ${isSelected ? 'opacity-0' : 'opacity-100'}`} style={{ backgroundImage: `url('${getElementIcon(num)}')` }} />
+                <div className={`absolute inset-0 flex items-center justify-center bg-amber-500/20 ${isSelected ? 'opacity-100' : 'opacity-0'}`}>
+                  <span className="text-2xl font-black text-amber-500">{num}</span>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* 하단 금고 & 채굴 시작 버튼 */}
+      <div className="w-full max-w-md mt-auto bg-zinc-900/50 p-8 rounded-[3.5rem] border border-zinc-800 flex justify-between items-center shadow-2xl relative z-20">
+         <div className="flex items-center gap-6">
+           <div className="w-16 h-16 bg-zinc-900 rounded-2xl flex items-center justify-center border border-zinc-800 text-amber-500 font-black text-3xl">Ω</div>
+           <div>
+             <p className="text-xs text-zinc-600 font-black mb-1 uppercase tracking-tighter">{userTier === 'basic' ? 'Basic' : userTier === 'premium' ? 'Premium Vault' : 'VIP Vault'}</p>
+             <p className="text-2xl font-black text-white italic">{ohmBalance.toLocaleString()} <span className="text-amber-500 text-sm">Ω</span></p>
+           </div>
+         </div>
+         <button onClick={handleMining} disabled={selectedNumbers.length < 6} className={`flex items-center gap-4 px-10 py-5 rounded-3xl font-black text-base uppercase transition-all transform active:scale-95 ${selectedNumbers.length === 6 ? 'bg-amber-500 text-black shadow-[0_0_20px_rgba(243,156,18,0.4)]' : 'bg-zinc-800 text-zinc-700'}`}>
+           <Pickaxe size={24} /> {drawCount > 0 ? `Draw (${drawCount})` : 'Start'}
+         </button>
+      </div>
+
+      {/* 폭죽 및 애니메이션 스타일 시트 */}
+      <style jsx global>{`
+        @import url('https://fonts.googleapis.com/css2?family=Urbanist:ital,wght@1,900&display=swap');
+        .font-urbanist { font-family: 'Urbanist', sans-serif; }
+        
+        .firework { position: absolute; width: 5px; height: 5px; border-radius: 50%; opacity: 0; transform-origin: center; }
+        .firework-1 { background-color: #f39c12; animation: explode-1 2s ease-out forwards; top: 50%; left: 50%; }
+        .firework-2 { background-color: #ffffff; animation: explode-2 1.8s ease-out 0.2s forwards; top: 40%; left: 60%; }
+        .firework-3 { background-color: #a3e235; animation: explode-3 2.2s ease-out 0.1s forwards; top: 60%; left: 40%; }
+        .firework-4 { background-color: #f39c12; animation: explode-4 1.9s ease-out 0.3s forwards; top: 30%; left: 50%; }
+        .firework-5 { background-color: #ffffff; animation: explode-1 2.1s ease-out 0.2s forwards; top: 70%; left: 55%; }
+        .firework-6 { background-color: #f39c12; animation: explode-2 2s ease-out 0.5s forwards; top: 50%; left: 20%; }
+        .firework-7 { background-color: #a3e235; animation: explode-3 1.7s ease-out 0.1s forwards; top: 20%; left: 80%; }
+        .firework-8 { background-color: #ffffff; animation: explode-4 2.3s ease-out 0.4s forwards; top: 80%; left: 30%; }
+        .firework-9 { background-color: #f39c12; animation: explode-1 2.0s ease-out 0.6s forwards; top: 60%; left: 70%; }
+        .firework-10 { background-color: #ffffff; animation: explode-2 1.9s ease-out 0.2s forwards; top: 30%; left: 30%; }
+
+        @keyframes explode-1 { 0% { transform: scale(1) translate(0, 0); opacity: 1; } 100% { transform: scale(0) translate(200px, -200px); opacity: 0; } }
+        @keyframes explode-2 { 0% { transform: scale(1) translate(0, 0); opacity: 1; } 100% { transform: scale(0) translate(-250px, -150px); opacity: 0; } }
+        @keyframes explode-3 { 0% { transform: scale(1) translate(0, 0); opacity: 1; } 100% { transform: scale(0) translate(150px, 250px); opacity: 0; } }
+        @keyframes explode-4 { 0% { transform: scale(1) translate(0, 0); opacity: 1; } 100% { transform: scale(0) translate(-200px, 200px); opacity: 0; } }
+
+        @keyframes bounce-slow { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-12px); } }
+        @keyframes progress-3s { from { width: 0%; } to { width: 100%; } }
+        @keyframes neon-blink { 0%, 100% { opacity: 1; text-shadow: 0 0 15px rgba(163,230,53,1); } 50% { opacity: 0.1; } }
+
+        .animate-bounce-slow { animation: bounce-slow 4s ease-in-out infinite; }
+        .animate-progress-3s { animation: progress-3s 3s linear forwards; }
+        .animate-infinite-blink { animation: neon-blink 1s linear infinite; }
+      `}</style>
+    </div>
+  );
+}

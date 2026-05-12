@@ -14,7 +14,7 @@ export default function MainGameLobby() {
 
   if (!isReady) return null;
 
-  // 🏁 1단계: 인트로 (베타 테스트 공지 추가)
+  // 🏁 1단계: 인트로 (순환경제 완성 비전 추가)
   if (view === 'intro') {
     return (
       <div className="min-h-screen bg-[#050505] text-white flex flex-col items-center justify-center p-6 relative overflow-hidden">
@@ -22,7 +22,6 @@ export default function MainGameLobby() {
         
         <div className="relative z-10 w-full max-w-4xl flex flex-col items-center gap-6 bg-black/60 p-10 rounded-[3rem] border border-zinc-800 backdrop-blur-md shadow-2xl mt-10">
           
-          {/* 🌟 1. 코어팀 제출용 BETA TESTNET 배너 (신규 추가) 🌟 */}
           <div className="w-full bg-gradient-to-r from-red-600/80 via-red-500/80 to-red-600/80 p-3 rounded-2xl border-2 border-red-400 text-center mb-4 shadow-[0_0_20px_rgba(239,68,68,0.3)] animate-pulse">
             <h2 className="text-white font-black uppercase tracking-widest text-sm md:text-base">
               ⚠️ Official Beta Testnet Demo ⚠️
@@ -32,7 +31,6 @@ export default function MainGameLobby() {
             </p>
           </div>
 
-          {/* 웅장한 회사 로고 최상단 배치 */}
           <div className="relative w-40 h-40 md:w-48 md:h-48 mb-2 animate-pulse-slow">
             <Image 
               src="/marpo-logo.png" 
@@ -60,14 +58,28 @@ export default function MainGameLobby() {
             </div>
           </div>
           
-          <div className="w-full bg-zinc-900/80 p-6 md:p-8 rounded-3xl border border-zinc-700 text-left mt-2">
-            <h2 className="text-xl font-black text-amber-500 mb-3 uppercase tracking-widest">Marpo Tokenomics Vision</h2>
-            <p className="text-zinc-300 text-sm md:text-base leading-relaxed mb-4">
-              마르포 그룹(Marpo Group)은 파이 네트워크(Pi Network) 생태계의 가치 보존과 디플레이션(Deflation)을 이끄는 핵심 엔진입니다. 유저는 원소 채굴을 통해 Ω 에너지를 획득하며, 이는 곧 실물 경제 서사의 기반이 됩니다.
+          {/* 🌟 수정된 핵심 영역: Web3 SaaS 및 순환경제 비전 명시 🌟 */}
+          <div className="w-full bg-zinc-900/80 p-6 md:p-8 rounded-3xl border border-zinc-700 text-left mt-2 relative overflow-hidden">
+            {/* 장식용 글로우 */}
+            <div className="absolute -top-10 -right-10 w-32 h-32 bg-amber-500/10 blur-3xl rounded-full"></div>
+            
+            <h2 className="text-xl font-black text-amber-500 mb-4 uppercase tracking-widest flex items-center gap-2">
+              <span className="w-1.5 h-6 bg-amber-500 rounded-full"></span>
+              The Circular Economy Vision
+            </h2>
+            
+            <p className="text-zinc-200 text-sm md:text-lg leading-relaxed mb-6 font-bold break-keep">
+              마르포 그룹은 <span className="text-amber-400 border-b-2 border-amber-500/50 pb-0.5">이 Web3 SaaS 시스템을 활용하여, 파이 생태계의 순환경제를 완성합니다.</span>
             </p>
-            <p className="text-zinc-400 text-[11px] md:text-xs leading-relaxed">
-              우리는 무분별한 인플레이션을 거부합니다. 파이(Pi) 결제를 통해 활성화되는 시스템은 참여자 모두에게 공정한 가치 분배와 강력한 소각 메커니즘을 제공합니다. 마르포 스피릿과 함께 새로운 부의 서사를 작성하시겠습니까?
-            </p>
+            
+            <div className="space-y-4 text-zinc-400 text-[12px] md:text-sm leading-relaxed">
+              <p>
+                단순한 일회성 결제를 넘어, SaaS(Software as a Service) 기반의 지속 가능한 구독 모델을 통해 Pi의 상시 유틸리티를 창출합니다. 이는 생태계 내에 고여있는 토큰을 끊임없이 순환시키고 가치를 재분배하는 강력한 혈관 역할을 수행합니다.
+              </p>
+              <p>
+                우리는 파이오니어들의 장기적인 참여와 기여를 이끌어내는 고유의 전술적 운영 프로토콜을 통해, 공급과 수요의 균형을 맞추고 Pi의 거시적 희소성을 보호하는 '디플레이션 선순환' 체계를 구축하고자 합니다.
+              </p>
+            </div>
           </div>
 
           <div 
@@ -78,7 +90,7 @@ export default function MainGameLobby() {
               {agreed && <span className="text-black font-black text-lg">✓</span>}
             </div>
             <span className="text-zinc-300 font-bold text-sm md:text-base select-none group-hover:text-white transition-colors">
-              마르포 그룹의 토크노믹스 비전 및 정책에 동의합니다.
+              마르포 그룹의 생태계 순환경제 비전에 동의합니다.
             </span>
           </div>
 
@@ -101,11 +113,10 @@ export default function MainGameLobby() {
     );
   }
 
-  // 💳 2단계: 구독 선택창 (데모 모드 안내 추가)
+  // 💳 2단계: 구독 선택창
   if (view === 'subscription') {
     const handlePayment = (tier: string) => {
-      // 🌟 코어팀 테스트를 위해 가짜(Mock) 결제 알림창을 명확히 명시합니다.
-      alert(`[Demo Mode] 가상 Pi 지갑 연동 시뮬레이션입니다.\n${tier.toUpperCase()} 등급 권한이 부여되었습니다.`);
+      alert(`[Demo Mode] Web3 SaaS 구독 시뮬레이션입니다.\n${tier.toUpperCase()} 등급 프로토콜이 가동됩니다.`);
       localStorage.setItem('marpo_session', 'active');
       localStorage.setItem('marpo_tier', tier); 
       setView('dashboard');
@@ -114,7 +125,7 @@ export default function MainGameLobby() {
     return (
       <div className="min-h-screen bg-[#050505] text-white flex flex-col items-center justify-center p-6 relative">
         <div className="mb-4 w-full text-center text-amber-500 font-bold text-sm uppercase tracking-widest animate-pulse">
-           [ Testnet Sandbox Mode ]
+           [ Web3 SaaS Sandbox Mode ]
         </div>
         <div className="mb-4 relative w-24 h-24">
           <Image src="/marpo-logo.png" alt="Logo" fill className="object-contain opacity-50" />
@@ -128,9 +139,9 @@ export default function MainGameLobby() {
             <ul className="text-zinc-500 text-[11px] font-bold flex-1 space-y-3 mb-8">
               <li>기본 원소 탐색 권한</li>
               <li>매회 광고 시청 필수</li>
-              <li>기본 리워드 풀 접속</li>
+              <li>SaaS 기본 모듈 접속</li>
             </ul>
-            <button onClick={() => handlePayment('basic')} className="w-full py-4 bg-zinc-800 text-white rounded-xl font-black uppercase text-xs">Free Access (Demo)</button>
+            <button onClick={() => handlePayment('basic')} className="w-full py-4 bg-zinc-800 text-white rounded-xl font-black uppercase text-xs">Free Access</button>
           </div>
 
           <div className="bg-zinc-900 border-2 border-amber-500 rounded-[3.5rem] p-8 flex flex-col items-center text-center transform md:-translate-y-4 shadow-[0_0_40px_rgba(243,156,18,0.2)]">
@@ -139,10 +150,10 @@ export default function MainGameLobby() {
             <p className="text-5xl font-black text-white mb-6">1 Pi</p>
             <ul className="text-zinc-300 text-[11px] font-bold flex-1 space-y-3 mb-8">
               <li>4시간 내 5회 연속 프리드로우</li>
-              <li>5회 소진 시 광고 1회 시청 룰 적용</li>
+              <li>광고 최소화 프로토콜 적용</li>
               <li>프리미엄 리워드 배율 적용</li>
             </ul>
-            <button onClick={() => handlePayment('premium')} className="w-full py-5 bg-amber-500 text-black rounded-xl font-black uppercase text-sm shadow-[0_0_20px_rgba(243,156,18,0.3)]">Mock Pi Payment</button>
+            <button onClick={() => handlePayment('premium')} className="w-full py-5 bg-amber-500 text-black rounded-xl font-black uppercase text-sm shadow-[0_0_20px_rgba(243,156,18,0.3)]">Subscribe with Pi</button>
           </div>
 
           <div className="bg-zinc-900 border border-lime-500/50 rounded-[3.5rem] p-8 flex flex-col items-center text-center shadow-[0_0_30px_rgba(163,230,53,0.1)]">
@@ -150,10 +161,10 @@ export default function MainGameLobby() {
             <p className="text-3xl font-black text-white mb-6">3 Pi</p>
             <ul className="text-zinc-400 text-[11px] font-bold flex-1 space-y-3 mb-8">
               <li>10회 연속 압도적 프리드로우</li>
-              <li>10회 소진 시 짧은 광고 1회 룰 적용</li>
-              <li>마르포 생태계 최우선 혜택 보장</li>
+              <li>VIP 전용 에어드랍 알고리즘</li>
+              <li>생태계 최우선권 보장</li>
             </ul>
-            <button onClick={() => handlePayment('vip')} className="w-full py-4 bg-lime-500 text-black rounded-xl font-black uppercase text-xs">Mock Pi Payment</button>
+            <button onClick={() => handlePayment('vip')} className="w-full py-4 bg-lime-500 text-black rounded-xl font-black uppercase text-xs">Subscribe with Pi</button>
           </div>
         </div>
         <button onClick={() => setView('intro')} className="mt-12 text-zinc-500 text-[10px] font-bold underline hover:text-white transition-colors">Cancel & Go Back</button>
@@ -161,7 +172,7 @@ export default function MainGameLobby() {
     );
   }
 
-  // 🏁 3단계: 메인 게임 (테스트넷 라벨 부착)
+  // 🏁 3단계: 메인 게임 대시보드
   if (view === 'dashboard') {
     return (
       <div className="min-h-screen bg-[#050505] text-white relative flex flex-col items-center">
@@ -174,7 +185,7 @@ export default function MainGameLobby() {
                <h2 className="text-[10px] md:text-xs font-black text-zinc-400 uppercase italic tracking-widest flex items-center gap-2">
                   <span className="w-1.5 h-1.5 bg-yellow-500 rounded-full animate-pulse"></span> Pi Testnet Connected
                </h2>
-               <span className="text-[8px] text-amber-500 font-bold uppercase">Demo Sandbox</span>
+               <span className="text-[8px] text-amber-500 font-bold uppercase">Web3 SaaS Demo</span>
              </div>
           </div>
           <button 

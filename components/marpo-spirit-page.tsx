@@ -269,7 +269,7 @@ export default function MarpoSpiritPage({ lang = 'ko' }: { lang?: 'ko' | 'en' })
         <div className="fixed inset-0 z-[1200] bg-black/95 backdrop-blur-2xl flex flex-col items-center justify-center p-6 animate-in zoom-in duration-300">
           <div className="bg-gradient-to-b from-zinc-900 to-black border-4 border-amber-600 rounded-[4rem] p-12 w-full max-w-xl text-center shadow-[0_0_60px_rgba(243,156,18,0.2)] relative overflow-hidden">
             <div className="w-48 h-48 mx-auto mb-6 relative animate-bounce-slow z-10">
-               <Image src="/marpo-stage-2.png" alt="Encouraging Rabbit" fill className="object-contain" unoptimized />
+               <Image src="/marpo-stage-1.png" alt="Encouraging Rabbit" fill className="object-contain" unoptimized />
             </div>
             <div className="relative mb-10 bg-black/50 border border-zinc-800 p-8 rounded-3xl z-10">
                 <div className="absolute -top-3 -left-3 text-amber-500 text-6xl font-serif">“</div>

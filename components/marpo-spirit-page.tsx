@@ -24,7 +24,8 @@ const guideLines = [
   "디플레이션을 향한 여정, 샘플 선택 후 채굴 버튼을 누르세요!"
 ];
 
-type GameState = 'idle' | 'mining' | 'success_punch' | 'success_fireworks' | 'success_malpo' | 'fail_punch' | 'fail_rabbit' | 'ad_wall';
+// 🚩 상태명 완벽 교정 (success_malpo -> success_marpo)
+type GameState = 'idle' | 'mining' | 'success_punch' | 'success_fireworks' | 'success_marpo' | 'fail_punch' | 'fail_rabbit' | 'ad_wall';
 type UserTier = 'basic' | 'premium' | 'vip';
 
 export default function MarpoSpiritPage({ lang }: { lang: string }) {
@@ -95,7 +96,7 @@ export default function MarpoSpiritPage({ lang }: { lang: string }) {
         setGameState('success_punch');
         setTimeout(() => {
           setGameState('success_fireworks');
-          setTimeout(() => setGameState('success_malpo'), 2000);
+          setTimeout(() => setGameState('success_marpo'), 2000); // 🚩 수정 완료
         }, 3000);
       } else {
         setGameState('fail_punch');
@@ -137,14 +138,12 @@ export default function MarpoSpiritPage({ lang }: { lang: string }) {
     <div className="min-h-screen bg-[#050505] text-white p-6 pb-48 flex flex-col items-center font-sans relative overflow-hidden">
       <div className="absolute inset-0 opacity-[0.03] pointer-events-none fixed" style={{ backgroundImage: "radial-gradient(#f39c12 1px, transparent 1px)", backgroundSize: "40px 40px" }}></div>
 
-      {/* 개발자 테스트용 등급 스위치 */}
       <div className="absolute top-4 left-4 z-50 flex gap-2 bg-black/80 p-2 rounded-xl border border-zinc-800">
         <button onClick={() => {setUserTier('basic'); setDrawCount(0);}} className={`px-3 py-1 text-[10px] font-bold rounded-lg uppercase ${userTier==='basic' ? 'bg-zinc-600' : 'text-zinc-500'}`}>Basic</button>
         <button onClick={() => {setUserTier('premium'); setDrawCount(0);}} className={`px-3 py-1 text-[10px] font-bold rounded-lg uppercase ${userTier==='premium' ? 'bg-amber-600 text-black' : 'text-zinc-500'}`}>Premium</button>
         <button onClick={() => {setUserTier('vip'); setDrawCount(0);}} className={`px-3 py-1 text-[10px] font-bold rounded-lg uppercase ${userTier==='vip' ? 'bg-lime-500 text-black' : 'text-zinc-500'}`}>VIP</button>
       </div>
 
-      {/* 가이드 내비게이터 */}
       <div className="w-full max-w-md mt-14 mb-8 flex items-start gap-6 relative z-20">
         <div className="relative w-28 h-28 shrink-0 bg-gradient-to-tr from-black to-zinc-900 rounded-full border-4 border-amber-500 shadow-[0_0_30px_rgba(243,156,18,0.3)] flex items-center justify-center overflow-hidden animate-bounce-slow relative">
            <Image src="/marpo-stage-1.png" alt="Rabbit" fill className="object-cover scale-110" priority unoptimized />
@@ -156,7 +155,6 @@ export default function MarpoSpiritPage({ lang }: { lang: string }) {
         </div>
       </div>
 
-      {/* 채굴 중 오버레이 */}
       {gameState === 'mining' && (
         <div className="fixed inset-0 z-[1000] bg-black flex flex-col items-center justify-center p-0 animate-in fade-in duration-700">
           <div className="relative w-full h-full flex flex-col items-center justify-center">
@@ -170,7 +168,6 @@ export default function MarpoSpiritPage({ lang }: { lang: string }) {
         </div>
       )}
 
-      {/* 🟢 성공 1단계: 인플레이션 격파 */}
       {gameState === 'success_punch' && (
         <div className="fixed inset-0 z-[1100] bg-black flex items-center justify-center animate-in fade-in duration-500">
           <div className="relative w-full h-full">
@@ -185,7 +182,6 @@ export default function MarpoSpiritPage({ lang }: { lang: string }) {
         </div>
       )}
 
-      {/* 🟢 성공 2단계: 폭죽 효과 */}
       {gameState === 'success_fireworks' && (
         <div className="fixed inset-0 z-[1200] bg-black/80 flex flex-col items-center justify-center animate-in fade-in duration-300">
           <div className="firework-container relative w-full h-full overflow-hidden">
@@ -198,12 +194,13 @@ export default function MarpoSpiritPage({ lang }: { lang: string }) {
         </div>
       )}
 
-      {/* 🟢 성공 3단계: 말포 축하창 */}
-      {gameState === 'success_malpo' && (
+      {/* 🟢 성공 3단계: 마르포 축하창 (철자 수정 완료) */}
+      {gameState === 'success_marpo' && (
         <div className="fixed inset-0 z-[1300] bg-black/95 backdrop-blur-2xl flex flex-col items-center justify-center p-6 animate-in zoom-in duration-300">
           <div className="bg-gradient-to-b from-zinc-900 to-black border-4 border-lime-500 rounded-[4rem] p-12 w-full max-w-xl text-center shadow-[0_0_60px_rgba(163,230,53,0.3)] relative overflow-hidden">
             <div className="w-40 h-40 mx-auto mb-8 relative animate-bounce-slow z-10">
-               <Image src="/.말하는 말포png.png" alt="Celebrating Malpo" fill className="object-contain" unoptimized />
+               {/* 🚩 파일 이름 완벽 교정! */}
+               <Image src="/marpo-celebrate.png" alt="Celebrating Marpo" fill className="object-contain" unoptimized />
                <Flame className="absolute -top-4 -right-4 text-lime-400 animate-pulse" size={32} />
             </div>
             <div className="relative mb-12 bg-black/50 border border-zinc-800 p-8 rounded-3xl z-10">
@@ -224,7 +221,6 @@ export default function MarpoSpiritPage({ lang }: { lang: string }) {
         </div>
       )}
 
-      {/* 🔴 실패 1단계: 인플레이션 역습 */}
       {gameState === 'fail_punch' && (
         <div className="fixed inset-0 z-[1100] bg-black flex items-center justify-center animate-in fade-in duration-500">
           <div className="relative w-full h-full">
@@ -239,7 +235,6 @@ export default function MarpoSpiritPage({ lang }: { lang: string }) {
         </div>
       )}
 
-      {/* 🔴 실패 2단계: 토끼 독려창 */}
       {gameState === 'fail_rabbit' && (
         <div className="fixed inset-0 z-[1200] bg-black/95 backdrop-blur-2xl flex flex-col items-center justify-center p-6 animate-in zoom-in duration-300">
           <div className="bg-gradient-to-b from-zinc-900 to-black border-4 border-amber-600 rounded-[4rem] p-12 w-full max-w-xl text-center shadow-[0_0_60px_rgba(243,156,18,0.2)] relative overflow-hidden">
@@ -260,7 +255,6 @@ export default function MarpoSpiritPage({ lang }: { lang: string }) {
         </div>
       )}
 
-      {/* ⚠️ 광고 시청 요구 모달 */}
       {gameState === 'ad_wall' && (
         <div className="fixed inset-0 z-[2000] bg-black/95 backdrop-blur-2xl flex flex-col items-center justify-center p-6 animate-in zoom-in duration-300">
           <div className="bg-zinc-900 border-2 border-amber-500 rounded-[3rem] p-10 w-full max-w-md text-center shadow-2xl relative overflow-hidden">
@@ -282,7 +276,6 @@ export default function MarpoSpiritPage({ lang }: { lang: string }) {
         </div>
       )}
 
-      {/* 🎯 복구 완료: 중앙 리워드 풀 */}
       <section className="w-full max-w-md bg-gradient-to-br from-[#1a1a1a] to-[#050505] p-12 rounded-[3.5rem] border border-[#f39c12]/20 mb-10 shadow-2xl text-center relative z-20">
         <p className="text-xs text-zinc-600 font-black uppercase tracking-[0.4em] mb-3">MAR-Ω Reward Pool Matching</p>
         <div className="flex items-center justify-center gap-4">
@@ -291,13 +284,11 @@ export default function MarpoSpiritPage({ lang }: { lang: string }) {
         </div>
       </section>
 
-      {/* 🎯 복구 완료: 인사이더 힌트 버튼 */}
       <button onClick={handleReveal} className="w-full max-w-md py-7 bg-zinc-900/40 border border-[#f39c12]/40 rounded-3xl flex flex-col items-center mb-10 active:scale-95 transition-all relative z-20">
         <div className="flex items-center gap-3 mb-1.5"><Target size={20} className="text-[#f39c12]" /><p className="text-[#f39c12] font-black text-sm uppercase tracking-[0.2em]">Insider Reveal</p></div>
         <p className="text-[16px] font-black uppercase tracking-widest italic text-lime-300 animate-infinite-blink">Burn 1,000 Ω for a hint</p>
       </button>
 
-      {/* 🎯 복구 완료: 45개 원소 전술 보드판 */}
       <div className={`w-full max-w-md bg-zinc-900/30 border border-zinc-800 rounded-[3.5rem] p-8 mb-12 relative shadow-2xl z-20 ${!isUnlocked && 'opacity-50 grayscale'}`}>
         {!isUnlocked && (
           <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black/70 backdrop-blur-md rounded-[3.5rem] p-8 text-center">
@@ -323,7 +314,6 @@ export default function MarpoSpiritPage({ lang }: { lang: string }) {
         </div>
       </div>
 
-      {/* 하단 금고 & 채굴 시작 버튼 */}
       <div className="w-full max-w-md mt-auto bg-zinc-900/50 p-8 rounded-[3.5rem] border border-zinc-800 flex justify-between items-center shadow-2xl relative z-20">
          <div className="flex items-center gap-6">
            <div className="w-16 h-16 bg-zinc-900 rounded-2xl flex items-center justify-center border border-zinc-800 text-amber-500 font-black text-3xl">Ω</div>
@@ -337,7 +327,6 @@ export default function MarpoSpiritPage({ lang }: { lang: string }) {
          </button>
       </div>
 
-      {/* 폭죽 및 애니메이션 스타일 시트 */}
       <style jsx global>{`
         @import url('https://fonts.googleapis.com/css2?family=Urbanist:ital,wght@1,900&display=swap');
         .font-urbanist { font-family: 'Urbanist', sans-serif; }

@@ -41,7 +41,10 @@ export default function MarpoSpiritPage({ lang }: { lang: string }) {
   const [lineIdx, setLineIdx] = useState(0);
   const [revealedNumber, setRevealedNumber] = useState<number | null>(null);
 
-  // 🚩 핵심 연결: 결제창(app/page.tsx)에서 저장한 등급(tier)을 자동으로 불러옵니다.
+  // 🚩 VIP 에어드랍 전용 상태 추가
+  const [vipBonusHit, setVipBonusHit] = useState(false);
+  const [vipTargetNumbers, setVipTargetNumbers] = useState<number[]>([]);
+
   useEffect(() => {
     const savedTier = localStorage.getItem('marpo_tier') as UserTier;
     if (savedTier) {
@@ -79,6 +82,10 @@ export default function MarpoSpiritPage({ lang }: { lang: string }) {
     if (selectedNumbers.length < 6) return alert("원소 샘플 6개를 선택해주세요!");
     setGameState('mining');
     
+    // 🚩 채굴 시작 시 이전 에어드랍 기록 초기화
+    setVipBonusHit(false);
+    setVipTargetNumbers([]);
+    
     setTimeout(() => {
       setDrawCount(prev => prev + 1);
 
@@ -89,8 +96,31 @@ export default function MarpoSpiritPage({ lang }: { lang: string }) {
       }
       const matches = selectedNumbers.filter(n => results.includes(n)).length;
       const rewards: Record<number, number> = { 0:0, 1:10, 2:100, 3:1000, 4:4000, 5:8000, 6:314159 };
-      const reward = rewards[matches] || 0;
+      let reward = rewards[matches] || 0;
 
+      // 🌟 핵심 전술: VIP 보너스 에어드랍 로직 🌟
+      let isBonusHit = false;
+      let targets: number[] = [];
+      
+      if (userTier === 'vip') {
+         // 45개 중 랜덤 2개 지정
+         while(targets.length < 2) {
+           const r = Math.floor(Math.random() * 45) + 1;
+           if(!targets.includes(r)) targets.push(r);
+         }
+         setVipTargetNumbers(targets);
+
+         // 조건 1: 유저가 당첨되었는가? (reward > 0)
+         // 조건 2: 고른 6개 번호 중에 시스템이 몰래 뽑은 타겟 번호가 있는가?
+         const hasTarget = selectedNumbers.some(n => targets.includes(n));
+         
+         if (hasTarget && reward > 0) {
+            reward = reward * 2; // 대표님 지시대로 당첨금 2배 지급!
+            isBonusHit = true;
+         }
+      }
+
+      setVipBonusHit(isBonusHit);
       setMinedNumbers(results);
       setMatchCount(matches);
       setWonAmount(reward);
@@ -113,6 +143,7 @@ export default function MarpoSpiritPage({ lang }: { lang: string }) {
     setSelectedNumbers([]);
     setRevealedNumber(null);
     setAdWallWatched(0); 
+    setVipBonusHit(false);
 
     if (userTier === 'basic') {
       setGameState('ad_wall');
@@ -142,7 +173,7 @@ export default function MarpoSpiritPage({ lang }: { lang: string }) {
     <div className="min-h-screen bg-[#050505] text-white p-6 pb-48 flex flex-col items-center font-sans relative overflow-hidden">
       <div className="absolute inset-0 opacity-[0.03] pointer-events-none fixed" style={{ backgroundImage: "radial-gradient(#f39c12 1px, transparent 1px)", backgroundSize: "40px 40px" }}></div>
 
-      {/* 개발자 테스트 스위치 (필요 시 주석 처리 가능) */}
+      {/* 개발자 테스트 스위치 */}
       <div className="absolute top-4 left-4 z-50 flex gap-2 bg-black/80 p-2 rounded-xl border border-zinc-800">
         <button onClick={() => {setUserTier('basic'); setDrawCount(0);}} className={`px-3 py-1 text-[10px] font-bold rounded-lg uppercase ${userTier==='basic' ? 'bg-zinc-600' : 'text-zinc-500'}`}>Basic</button>
         <button onClick={() => {setUserTier('premium'); setDrawCount(0);}} className={`px-3 py-1 text-[10px] font-bold rounded-lg uppercase ${userTier==='premium' ? 'bg-amber-600 text-black' : 'text-zinc-500'}`}>Premium</button>
@@ -202,10 +233,20 @@ export default function MarpoSpiritPage({ lang }: { lang: string }) {
       {gameState === 'success_marpo' && (
         <div className="fixed inset-0 z-[1300] bg-black/95 backdrop-blur-2xl flex flex-col items-center justify-center p-6 animate-in zoom-in duration-300">
           <div className="bg-gradient-to-b from-zinc-900 to-black border-4 border-lime-500 rounded-[4rem] p-12 w-full max-w-xl text-center shadow-[0_0_60px_rgba(163,230,53,0.3)] relative overflow-hidden">
-            <div className="w-40 h-40 mx-auto mb-8 relative animate-bounce-slow z-10">
+            
+            {/* 🌟 2배 당첨 VIP 에어드랍 시각 연출 🌟 */}
+            {vipBonusHit && (
+              <div className="absolute top-6 left-1/2 -translate-x-1/2 w-[120%] py-2 bg-gradient-to-r from-yellow-500 via-amber-400 to-yellow-500 shadow-[0_0_40px_rgba(250,204,21,0.6)] z-20 flex flex-col items-center rotate-[-2deg] border-y-4 border-black">
+                <span className="text-black font-black text-xl italic uppercase tracking-[0.2em] animate-pulse">🔥 VIP 2X MULTIPLIER 🔥</span>
+                <span className="text-black font-bold text-[10px] uppercase">Hidden Elements Matched: {vipTargetNumbers.join(', ')}</span>
+              </div>
+            )}
+
+            <div className={`w-40 h-40 mx-auto mb-8 relative animate-bounce-slow z-10 ${vipBonusHit ? 'mt-10' : ''}`}>
                <Image src="/marpo-celebrate.png" alt="Celebrating Marpo" fill className="object-contain" unoptimized />
                <Flame className="absolute -top-4 -right-4 text-lime-400 animate-pulse" size={32} />
             </div>
+            
             <div className="relative mb-12 bg-black/50 border border-zinc-800 p-8 rounded-3xl z-10">
                 <div className="absolute -top-3 -left-3 text-lime-500 text-6xl font-serif">“</div>
                 <p className="text-3xl font-black text-white leading-tight italic tracking-tight px-4 break-keep">축하합니다.<br/>디플레이션에 한걸음 나아갑니다.</p>
@@ -214,7 +255,9 @@ export default function MarpoSpiritPage({ lang }: { lang: string }) {
             <div className="mb-12 flex justify-center gap-6 z-10 relative">
                 <div className="text-center">
                     <p className="text-xs text-zinc-500 font-bold uppercase tracking-widest mb-1">Rewards Gained</p>
-                    <p className="text-5xl font-black text-white tracking-tighter">+{wonAmount.toLocaleString()} <span className="text-amber-500 italic">Ω</span></p>
+                    <p className={`text-5xl font-black tracking-tighter ${vipBonusHit ? 'text-yellow-400 drop-shadow-[0_0_15px_rgba(250,204,21,0.8)]' : 'text-white'}`}>
+                      +{wonAmount.toLocaleString()} <span className="text-amber-500 italic">Ω</span>
+                    </p>
                 </div>
             </div>
             <button onClick={handleRetry} className="w-full flex items-center justify-center gap-3 py-6 bg-lime-500 text-black rounded-2xl font-black text-xl hover:scale-105 active:scale-95 transition-all relative z-10">

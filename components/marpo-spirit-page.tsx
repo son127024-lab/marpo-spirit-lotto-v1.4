@@ -124,9 +124,8 @@ export default function MarpoSpiritPage({ lang }: { lang: string }) {
     }
   };
 
-  // 🚩 광고 시청 버튼 로직 (프리미엄도 1회로 통일)
   const executeAdWatch = () => {
-    const targetAds = 1; // 모든 등급 공통으로 광고 1회 시청
+    const targetAds = 1;
     const newCount = adWallWatched + 1;
     
     setAdWallWatched(newCount);
@@ -284,7 +283,6 @@ export default function MarpoSpiritPage({ lang }: { lang: string }) {
               {userTier === 'basic' && (
                 <p><span className="text-zinc-400">베이직 유저 탐색 프로토콜</span><br/><br/>새로운 원소 채굴을 진행하시려면<br/>광고를 1회 시청해 주십시오.</p>
               )}
-              {/* 🚩 프리미엄 안내 텍스트 1회로 수정 */}
               {userTier === 'premium' && (
                 <p><span className="text-amber-500">프리미엄 4시간 내 5회 프리드로우 완료</span><br/><br/>추가 1회 드로우 권한을 획득하려면<br/>광고 1회를 시청해 주십시오.</p>
               )}
@@ -293,7 +291,6 @@ export default function MarpoSpiritPage({ lang }: { lang: string }) {
               )}
             </div>
 
-            {/* 🚩 버튼 텍스트도 고정 1회로 수정 */}
             <button onClick={executeAdWatch} className="w-full flex items-center justify-center gap-3 py-5 bg-amber-500 text-black rounded-xl font-black text-lg shadow-[0_0_20px_rgba(243,156,18,0.3)] hover:scale-105 active:scale-95 transition-all mb-4">
               <PlaySquare size={20} fill="currentColor" />
               광고 시청하기 ({adWallWatched} / 1)
@@ -306,57 +303,35 @@ export default function MarpoSpiritPage({ lang }: { lang: string }) {
         </div>
       )}
 
-      <div className="w-full max-w-md mt-auto bg-zinc-900/50 p-8 rounded-[3.5rem] border border-zinc-800 flex justify-between items-center shadow-2xl relative z-20">
-         <div className="flex items-center gap-6">
-           <div className="w-16 h-16 bg-zinc-900 rounded-2xl flex items-center justify-center border border-zinc-800 text-amber-500 font-black text-3xl">Ω</div>
-           <div>
-             <p className="text-xs text-zinc-600 font-black mb-1 uppercase tracking-tighter">
-               {userTier === 'basic' ? 'Basic' : userTier === 'premium' ? 'Premium Vault' : 'VIP Vault'}
-             </p>
-             <p className="text-2xl font-black text-white italic">{ohmBalance.toLocaleString()} <span className="text-amber-500 text-sm">Ω</span></p>
-           </div>
-         </div>
-         <button onClick={handleMining} disabled={selectedNumbers.length < 6} className={`flex items-center gap-4 px-10 py-5 rounded-3xl font-black text-base uppercase transition-all transform active:scale-95 ${selectedNumbers.length === 6 ? 'bg-amber-500 text-black shadow-[0_0_20px_rgba(243,156,18,0.4)]' : 'bg-zinc-800 text-zinc-700'}`}>
-           <Pickaxe size={24} /> {drawCount > 0 ? `Draw (${drawCount})` : 'Start'}
-         </button>
-      </div>
+      {/* 🚩 복구된 부분 1: 리워드 풀 */}
+      <section className="w-full max-w-md bg-gradient-to-br from-[#1a1a1a] to-[#050505] p-12 rounded-[3.5rem] border border-[#f39c12]/20 mb-10 shadow-2xl text-center relative z-20">
+        <p className="text-xs text-zinc-600 font-black uppercase tracking-[0.4em] mb-3">MAR-Ω Reward Pool Matching</p>
+        <div className="flex items-center justify-center gap-4">
+          <p className="text-6xl font-black text-white tracking-tighter font-mono">5,314,159</p>
+          <span className="text-[#f39c12] text-4xl font-black italic">Ω</span>
+        </div>
+      </section>
 
-      <style jsx global>{`
-        @import url('https://fonts.googleapis.com/css2?family=Urbanist:ital,wght@1,900&display=swap');
-        .font-urbanist { font-family: 'Urbanist', sans-serif; }
-        
-        .firework { position: absolute; width: 5px; height: 5px; border-radius: 50%; opacity: 0; transform-origin: center; }
-        .firework-1 { background-color: #f39c12; animation: explode-1 2s ease-out forwards; top: 50%; left: 50%; }
-        .firework-2 { background-color: #ffffff; animation: explode-2 1.8s ease-out 0.2s forwards; top: 40%; left: 60%; }
-        .firework-3 { background-color: #a3e235; animation: explode-3 2.2s ease-out 0.1s forwards; top: 60%; left: 40%; }
-        .firework-4 { background-color: #f39c12; animation: explode-4 1.9s ease-out 0.3s forwards; top: 30%; left: 50%; }
-        .firework-5 { background-color: #ffffff; animation: explode-1 2.1s ease-out 0.2s forwards; top: 70%; left: 55%; }
-        .firework-6 { background-color: #f39c12; animation: explode-2 2s ease-out 0.5s forwards; top: 50%; left: 20%; }
-        .firework-7 { background-color: #a3e235; animation: explode-3 1.7s ease-out 0.1s forwards; top: 20%; left: 80%; }
-        .firework-8 { background-color: #ffffff; animation: explode-4 2.3s ease-out 0.4s forwards; top: 80%; left: 30%; }
-        .firework-9 { background-color: #f39c12; animation: explode-1 2.0s ease-out 0.6s forwards; top: 60%; left: 70%; }
-        .firework-10 { background-color: #ffffff; animation: explode-2 1.9s ease-out 0.2s forwards; top: 30%; left: 30%; }
-        .firework-11 { background-color: #a3e235; animation: explode-3 2s ease-out forwards; top: 50%; left: 50%; }
-        .firework-12 { background-color: #ffffff; animation: explode-1 1.8s ease-out 0.2s forwards; top: 40%; left: 60%; }
-        .firework-13 { background-color: #f39c12; animation: explode-2 2.2s ease-out 0.1s forwards; top: 60%; left: 40%; }
-        .firework-14 { background-color: #a3e235; animation: explode-3 1.9s ease-out 0.3s forwards; top: 30%; left: 50%; }
-        .firework-15 { background-color: #ffffff; animation: explode-4 2.1s ease-out 0.2s forwards; top: 70%; left: 55%; }
-        .firework-16 { background-color: #a3e235; animation: explode-1 2s ease-out 0.5s forwards; top: 50%; left: 20%; }
-        .firework-17 { background-color: #f39c12; animation: explode-2 1.7s ease-out 0.1s forwards; top: 20%; left: 80%; }
-        .firework-18 { background-color: #ffffff; animation: explode-3 2.3s ease-out 0.4s forwards; top: 80%; left: 30%; }
-        .firework-19 { background-color: #a3e235; animation: explode-4 2.0s ease-out 0.6s forwards; top: 60%; left: 70%; }
-        .firework-20 { background-color: #ffffff; animation: explode-1 1.9s ease-out 0.2s forwards; top: 30%; left: 30%; }
+      {/* 🚩 복구된 부분 2: 인사이더 리빌 (힌트 보기) */}
+      <button onClick={handleReveal} className="w-full max-w-md py-7 bg-zinc-900/40 border border-[#f39c12]/40 rounded-3xl flex flex-col items-center mb-10 active:scale-95 transition-all relative z-20">
+        <div className="flex items-center gap-3 mb-1.5"><Target size={20} className="text-[#f39c12]" /><p className="text-[#f39c12] font-black text-sm uppercase tracking-[0.2em]">Insider Reveal</p></div>
+        <p className="text-[16px] font-black uppercase tracking-widest italic text-lime-300 animate-infinite-blink">Burn 1,000 Ω for a hint</p>
+      </button>
 
-        @keyframes explode-1 { 0% { transform: scale(1) translate(0, 0); opacity: 1; } 100% { transform: scale(0) translate(200px, -200px); opacity: 0; } }
-        @keyframes explode-2 { 0% { transform: scale(1) translate(0, 0); opacity: 1; } 100% { transform: scale(0) translate(-250px, -150px); opacity: 0; } }
-        @keyframes explode-3 { 0% { transform: scale(1) translate(0, 0); opacity: 1; } 100% { transform: scale(0) translate(150px, 250px); opacity: 0; } }
-        @keyframes explode-4 { 0% { transform: scale(1) translate(0, 0); opacity: 1; } 100% { transform: scale(0) translate(-200px, 200px); opacity: 0; } }
-
-        @keyframes bounce-slow { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-12px); } }
-        @keyframes progress-3s { from { width: 0%; } to { width: 100%; } }
-        .animate-bounce-slow { animation: bounce-slow 4s ease-in-out infinite; }
-        .animate-progress-3s { animation: progress-3s 3s linear forwards; }
-      `}</style>
-    </div>
-  );
-}
+      {/* 🚩 복구된 부분 3: 45개 원소 전술 보드 */}
+      <div className={`w-full max-w-md bg-zinc-900/30 border border-zinc-800 rounded-[3.5rem] p-8 mb-12 relative shadow-2xl z-20 ${!isUnlocked && 'opacity-50 grayscale'}`}>
+        {!isUnlocked && (
+          <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black/70 backdrop-blur-md rounded-[3.5rem] p-8 text-center">
+            <Lock size={56} className="text-[#f39c12] mb-6 animate-pulse" />
+            <p className="text-[#f39c12] font-black text-lg uppercase mb-8">System Locked</p>
+            <button onClick={handleAdWatch} className="px-10 py-5 bg-[#f39c12] text-black rounded-2xl font-black text-sm uppercase">Activate Session ({adCount}/3)</button>
+          </div>
+        )}
+        <div className="grid grid-cols-6 gap-3">
+          {[...Array(45)].map((_, i) => {
+            const num = i + 1;
+            const isSelected = selectedNumbers.includes(num);
+            const isHint = revealedNumber === num;
+            return (
+              <button key={num} onClick={() => handleNumberToggle(num)} className={`relative aspect-square rounded-xl overflow-hidden transition-all duration-300 transform ${isSelected ? 'border-2 border-amber-500 scale-110 z-10' : isHint ? 'border-2 border-[#f39c12] animate-pulse scale-105' : 'border border-zinc-800'}`}>
+                <div className={`absolute inset-0 bg-cover bg-center transition-opacity ${isSelected ? 'opacity-0' : 'opacity-100'}`} style={{ backgroundImage: `url('${getElementIcon(num)}')

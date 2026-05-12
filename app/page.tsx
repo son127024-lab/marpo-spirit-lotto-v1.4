@@ -1,6 +1,5 @@
 "use client";
 import React, { useState, useEffect } from 'react';
-// 🚩 점 2개(../) 경로 완벽 적용
 import MarpoSpiritPage from '../components/marpo-spirit-page'; 
 
 export default function MainGameLobby() {
@@ -10,7 +9,7 @@ export default function MainGameLobby() {
 
   useEffect(() => {
     setIsReady(true);
-    // 🚧 [테스트용 임시 조치] 무조건 첫 화면을 보실 수 있도록 자동 로그인 로직을 잠시 꺼두었습니다.
+    // 🚧 [테스트용] 무조건 인트로 화면부터 보이도록 세션 자동 점프를 꺼두었습니다.
     // const savedSession = localStorage.getItem('marpo_session');
     // if (savedSession === 'active') {
     //   setView('dashboard');
@@ -25,12 +24,30 @@ export default function MainGameLobby() {
       <div className="min-h-screen bg-[#050505] text-white flex flex-col items-center justify-center p-6 relative overflow-hidden">
         <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: `radial-gradient(#f39c12 1px, transparent 1px)`, backgroundSize: '40px 40px' }}></div>
         
-        <div className="relative z-10 w-full max-w-4xl flex flex-col items-center gap-8 bg-black/60 p-10 rounded-[3rem] border border-zinc-800 backdrop-blur-md shadow-2xl">
-          <h1 className="text-6xl md:text-8xl font-black tracking-tighter text-marpo-amber italic uppercase leading-none drop-shadow-[0_0_20px_rgba(243,156,18,0.2)]">
-            MARPO <span className="text-white">RUN</span>
-          </h1>
+        <div className="relative z-10 w-full max-w-4xl flex flex-col items-center gap-8 bg-black/60 p-10 rounded-[3rem] border border-zinc-800 backdrop-blur-md shadow-2xl mt-10">
           
-          <div className="w-full bg-zinc-900/80 p-8 rounded-3xl border border-zinc-700 text-left">
+          {/* 🚩 대표님 지시사항 반영: 웅장한 3단 타이틀 구성 */}
+          <div className="text-center flex flex-col items-center">
+            {/* 1. 메인 타이틀 */}
+            <h1 className="text-6xl md:text-8xl font-black tracking-tighter text-amber-500 italic uppercase leading-none drop-shadow-[0_0_30px_rgba(243,156,18,0.4)]">
+              MARPO SPIRIT
+            </h1>
+            {/* 2. 50% 사이즈 서브 타이틀 */}
+            <p className="text-3xl md:text-4xl font-black text-white mt-4 italic tracking-widest drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]">
+              Mar point
+            </p>
+            {/* 3. L.O.T.T.O WORLD 작전명 */}
+            <div className="mt-6 flex flex-col items-center gap-2">
+              <p className="text-xl md:text-2xl font-black text-amber-400 tracking-[0.3em] uppercase">
+                L.O.T.T.O WORLD
+              </p>
+              <p className="text-xs md:text-sm font-bold text-zinc-500 uppercase tracking-widest">
+                ( Loyalty Optimized Token Tactical Operations )
+              </p>
+            </div>
+          </div>
+          
+          <div className="w-full bg-zinc-900/80 p-8 rounded-3xl border border-zinc-700 text-left mt-4">
             <h2 className="text-2xl font-black text-amber-500 mb-4 uppercase tracking-widest">Marpo Tokenomics Vision</h2>
             <p className="text-zinc-300 leading-relaxed mb-4">
               마르포 그룹(Marpo Group)은 파이 네트워크(Pi Network) 생태계의 가치 보존과 디플레이션(Deflation)을 이끄는 핵심 엔진입니다. 유저는 원소 채굴을 통해 Ω 에너지를 획득하며, 이는 곧 실물 경제 서사의 기반이 됩니다.
@@ -40,19 +57,23 @@ export default function MainGameLobby() {
             </p>
           </div>
 
-          <label className="flex items-center gap-4 cursor-pointer group">
+          {/* 🚩 고장 났던 방아쇠 수리 완료: onClick 이벤트 추가 */}
+          <div 
+            onClick={() => setAgreed(!agreed)} 
+            className="flex items-center gap-4 cursor-pointer group p-2 rounded-xl hover:bg-zinc-900/50 transition-colors w-full justify-center"
+          >
             <div className={`w-8 h-8 rounded-lg border-2 flex items-center justify-center transition-colors ${agreed ? 'bg-amber-500 border-amber-500' : 'border-zinc-500 group-hover:border-amber-400'}`}>
               {agreed && <span className="text-black font-black text-xl">✓</span>}
             </div>
             <span className="text-zinc-300 font-bold text-lg select-none group-hover:text-white transition-colors">
               마르포 그룹의 토크노믹스 비전 및 정책에 동의합니다.
             </span>
-          </label>
+          </div>
 
           <button 
             onClick={() => setView('subscription')}
             disabled={!agreed}
-            className={`mt-4 font-black uppercase italic tracking-widest px-16 py-6 rounded-2xl transition-all shadow-2xl ${agreed ? 'bg-amber-500 text-black hover:scale-105 active:scale-95 shadow-[0_0_30px_rgba(243,156,18,0.4)]' : 'bg-zinc-800 text-zinc-600 cursor-not-allowed'}`}
+            className={`mt-2 font-black uppercase italic tracking-widest px-16 py-6 rounded-2xl transition-all shadow-2xl ${agreed ? 'bg-amber-500 text-black hover:scale-105 active:scale-95 shadow-[0_0_30px_rgba(243,156,18,0.4)]' : 'bg-zinc-800 text-zinc-600 cursor-not-allowed'}`}
           >
             Access Subscription
           </button>
@@ -136,7 +157,6 @@ export default function MainGameLobby() {
         </header>
 
         <main className="w-full flex-1 relative">
-          {/* 🚩 에러의 원인이었던 필수 무기(lang="ko")를 완벽하게 장착했습니다! */}
           <MarpoSpiritPage lang="ko" />
         </main>
       </div>

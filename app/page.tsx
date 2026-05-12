@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useEffect } from 'react';
 // 👇 현재 가동 중인 게임 엔진을 불러옵니다
-import MarpoSpiritPage from './components/marpo-spirit-page'; 
+import MarpoSpiritPage from '../components/marpo-spirit-page'; 
 
 export default function MainGameLobby() {
   const [isReady, setIsReady] = useState(false);
@@ -141,7 +141,7 @@ export default function MainGameLobby() {
 
         {/* 👇 여기서 방금 전까지 작업한 게임 엔진이 그대로 구동됩니다 */}
         <main className="w-full flex-1 relative">
-          <MarpoSpiritPage />
+          <MarpoSpiritPage lang='ko'/>
         </main>
       </div>
     );

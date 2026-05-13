@@ -142,16 +142,37 @@ export default function MarpoSpiritPage({ lang = 'ko' }: { lang?: 'ko' | 'en' })
       {/* 🏁 1단계: Mar원소 분석 중 (5초 로딩) */}
       {gameState === 'analyzing' && (
         <div className="fixed inset-0 z-[1100] bg-black/90 backdrop-blur-md flex flex-col items-center justify-center p-10">
-          <div className="relative w-full max-w-md flex flex-col items-center gap-10">
-            <div className="w-40 h-40 relative animate-pulse"><Image src="/marpo-logo.png" alt="Analyzing" fill className="object-contain" /></div>
-            <p className="text-2xl font-black text-amber-500 uppercase tracking-widest animate-infinite-blink">Mar원소 분석 중.....</p>
-            <div className="w-full h-4 bg-zinc-800 rounded-full overflow-hidden border border-zinc-700">
-              <div className="h-full bg-amber-500 transition-all duration-75 ease-linear" style={{ width: `${loadingProgress}%` }}></div>
+          <div className="absolute inset-0 w-full h-full z-0 opacity-80">
+            <Image 
+              src="/모래시계.png" 
+              alt="Analyzing Hourglass" 
+              fill 
+              className="object-cover" // 화면에 꽉 차게 배율 조정
+              priority 
+              unoptimized
+            />
+          </div>
+
+          {/* 컨텐츠 레이어 (이미지 위에 표시) */}
+          <div className="relative z-10 w-full max-w-md flex flex-col items-center gap-12 px-10">
+            {/* 기존 로고 영역 삭제 */}
+
+            {/* 텍스트 가독성 확보를 위해 글자 테두리(text-shadow) 스타일 추가 */}
+            <p className="text-3xl font-black text-amber-500 uppercase tracking-widest animate-infinite-blink break-keep text-center [text-shadow:0_2px_10px_rgba(0,0,0,1)]">
+              {lang === 'ko' ? "Mar원소 분석 중....." : "Analyzing Elements....."}
+            </p>
+            
+            {/* 로딩 바: 모래시계 중앙 하단에 배치 */}
+            <div className="w-full h-4 bg-black/50 rounded-full overflow-hidden border-2 border-zinc-700 shadow-[0_0_20px_rgba(0,0,0,0.5)]">
+              <div 
+                className="h-full bg-gradient-to-r from-amber-600 via-amber-400 to-amber-600 transition-all duration-75 ease-linear shadow-[0_0_15px_rgba(243,156,18,0.7)]"
+                style={{ width: `${loadingProgress}%` }}
+              ></div>
             </div>
           </div>
         </div>
       )}
-
+      
       {/* 🏁 2단계: 당첨 (토끼원석.png + 4초) */}
       {gameState === 'win_result' && (
         <div className="fixed inset-0 z-[1200] bg-black/95 flex flex-col items-center justify-center p-6 animate-in zoom-in duration-300">

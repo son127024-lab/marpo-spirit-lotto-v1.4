@@ -98,7 +98,7 @@ export default function MarpoSpiritPage({ lang = 'ko' }: { lang?: 'ko' | 'en' })
           setTimeout(() => handleRetry(), 4000);
         } else {
           setGameState('fail_result');
-          setTimeout(() => handleRetry(), 5000);
+          setTimeout(() => handleRetry(), 6000); 
         }
       }, 5000);
     }, 3000);
@@ -114,6 +114,25 @@ export default function MarpoSpiritPage({ lang = 'ko' }: { lang?: 'ko' | 'en' })
     }
   };
 
+  // 🚩 석탄 입자 생성 (화면 전체에 불규칙하게 뿌림)
+  const renderCoalParticles = () => {
+    const particles = [];
+    const colors = ['#0a0a0a', '#1a1a1a', '#2a2a2a', '#3a3a3a'];
+    for (let i = 0; i < 80; i++) {
+      const style = {
+        '--dir-x': `${Math.random() * 800 - 400}px`,
+        '--dir-y': `${Math.random() * 800 - 400}px`,
+        '--rot': `${Math.random() * 720}deg`,
+        '--delay': `${Math.random() * 0.3}s`,
+        'width': `${Math.random() * 15 + 8}px`,
+        'height': `${Math.random() * 15 + 8}px`,
+        'background': colors[Math.floor(Math.random() * colors.length)],
+      } as React.CSSProperties;
+      particles.push(<div key={i} className="coal-particle" style={style} />);
+    }
+    return particles;
+  };
+
   return (
     <div className="min-h-screen bg-[#050505] text-white p-6 pb-48 flex flex-col items-center font-sans relative overflow-hidden">
       <div className="absolute inset-0 opacity-[0.03] pointer-events-none fixed" style={{ backgroundImage: "radial-gradient(#f39c12 1px, transparent 1px)", backgroundSize: "40px 40px" }}></div>
@@ -124,7 +143,7 @@ export default function MarpoSpiritPage({ lang = 'ko' }: { lang?: 'ko' | 'en' })
           <video autoPlay muted loop playsInline className="absolute inset-0 w-full h-full object-cover opacity-80"><source src="/mining-video.mp4" type="video/mp4" /></video>
           <div className="relative z-10 flex flex-col items-center gap-6">
             <div className="w-24 h-24 border-4 border-amber-500 border-t-transparent rounded-full animate-spin"></div>
-            <p className="text-4xl font-black text-amber-500 uppercase tracking-[0.4em] drop-shadow-[0_0_20px_rgba(243,156,18,0.8)]">Mining...</p>
+            <p className="text-4xl font-black text-amber-500 uppercase tracking-[0.4em]">Mining...</p>
           </div>
         </div>
       )}
@@ -136,7 +155,7 @@ export default function MarpoSpiritPage({ lang = 'ko' }: { lang?: 'ko' | 'en' })
           <div className="relative z-10 w-full max-w-md flex flex-col items-center gap-10 px-10">
             <p className="text-3xl font-black text-amber-500 uppercase tracking-widest animate-infinite-blink [text-shadow:0_2px_10px_rgba(0,0,0,1)]">Mar원소 분석 중.....</p>
             <div className="w-full h-4 bg-black/50 rounded-full overflow-hidden border-2 border-zinc-700">
-              <div className="h-full bg-amber-500 transition-all duration-75 ease-linear" style={{ width: `${loadingProgress}%` }}></div>
+              <div className="h-full bg-amber-500" style={{ width: `${loadingProgress}%` }}></div>
             </div>
           </div>
         </div>
@@ -149,44 +168,33 @@ export default function MarpoSpiritPage({ lang = 'ko' }: { lang?: 'ko' | 'en' })
             <div className="relative w-72 h-72 mb-8 animate-bounce-in"><Image src="/토끼원석.png" alt="Winner Rabbit" fill className="object-contain" unoptimized /></div>
             <h2 className="text-6xl font-black text-amber-500 mb-4 italic uppercase tracking-tighter">SUCCESS!</h2>
             <p className="text-4xl font-black text-white">+{wonAmount.toLocaleString()} Ω</p>
-            <div className="firework-container absolute inset-0 -z-10 overflow-hidden">{[...Array(10)].map((_, i) => ( <div key={i} className={`firework firework-${(i % 3) + 1}`} style={{ top: `${Math.random()*100}%`, left: `${Math.random()*100}%` }}></div> ))}</div>
+            <div className="firework-container absolute inset-0 -z-10 overflow-hidden">{[...Array(10)].map((_, i) => ( <div key={i} className="firework" style={{ top: `${Math.random()*100}%`, left: `${Math.random()*100}%`, background: '#f39c12' }}></div> ))}</div>
           </div>
         </div>
       )}
 
-      {/* 🏁 [수정] 3단계: 실패 (당황토끼.png + 석탄 파편 폭발 5초) */}
+      {/* 🏁 [수정] 3단계: 실패 (기존 멘트 유지 + 석탄 폭죽 효과 6초) */}
       {gameState === 'fail_result' && (
         <div className="fixed inset-0 z-[1200] bg-black/95 flex flex-col items-center justify-center p-6 animate-in fade-in duration-500 overflow-hidden">
           
-          <div className="relative w-72 h-72 mb-12">
-            {/* 1. 당황토끼 이미지 (컬러 유지, 흔들림 제거) */}
-            <Image src="/당황토끼.png" alt="Failed Rabbit" fill className="object-contain" unoptimized />
-            
-            {/* 2. 석탄 폭발 파편 레이어 */}
-            <div className="absolute inset-0 z-20 flex items-center justify-center pointer-events-none">
-              {[...Array(30)].map((_, i) => (
-                <div 
-                  key={i} 
-                  className="coal-shatter" 
-                  style={{ 
-                    '--dir-x': `${Math.random() * 600 - 300}px`, 
-                    '--dir-y': `${Math.random() * 600 - 300}px`,
-                    '--rot': `${Math.random() * 360}deg`,
-                    '--delay': `${Math.random() * 0.5}s`
-                  } as React.CSSProperties} 
-                />
-              ))}
-            </div>
+          {/* 🚩 석탄 파편 레이어 (화면 전체에 뿌려짐) */}
+          <div className="fixed inset-0 z-0 flex items-center justify-center pointer-events-none">
+            {renderCoalParticles()}
           </div>
 
-          <h2 className="text-4xl font-black text-red-600 uppercase tracking-widest mb-4 [text-shadow:0_0_20px_rgba(220,38,38,0.6)]">
-            Analysis Failed
-          </h2>
-          <p className="text-zinc-400 font-bold italic text-center px-10 break-keep">
-            {lang === 'ko' ? "원소 결합에 실패했습니다. 석탄이 되어 흩어집니다!" : "Element combination failed. Shattered into coal!"}
-          </p>
-          <div className="mt-8 w-48 h-1.5 bg-zinc-800 rounded-full overflow-hidden">
-             <div className="h-full bg-red-600 animate-progress-5s"></div>
+          <div className="relative z-10 flex flex-col items-center">
+            <div className="relative w-72 h-72 mb-12">
+              {/* 토끼는 컬러 그대로 유지 */}
+              <Image src="/당황토끼.png" alt="Failed Rabbit" fill className="object-contain" unoptimized />
+            </div>
+
+            {/* 🚩 멘트는 기존 그대로 복구 */}
+            <h2 className="text-4xl font-black text-zinc-500 uppercase tracking-widest mb-4">
+              Analysis Failed
+            </h2>
+            <p className="text-zinc-400 font-bold italic text-center px-10 break-keep">
+              {lang === 'ko' ? "원소 결합에 실패했습니다. 다시 도전 하세요." : "Element combination failed. Try again!"}
+            </p>
           </div>
         </div>
       )}
@@ -212,7 +220,7 @@ export default function MarpoSpiritPage({ lang = 'ko' }: { lang?: 'ko' | 'en' })
             </div>
           </section>
 
-          <button onClick={handleReveal} className="w-full max-w-md mb-6 py-4 bg-zinc-900 border border-amber-500/50 rounded-2xl flex items-center justify-center gap-3 text-amber-500 font-black uppercase tracking-widest hover:bg-amber-500/10 z-20">
+          <button onClick={handleReveal} className="w-full max-w-md mb-6 py-4 bg-zinc-900 border border-amber-500/50 rounded-2xl flex items-center justify-center gap-3 text-amber-500 font-black uppercase tracking-widest z-20">
             <Lightbulb size={20} /> {lang === 'ko' ? "원소 힌트 받기 (-1,000 Ω)" : "Get Element Hint (-1,000 Ω)"}
           </button>
 
@@ -242,8 +250,8 @@ export default function MarpoSpiritPage({ lang = 'ko' }: { lang?: 'ko' | 'en' })
                  <p className="text-2xl font-black text-white italic">{ohmBalance.toLocaleString()} Ω</p>
                </div>
              </div>
-             <button onClick={handleMining} disabled={selectedNumbers.length < 6} className="flex items-center gap-4 px-10 py-5 rounded-3xl bg-amber-500 text-black font-black uppercase shadow-[0_0_20px_rgba(243,156,18,0.4)] active:scale-95 transition-all">
-               <Pickaxe size={24} /> {lang === 'ko' ? '분석 시작' : 'Start'}
+             <button onClick={handleMining} disabled={selectedNumbers.length < 6} className="px-10 py-5 rounded-3xl bg-amber-500 text-black font-black uppercase shadow-[0_0_20px_rgba(243,156,18,0.4)] active:scale-95 transition-all">
+               <Pickaxe size={24} className="inline mr-2" /> {lang === 'ko' ? '분석 시작' : 'Start'}
              </button>
           </div>
         </>
@@ -251,25 +259,21 @@ export default function MarpoSpiritPage({ lang = 'ko' }: { lang?: 'ko' | 'en' })
 
       {/* 🌟 애니메이션 정의 🌟 */}
       <style jsx global>{`
-        @keyframes coalShatter {
-          0% { transform: scale(0) rotate(0deg); opacity: 1; }
+        @keyframes coalExplode {
+          0% { transform: scale(0.2) translate(0, 0); opacity: 1; }
           100% { transform: scale(1.5) translate(var(--dir-x), var(--dir-y)) rotate(var(--rot)); opacity: 0; }
         }
-        .coal-shatter {
+        .coal-particle {
           position: absolute;
-          width: 20px;
-          height: 20px;
-          background: #121212;
-          box-shadow: inset 0 0 10px #000;
-          clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%); /* 파편 모양 */
-          animation: coalShatter 1s ease-out var(--delay) forwards;
+          top: 50%;
+          left: 50%;
+          clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+          animation: coalExplode 2s cubic-bezier(0.1, 1, 0.3, 1) var(--delay) forwards;
         }
         @keyframes explode { 0% { transform: scale(1); opacity: 1; } 100% { transform: scale(25); opacity: 0; } }
-        .firework { position: absolute; width: 4px; height: 4px; border-radius: 50%; opacity: 0; animation: explode 1.5s ease-out infinite; background: #f39c12; }
+        .firework { position: absolute; width: 4px; height: 4px; border-radius: 50%; opacity: 0; animation: explode 1.5s ease-out infinite; }
         @keyframes bounce-in { 0% { transform: scale(0.3); opacity: 0; } 70% { transform: scale(1.1); opacity: 1; } 100% { transform: scale(1); } }
         .animate-bounce-in { animation: bounce-in 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
-        .animate-progress-5s { animation: progress 5s linear forwards; }
-        @keyframes progress { from { width: 0%; } to { width: 100%; } }
         .animate-infinite-blink { animation: blink 1s linear infinite; }
         @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
       `}</style>

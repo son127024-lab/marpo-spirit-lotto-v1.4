@@ -9,9 +9,28 @@ export default function MainGameLobby() {
   const [agreed, setAgreed] = useState(false);
   // 🚩 언어 설정 상태 (ko: 한국어, en: 영어)
   const [lang, setLang] = useState<'ko' | 'en'>('ko');
-
+  const [piUser, setPiUser] = useState<{username: string} | null>(null);
   useEffect(() => {
     setIsReady(true);
+     // 파이 SDK 엔진 초기화 및 로그인 호출
+    const Pi = (typeof window !== 'undefined') ? (window as any).Pi : null;
+    
+    if (Pi) {
+      // 샌드박스 모드(테스트넷) 활성화
+      Pi.init({ version: "2.0", sandbox: true });
+
+      // 유저 인증 시도
+      Pi.authenticate(['username'], function (incompletePayment: any) {
+        // 미완료 결제가 있다면 여기서 처리 (추후 결제 연동 시 사용)
+      })
+      .then(function (auth: any) {
+        console.log("Marpo Connect Success:", auth.user.username);
+        setPiUser(auth.user); // 유저 정보 획득 완료!
+      })
+      .catch(function (error: any) {
+        console.error("Marpo Connect Error:", error);
+      });
+    }
   }, []);
 
   if (!isReady) return null;
@@ -235,6 +254,10 @@ export default function MainGameLobby() {
             }}
             className="text-zinc-500 hover:text-amber-500 text-[9px] font-bold uppercase tracking-widest transition-colors border border-zinc-800 px-3 py-1 rounded-full"
           >
+            {/* 3단계 대시보드 헤더 내부 Disconnect 버튼 앞쪽 등에 배치 */}
+  <div className="mr-4 text-[10px] font-bold text-amber-400 uppercase">
+    Commander: {piUser ? piUser.username : "Connecting..."}
+  </div>
             Disconnect
           </button>
         </header>

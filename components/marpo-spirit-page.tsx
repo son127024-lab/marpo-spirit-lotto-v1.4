@@ -634,9 +634,19 @@ export default function MarpoSpiritPage({ lang = 'ko' }: { lang?: 'ko' | 'en' })
         </div>
       )}
 
+          {/* 🌟 애니메이션 정의 🌟 */}
       <style jsx global>{`
-        @keyframes coalExplode { 0% { transform: scale(0.2) translate(0, 0); opacity: 1; } 100% { transform: scale(1.5) translate(var(--dir-x), var(--dir-y)) rotate(var(--rot)); opacity: 0; } }
-        .coal-particle { position: absolute; top: 50%; left: 50%; clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%); animation: coalExplode 2s cubic-bezier(0.1, 1, 0.3, 1) var(--delay) forwards; }
+        @keyframes coalExplode {
+          0% { transform: scale(0.2) translate(0, 0); opacity: 1; }
+          100% { transform: scale(1.5) translate(var(--dir-x), var(--dir-y)) rotate(var(--rot)); opacity: 0; }
+        }
+        .coal-particle {
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+          animation: coalExplode 2s cubic-bezier(0.1, 1, 0.3, 1) var(--delay) forwards;
+        }
         @keyframes explode { 0% { transform: scale(1); opacity: 1; } 100% { transform: scale(25); opacity: 0; } }
         .firework { position: absolute; width: 4px; height: 4px; border-radius: 50%; opacity: 0; animation: explode 1.5s ease-out infinite; }
         @keyframes bounce-in { 0% { transform: scale(0.3); opacity: 0; } 70% { transform: scale(1.1); opacity: 1; } 100% { transform: scale(1); } }

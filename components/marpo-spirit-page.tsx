@@ -21,13 +21,13 @@ const guideData = {
   ko: [
     "파이오니어님 이제 MAR 에너지 채굴 탐색을 시작합니다.",
     "아래의 원소 중 6개의 원소 샘플을 선택하세요.",
-    "채굴된 원소가 일치하면, Ω 에너지 크레딧을 획득합니다.",
+    "채굴된 원소가 일치하면, 매칭 개수에 따라 등급별 원석을 획득합니다.",
     "디플레이션을 향한 여정, 샘플 선택 후 채굴 버튼을 누르세요!"
   ],
   en: [
     "Pioneer, the MAR energy mining exploration begins now.",
     "Please select 6 element samples from the elements below.",
-    "If the mined elements match, you will earn Ω energy credits.",
+    "Based on matched elements, you will earn tiered raw elements.",
     "A journey toward deflation. Select samples and press Mining!"
   ]
 };
@@ -47,9 +47,10 @@ export default function MarpoSpiritPage({ lang = 'ko' }: { lang?: 'ko' | 'en' })
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [revealedNumber, setRevealedNumber] = useState<number | null>(null);
 
-  // 🚩 신규: 금고 데이터 및 모달 상태
+  // 금고 및 획득 원석 상태
   const [inventory, setInventory] = useState<Record<number, number>>({});
   const [showVault, setShowVault] = useState(false);
+  const [earnedElement, setEarnedElement] = useState<number | null>(null);
 
   const currentGuides = guideData[lang] || guideData.ko;
 
@@ -57,7 +58,6 @@ export default function MarpoSpiritPage({ lang = 'ko' }: { lang?: 'ko' | 'en' })
     const savedTier = localStorage.getItem('marpo_tier') as UserTier;
     if (savedTier) setUserTier(savedTier);
     
-    // 🚩 컴포넌트 마운트 시 로컬스토리지에서 금고 데이터 로드
     const savedInv = localStorage.getItem('marpo_inventory');
     if (savedInv) setInventory(JSON.parse(savedInv));
 
@@ -86,6 +86,7 @@ export default function MarpoSpiritPage({ lang = 'ko' }: { lang?: 'ko' | 'en' })
   const handleMining = () => {
     if (selectedNumbers.length < 6) return alert(lang === 'ko' ? "원소 샘플 6개를 선택해주세요!" : "Please select 6 element samples!");
     setGameState('mining_video');
+    setEarnedElement(null);
 
     setTimeout(() => {
       setGameState('analyzing');
@@ -97,24 +98,60 @@ export default function MarpoSpiritPage({ lang = 'ko' }: { lang?: 'ko' | 'en' })
       setTimeout(() => {
         clearInterval(progressInterval);
         setDrawCount(prev => prev + 1);
-        const isWinner = Math.random() > 0.7; 
-        const reward = isWinner ? Math.floor(Math.random() * 5000) + 500 : 0;
+        
+        // 당첨 로직 임시 시뮬레이션 (실제로는 서버/스마트컨트랙트에서 난수 생성)
+        const results: number[] = [];
+        while (results.length < 6) {
+          const n = Math.floor(Math.random() * 45) + 1;
+          if (!results.includes(n)) results.push(n);
+        }
+        
+        const matchedNums = selectedNumbers.filter(n => results.includes(n));
+        const matches = matchedNums.length;
+        
+        // 🚩 전술 B: 매칭 개수에 따른 랜덤 티어 박스 시스템
+        let reward = 0;
+        let obtainedElement: number | null = null;
+
+        if (matches > 0) {
+          reward = matches === 1 ? 500 : matches === 2 ? 1500 : matches === 3 ? 5000 : matches === 4 ? 20000 : matches === 5 ? 100000 : 314159;
+          
+          if (matches === 1) obtainedElement = Math.floor(Math.random() * 15) + 1; // 1~15 (하급)
+          else if (matches === 2) obtainedElement = Math.floor(Math.random() * 10) + 16; // 16~25 (중급)
+          else if (matches === 3) obtainedElement = Math.floor(Math.random() * 10) + 26; // 26~35 (고급)
+          else obtainedElement = Math.floor(Math.random() * 10) + 36; // 36~45 (최상급)
+
+          setEarnedElement(obtainedElement);
+          
+          setInventory(prevInv => {
+            const updatedInv = { ...prevInv };
+            if (obtainedElement) {
+              updatedInv[obtainedElement] = (updatedInv[obtainedElement] || 0) + 1;
+              localStorage.setItem('marpo_inventory', JSON.stringify(updatedInv));
+            }
+            return updatedInv;
+          });
+        } else {
+          // 데모 버전을 위해 강제 승리 확률 30% 부여 (테스트용)
+          if (Math.random() > 0.7) {
+             reward = 500;
+             obtainedElement = Math.floor(Math.random() * 15) + 1;
+             setEarnedElement(obtainedElement);
+             setInventory(prevInv => {
+               const updatedInv = { ...prevInv };
+               updatedInv[obtainedElement!] = (updatedInv[obtainedElement!] || 0) + 1;
+               localStorage.setItem('marpo_inventory', JSON.stringify(updatedInv));
+               return updatedInv;
+             });
+          }
+        }
+
         setWonAmount(reward);
         setOhmBalance(prev => prev + reward);
 
-        if (isWinner) {
-          // 🚩 당첨 시, 내가 선택한 6개의 원석을 금고에 저장
-          setInventory(prevInv => {
-            const updatedInv = { ...prevInv };
-            selectedNumbers.forEach(n => {
-              updatedInv[n] = (updatedInv[n] || 0) + 1;
-            });
-            localStorage.setItem('marpo_inventory', JSON.stringify(updatedInv));
-            return updatedInv;
-          });
-
+        if (reward > 0) {
           setGameState('win_result');
-          setTimeout(() => handleRetry(), 4000);
+          setTimeout(() => handleRetry(), 5000);
         } else {
           setGameState('fail_result');
           setTimeout(() => handleRetry(), 6000); 
@@ -126,6 +163,7 @@ export default function MarpoSpiritPage({ lang = 'ko' }: { lang?: 'ko' | 'en' })
   const handleRetry = () => {
     setSelectedNumbers([]);
     setRevealedNumber(null);
+    setEarnedElement(null);
     if (userTier === 'basic' || (userTier === 'premium' && drawCount >= 5) || (userTier === 'vip' && drawCount >= 10)) {
       setGameState('ad_wall');
     } else {
@@ -133,7 +171,6 @@ export default function MarpoSpiritPage({ lang = 'ko' }: { lang?: 'ko' | 'en' })
     }
   };
 
-  // 🚩 석탄 입자 생성
   const renderCoalParticles = () => {
     const particles = [];
     const colors = ['#0a0a0a', '#1a1a1a', '#2a2a2a', '#3a3a3a'];
@@ -156,7 +193,6 @@ export default function MarpoSpiritPage({ lang = 'ko' }: { lang?: 'ko' | 'en' })
     <div className="min-h-screen bg-[#050505] text-white p-6 pb-48 flex flex-col items-center font-sans relative overflow-hidden">
       <div className="absolute inset-0 opacity-[0.03] pointer-events-none fixed" style={{ backgroundImage: "radial-gradient(#f39c12 1px, transparent 1px)", backgroundSize: "40px 40px" }}></div>
 
-      {/* 🏁 0단계: 광부 채굴 영상 (3초) */}
       {gameState === 'mining_video' && (
         <div className="fixed inset-0 z-[1000] bg-black flex flex-col items-center justify-center">
           <video autoPlay muted loop playsInline className="absolute inset-0 w-full h-full object-cover opacity-80"><source src="/mining-video.mp4" type="video/mp4" /></video>
@@ -167,7 +203,6 @@ export default function MarpoSpiritPage({ lang = 'ko' }: { lang?: 'ko' | 'en' })
         </div>
       )}
 
-      {/* 🏁 1단계: 분석 중 (모래시계 풀 사이즈 5초) */}
       {gameState === 'analyzing' && (
         <div className="fixed inset-0 z-[1100] bg-black flex flex-col items-center justify-center overflow-hidden">
           <div className="absolute inset-0 w-full h-full z-0"><Image src="/모래시계.png" alt="Hourglass" fill className="object-cover opacity-70" priority unoptimized /></div>
@@ -180,19 +215,33 @@ export default function MarpoSpiritPage({ lang = 'ko' }: { lang?: 'ko' | 'en' })
         </div>
       )}
 
-      {/* 🏁 2단계: 당첨 (토끼원석.png + 폭죽 4초) */}
       {gameState === 'win_result' && (
         <div className="fixed inset-0 z-[1200] bg-black/95 flex flex-col items-center justify-center p-6 animate-in zoom-in duration-300">
           <div className="relative z-10 text-center flex flex-col items-center">
-            <div className="relative w-72 h-72 mb-8 animate-bounce-in"><Image src="/토끼원석.png" alt="Winner Rabbit" fill className="object-contain" unoptimized /></div>
-            <h2 className="text-6xl font-black text-amber-500 mb-4 italic uppercase tracking-tighter">SUCCESS!</h2>
-            <p className="text-4xl font-black text-white">+{wonAmount.toLocaleString()} Ω</p>
+            <div className="relative w-64 h-64 mb-4 animate-bounce-in"><Image src="/토끼원석.png" alt="Winner Rabbit" fill className="object-contain" unoptimized /></div>
+            <h2 className="text-6xl font-black text-amber-500 mb-2 italic uppercase tracking-tighter">SUCCESS!</h2>
+            <p className="text-4xl font-black text-white mb-6">+{wonAmount.toLocaleString()} Ω</p>
+            
+            {/* 🚩 획득한 원석을 직관적으로 보여주는 UI 추가 */}
+            {earnedElement && (
+              <div className="flex items-center gap-4 bg-zinc-900/90 px-6 py-3 rounded-[2rem] border-2 border-lime-500 shadow-[0_0_20px_rgba(132,204,22,0.4)] animate-in slide-in-from-bottom duration-500 delay-300">
+                <div className="relative w-12 h-12">
+                  <Image src={getElementIcon(earnedElement)} alt={`Element ${earnedElement}`} fill className="object-contain" unoptimized />
+                </div>
+                <div className="text-left">
+                  <p className="text-[10px] text-lime-400 font-black uppercase tracking-widest">Loot Box Unlocked</p>
+                  <p className="text-xl font-black text-white">
+                    {lang === 'ko' ? `${earnedElement}번 원석 획득!` : `Obtained #${earnedElement}!`}
+                  </p>
+                </div>
+              </div>
+            )}
+
             <div className="firework-container absolute inset-0 -z-10 overflow-hidden">{[...Array(10)].map((_, i) => ( <div key={i} className="firework" style={{ top: `${Math.random()*100}%`, left: `${Math.random()*100}%`, background: '#f39c12' }}></div> ))}</div>
           </div>
         </div>
       )}
 
-      {/* 🏁 3단계: 실패 (석탄 폭죽 효과 6초) */}
       {gameState === 'fail_result' && (
         <div className="fixed inset-0 z-[1200] bg-black/95 flex flex-col items-center justify-center p-6 animate-in fade-in duration-500 overflow-hidden">
           <div className="fixed inset-0 z-0 flex items-center justify-center pointer-events-none">
@@ -210,7 +259,6 @@ export default function MarpoSpiritPage({ lang = 'ko' }: { lang?: 'ko' | 'en' })
         </div>
       )}
 
-      {/* 메인 로비 (idle) */}
       {gameState === 'idle' && (
         <>
           <div className="w-full max-w-md mt-14 mb-8 flex items-start gap-6 relative z-20">
@@ -231,9 +279,7 @@ export default function MarpoSpiritPage({ lang = 'ko' }: { lang?: 'ko' | 'en' })
             </div>
           </section>
 
-          {/* 🚩 신규 레이아웃: 분석(힌트) 버튼 & 금고(Vault) 버튼 */}
           <div className="w-full max-w-md flex flex-col gap-3 mb-10 relative z-20">
-            {/* 1. 분석 버튼 (힌트) - 슬림하게 배치 */}
             <button onClick={handleReveal} className="w-full py-5 bg-zinc-900/40 border border-[#f39c12]/40 rounded-3xl flex flex-col items-center active:scale-95 transition-all">
               <div className="flex items-center gap-2 mb-1">
                 <Target size={18} className="text-[#f39c12]" />
@@ -244,7 +290,6 @@ export default function MarpoSpiritPage({ lang = 'ko' }: { lang?: 'ko' | 'en' })
               </p>
             </button>
 
-            {/* 2. 금고 버튼 (Vault) - 메인 액션으로 웅장하게 배치 */}
             <button onClick={() => setShowVault(true)} className="w-full py-6 bg-gradient-to-r from-amber-600 to-amber-500 rounded-3xl flex items-center justify-center gap-4 shadow-[0_10px_20px_rgba(0,0,0,0.3)] active:scale-95 transition-all border-b-4 border-amber-800">
               <Wallet size={24} className="text-black" />
               <span className="text-black font-black text-xl italic uppercase tracking-tighter">
@@ -254,7 +299,6 @@ export default function MarpoSpiritPage({ lang = 'ko' }: { lang?: 'ko' | 'en' })
             </button>
           </div>
 
-          {/* 원소 보드판 */}
           <div className="w-full max-w-md bg-zinc-900/30 border border-zinc-800 rounded-[3.5rem] p-8 mb-12 relative shadow-2xl z-20">
             <div className="grid grid-cols-6 gap-3">
               {[...Array(45)].map((_, i) => {
@@ -273,7 +317,6 @@ export default function MarpoSpiritPage({ lang = 'ko' }: { lang?: 'ko' | 'en' })
             </div>
           </div>
 
-          {/* 하단 채굴 버튼 존 */}
           <div className="w-full max-w-md mt-auto bg-zinc-900/50 p-8 rounded-[3.5rem] border border-zinc-800 flex justify-between items-center shadow-2xl z-20">
              <div className="flex items-center gap-6">
                <div className="w-16 h-16 bg-zinc-900 rounded-2xl flex items-center justify-center border border-zinc-800 text-amber-500 font-black text-3xl">Ω</div>
@@ -289,7 +332,6 @@ export default function MarpoSpiritPage({ lang = 'ko' }: { lang?: 'ko' | 'en' })
         </>
       )}
 
-      {/* 🚩 신규: 금고(Vault) 전체 화면 모달 (기존 기능 위에 덮어씌워짐) */}
       {showVault && (
         <div className="fixed inset-0 z-[2500] bg-black animate-in slide-in-from-bottom duration-500 flex flex-col p-8 overflow-y-auto">
           <div className="flex justify-between items-center mb-10 mt-10">
@@ -331,7 +373,6 @@ export default function MarpoSpiritPage({ lang = 'ko' }: { lang?: 'ko' | 'en' })
         </div>
       )}
 
-      {/* 🌟 애니메이션 정의 🌟 */}
       <style jsx global>{`
         @keyframes coalExplode {
           0% { transform: scale(0.2) translate(0, 0); opacity: 1; }

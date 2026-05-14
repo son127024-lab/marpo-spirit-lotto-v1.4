@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
-import { Lock, Pickaxe, Flame, Sparkles, RefreshCcw, PlaySquare, Lightbulb } from 'lucide-react';
+import { Lock, Pickaxe, Flame, Sparkles, RefreshCcw, PlaySquare, Lightbulb, Wallet, X, ChevronRight, Target } from 'lucide-react';
 
 const iconMap: Record<number, string> = {
   1: "1-In.png", 2: "2-.png", 3: "3-.png", 4: "4-Y.png", 5: "5-.png",
@@ -47,11 +47,20 @@ export default function MarpoSpiritPage({ lang = 'ko' }: { lang?: 'ko' | 'en' })
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [revealedNumber, setRevealedNumber] = useState<number | null>(null);
 
+  // 🚩 신규: 금고 데이터 및 모달 상태
+  const [inventory, setInventory] = useState<Record<number, number>>({});
+  const [showVault, setShowVault] = useState(false);
+
   const currentGuides = guideData[lang] || guideData.ko;
 
   useEffect(() => {
     const savedTier = localStorage.getItem('marpo_tier') as UserTier;
     if (savedTier) setUserTier(savedTier);
+    
+    // 🚩 컴포넌트 마운트 시 로컬스토리지에서 금고 데이터 로드
+    const savedInv = localStorage.getItem('marpo_inventory');
+    if (savedInv) setInventory(JSON.parse(savedInv));
+
     const interval = setInterval(() => setLineIdx((p) => (p + 1) % currentGuides.length), 4000);
     return () => clearInterval(interval);
   }, [currentGuides]);
@@ -94,6 +103,16 @@ export default function MarpoSpiritPage({ lang = 'ko' }: { lang?: 'ko' | 'en' })
         setOhmBalance(prev => prev + reward);
 
         if (isWinner) {
+          // 🚩 당첨 시, 내가 선택한 6개의 원석을 금고에 저장
+          setInventory(prevInv => {
+            const updatedInv = { ...prevInv };
+            selectedNumbers.forEach(n => {
+              updatedInv[n] = (updatedInv[n] || 0) + 1;
+            });
+            localStorage.setItem('marpo_inventory', JSON.stringify(updatedInv));
+            return updatedInv;
+          });
+
           setGameState('win_result');
           setTimeout(() => handleRetry(), 4000);
         } else {
@@ -114,7 +133,7 @@ export default function MarpoSpiritPage({ lang = 'ko' }: { lang?: 'ko' | 'en' })
     }
   };
 
-  // 🚩 석탄 입자 생성 (화면 전체에 불규칙하게 뿌림)
+  // 🚩 석탄 입자 생성
   const renderCoalParticles = () => {
     const particles = [];
     const colors = ['#0a0a0a', '#1a1a1a', '#2a2a2a', '#3a3a3a'];
@@ -173,25 +192,17 @@ export default function MarpoSpiritPage({ lang = 'ko' }: { lang?: 'ko' | 'en' })
         </div>
       )}
 
-      {/* 🏁 [수정] 3단계: 실패 (기존 멘트 유지 + 석탄 폭죽 효과 6초) */}
+      {/* 🏁 3단계: 실패 (석탄 폭죽 효과 6초) */}
       {gameState === 'fail_result' && (
         <div className="fixed inset-0 z-[1200] bg-black/95 flex flex-col items-center justify-center p-6 animate-in fade-in duration-500 overflow-hidden">
-          
-          {/* 🚩 석탄 파편 레이어 (화면 전체에 뿌려짐) */}
           <div className="fixed inset-0 z-0 flex items-center justify-center pointer-events-none">
             {renderCoalParticles()}
           </div>
-
           <div className="relative z-10 flex flex-col items-center">
             <div className="relative w-72 h-72 mb-12">
-              {/* 토끼는 컬러 그대로 유지 */}
               <Image src="/당황토끼.png" alt="Failed Rabbit" fill className="object-contain" unoptimized />
             </div>
-
-            {/* 🚩 멘트는 기존 그대로 복구 */}
-            <h2 className="text-4xl font-black text-zinc-500 uppercase tracking-widest mb-4">
-              Analysis Failed
-            </h2>
+            <h2 className="text-4xl font-black text-zinc-500 uppercase tracking-widest mb-4">Analysis Failed</h2>
             <p className="text-zinc-400 font-bold italic text-center px-10 break-keep">
               {lang === 'ko' ? "원소 결합에 실패했습니다. 다시 도전 하세요." : "Element combination failed. Try again!"}
             </p>
@@ -220,10 +231,30 @@ export default function MarpoSpiritPage({ lang = 'ko' }: { lang?: 'ko' | 'en' })
             </div>
           </section>
 
-          <button onClick={handleReveal} className="w-full max-w-md mb-6 py-4 bg-zinc-900 border border-amber-500/50 rounded-2xl flex items-center justify-center gap-3 text-amber-500 font-black uppercase tracking-widest z-20">
-            <Lightbulb size={20} /> {lang === 'ko' ? "원소 힌트 받기 (-1,000 Ω)" : "Get Element Hint (-1,000 Ω)"}
-          </button>
+          {/* 🚩 신규 레이아웃: 분석(힌트) 버튼 & 금고(Vault) 버튼 */}
+          <div className="w-full max-w-md flex flex-col gap-3 mb-10 relative z-20">
+            {/* 1. 분석 버튼 (힌트) - 슬림하게 배치 */}
+            <button onClick={handleReveal} className="w-full py-5 bg-zinc-900/40 border border-[#f39c12]/40 rounded-3xl flex flex-col items-center active:scale-95 transition-all">
+              <div className="flex items-center gap-2 mb-1">
+                <Target size={18} className="text-[#f39c12]" />
+                <p className="text-[#f39c12] font-black text-xs uppercase tracking-widest">Insider Reveal</p>
+              </div>
+              <p className="text-[14px] font-black uppercase italic text-lime-300 animate-infinite-blink">
+                {lang === 'ko' ? "1,000 Ω 소모하여 힌트 보기" : "Burn 1,000 Ω for a hint"}
+              </p>
+            </button>
 
+            {/* 2. 금고 버튼 (Vault) - 메인 액션으로 웅장하게 배치 */}
+            <button onClick={() => setShowVault(true)} className="w-full py-6 bg-gradient-to-r from-amber-600 to-amber-500 rounded-3xl flex items-center justify-center gap-4 shadow-[0_10px_20px_rgba(0,0,0,0.3)] active:scale-95 transition-all border-b-4 border-amber-800">
+              <Wallet size={24} className="text-black" />
+              <span className="text-black font-black text-xl italic uppercase tracking-tighter">
+                {lang === 'ko' ? "내 금고 확인 (자산)" : "MY VAULT (ASSETS)"}
+              </span>
+              <ChevronRight size={20} className="text-black/50" />
+            </button>
+          </div>
+
+          {/* 원소 보드판 */}
           <div className="w-full max-w-md bg-zinc-900/30 border border-zinc-800 rounded-[3.5rem] p-8 mb-12 relative shadow-2xl z-20">
             <div className="grid grid-cols-6 gap-3">
               {[...Array(45)].map((_, i) => {
@@ -242,6 +273,7 @@ export default function MarpoSpiritPage({ lang = 'ko' }: { lang?: 'ko' | 'en' })
             </div>
           </div>
 
+          {/* 하단 채굴 버튼 존 */}
           <div className="w-full max-w-md mt-auto bg-zinc-900/50 p-8 rounded-[3.5rem] border border-zinc-800 flex justify-between items-center shadow-2xl z-20">
              <div className="flex items-center gap-6">
                <div className="w-16 h-16 bg-zinc-900 rounded-2xl flex items-center justify-center border border-zinc-800 text-amber-500 font-black text-3xl">Ω</div>
@@ -255,6 +287,48 @@ export default function MarpoSpiritPage({ lang = 'ko' }: { lang?: 'ko' | 'en' })
              </button>
           </div>
         </>
+      )}
+
+      {/* 🚩 신규: 금고(Vault) 전체 화면 모달 (기존 기능 위에 덮어씌워짐) */}
+      {showVault && (
+        <div className="fixed inset-0 z-[2500] bg-black animate-in slide-in-from-bottom duration-500 flex flex-col p-8 overflow-y-auto">
+          <div className="flex justify-between items-center mb-10 mt-10">
+            <div>
+              <h2 className="text-4xl font-black italic text-amber-500 tracking-tighter uppercase">Marpo Vault</h2>
+              <p className="text-zinc-500 text-xs font-bold uppercase tracking-widest mt-1">Your Tactical Element Inventory</p>
+            </div>
+            <button onClick={() => setShowVault(false)} className="w-12 h-12 bg-zinc-900 rounded-full flex items-center justify-center border border-zinc-800">
+              <X size={24} className="text-white" />
+            </button>
+          </div>
+
+          <div className="grid grid-cols-4 gap-4 mb-20">
+            {[...Array(45)].map((_, i) => {
+              const num = i + 1;
+              const count = inventory[num] || 0;
+              return (
+                <div key={num} className={`relative aspect-square rounded-2xl border transition-all ${count > 0 ? 'border-amber-500 bg-zinc-900' : 'border-zinc-800 opacity-20'}`}>
+                   <div className="absolute inset-0 bg-cover bg-center rounded-2xl" style={{ backgroundImage: `url('${getElementIcon(num)}')` }} />
+                   {count > 0 && (
+                     <div className="absolute -top-2 -right-2 bg-amber-500 text-black text-[10px] font-black px-2 py-0.5 rounded-full shadow-lg">
+                       x{count}
+                     </div>
+                   )}
+                   <div className="absolute bottom-1 left-1/2 -translate-x-1/2 text-[10px] font-black text-white/50">{num}</div>
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="mt-auto bg-zinc-900/80 p-8 rounded-[3rem] border border-amber-500/30 text-center">
+             <p className="text-zinc-400 text-sm font-bold mb-4 italic break-keep">
+               {lang === 'ko' ? "융합 프로토콜(챕터 2) 준비 중... 더 많은 원석을 채굴하십시오." : "Fusion Protocol (Ch.2) Incoming... Keep mining raw elements."}
+             </p>
+             <button onClick={() => setShowVault(false)} className="w-full py-5 bg-amber-500 text-black rounded-2xl font-black text-lg uppercase">
+               {lang === 'ko' ? "채굴장으로 복귀" : "Return to Mining"}
+             </button>
+          </div>
+        </div>
       )}
 
       {/* 🌟 애니메이션 정의 🌟 */}
@@ -276,6 +350,8 @@ export default function MarpoSpiritPage({ lang = 'ko' }: { lang?: 'ko' | 'en' })
         .animate-bounce-in { animation: bounce-in 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
         .animate-infinite-blink { animation: blink 1s linear infinite; }
         @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+        @keyframes bounce-slow { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-12px); } }
+        .animate-bounce-slow { animation: bounce-slow 4s ease-in-out infinite; }
       `}</style>
     </div>
   );

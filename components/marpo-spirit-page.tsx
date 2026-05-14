@@ -512,9 +512,9 @@ export default function MarpoSpiritPage({ lang = 'ko' }: { lang?: 'ko' | 'en' })
 
       {/* 💎 금고(Vault) & 🔥 융합소 모달 */}
       {showVault && gameState === 'idle' && (
-        <div className={`fixed inset-0 z-[2500] ${isFusionMode ? 'bg-[#0a0000]' : 'bg-black'} animate-in slide-in-from-bottom duration-500 flex flex-col p-8 overflow-y-auto transition-colors`}>
+        <div className={`fixed inset-0 z-[2500] ${isFusionMode ? 'bg-[#0a0000]' : 'bg-black'} animate-in slide-in-from-bottom duration-500 flex flex-col p-0 overflow-hidden transition-colors`}>
           
-          <div className="flex justify-between items-center mb-8 mt-6">
+          <div className="shrink-0 flex justify-between items-center px-6 pt-6 pb-4 bg-black/95 border-b border-zinc-900 z-20">
             <div>
               <h2 className={`text-4xl font-black italic tracking-tighter uppercase transition-colors ${isFusionMode ? 'text-red-500' : 'text-amber-500'}`}>
                 {isFusionMode ? 'Fusion Lab' : 'Marpo Vault'}
@@ -555,8 +555,8 @@ export default function MarpoSpiritPage({ lang = 'ko' }: { lang?: 'ko' | 'en' })
 
           {/* 🔥 융합소 UI */}
           {isFusionMode && (
-            <div className="w-full bg-zinc-900/50 border border-red-900/50 rounded-[3rem] p-6 mb-8 flex flex-col items-center relative overflow-hidden">
-               <div className="flex gap-6 mb-6">
+            <div className="w-full min-h-fit bg-zinc-900/50 border border-red-900/50 rounded-[2rem] p-5 mb-8 flex flex-col items-center relative overflow-visible shrink-0">
+               <div className="w-full flex justify-center items-center gap-4 mb-6 shrink-0">
                  <button onClick={() => handleRemoveFromSlot('A')} className={`w-24 h-24 rounded-2xl border-2 flex items-center justify-center transition-all z-10 ${slotA ? 'border-red-500 bg-black shadow-[0_0_15px_rgba(255,0,0,0.3)]' : 'border-zinc-700 border-dashed bg-zinc-900/50'}`}>
                     {slotA ? <Image src={getElementIcon(slotA)} alt="A" width={60} height={60} unoptimized /> : <span className="text-zinc-600 font-black">A</span>}
                  </button>

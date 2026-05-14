@@ -21,9 +21,18 @@ export default function MainGameLobby() {
       Pi.init({ version: "2.0", sandbox: false });
 
       // 2. 광고 엔진 예열 (미리 로드)
-      if (Pi.Ads) {
-        Pi.Ads.preloadRewardedVideo();
-      }
+      // Pi Browser / Pi SDK 환경이 아니거나,
+       // preloadRewardedVideo 함수가 없는 경우 앱이 터지지 않도록 안전 체크
+      if (typeof window !== "undefined") {
+      const pi = (window as any).Pi;
+
+      if (pi?.Ads && typeof pi.Ads.preloadRewardedVideo === "function") {
+      pi.Ads.preloadRewardedVideo();
+      } else {
+      console.warn("Pi Ads preloadRewardedVideo is not available. Skipping preload.");
+  }
+}
+        
 
       // 3. 파이오니어 인증 (로그인)
       Pi.authenticate(['username'], function (incompletePayment: any) {

@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
-import { Lock, Pickaxe, Flame, Sparkles, RefreshCcw, PlaySquare, Lightbulb, Wallet, X, ChevronRight, Target } from 'lucide-react';
+import { Lock, Pickaxe, Flame, Sparkles, RefreshCcw, PlaySquare, Lightbulb, Wallet, X, ChevronRight, Target, Zap } from 'lucide-react';
 
 const iconMap: Record<number, string> = {
   1: "1-In.png", 2: "2-.png", 3: "3-.png", 4: "4-Y.png", 5: "5-.png",
@@ -16,6 +16,25 @@ const iconMap: Record<number, string> = {
 };
 
 const getElementIcon = (num: number) => `/elements/${iconMap[num] || `${num}-.png`}`;
+
+// 🚩 기하급수적 가치 모델 (토크노믹스 방어)
+const getElementValue = (num: number) => {
+  if (num <= 15) return 1000;      // 하급 (1~15)
+  if (num <= 25) return 5000;      // 중급 (16~25)
+  if (num <= 35) return 30000;     // 고급 (26~35)
+  if (num <= 44) return 150000;    // 최상급 (36~44)
+  return 1000000;                  // 제네시스 (45)
+};
+
+// 융합 비용: 두 원석 내재 가치 합의 10% (강력한 소각 메커니즘)
+const calcFusionCost = (a: number, b: number) => {
+  return Math.floor((getElementValue(a) * 0.1) + (getElementValue(b) * 0.1));
+};
+
+// 융합 성공 확률: 차이가 작을수록 성공 (최소 5%)
+const calcFusionChance = (a: number, b: number) => {
+  return Math.max(5, 90 - (Math.abs(a - b) * 2));
+};
 
 const guideData = {
   ko: [
@@ -32,7 +51,7 @@ const guideData = {
   ]
 };
 
-type GameState = 'idle' | 'mining_video' | 'analyzing' | 'win_result' | 'fail_result' | 'ad_wall';
+type GameState = 'idle' | 'mining_video' | 'analyzing' | 'win_result' | 'fail_result' | 'ad_wall' | 'fusion_analyzing' | 'fusion_success' | 'fusion_fail';
 type UserTier = 'basic' | 'premium' | 'vip';
 
 export default function MarpoSpiritPage({ lang = 'ko' }: { lang?: 'ko' | 'en' }) {
@@ -47,10 +66,16 @@ export default function MarpoSpiritPage({ lang = 'ko' }: { lang?: 'ko' | 'en' })
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [revealedNumber, setRevealedNumber] = useState<number | null>(null);
 
-  // 금고 및 획득 원석 상태
+  // 금고 (Vault)
   const [inventory, setInventory] = useState<Record<number, number>>({});
   const [showVault, setShowVault] = useState(false);
   const [earnedElement, setEarnedElement] = useState<number | null>(null);
+
+  // 🚩 챕터 2: 융합소 (Fusion Lab) 상태
+  const [isFusionMode, setIsFusionMode] = useState(false);
+  const [slotA, setSlotA] = useState<number | null>(null);
+  const [slotB, setSlotB] = useState<number | null>(null);
+  const [fusionResultNode, setFusionResultNode] = useState<number | null>(null);
 
   const currentGuides = guideData[lang] || guideData.ko;
 
@@ -67,6 +92,7 @@ export default function MarpoSpiritPage({ lang = 'ko' }: { lang?: 'ko' | 'en' })
 
   const isUnlocked = adCount >= 3 || userTier !== 'basic'; 
 
+  // --- [챕터 1: 채굴 로직] ---
   const handleReveal = () => {
     if (ohmBalance < 1000) return alert(lang === 'ko' ? "Ω 잔액이 부족합니다." : "Insufficient MAR-Ω.");
     setOhmBalance(prev => prev - 1000);
@@ -99,51 +125,33 @@ export default function MarpoSpiritPage({ lang = 'ko' }: { lang?: 'ko' | 'en' })
         clearInterval(progressInterval);
         setDrawCount(prev => prev + 1);
         
-        // 당첨 로직 임시 시뮬레이션 (실제로는 서버/스마트컨트랙트에서 난수 생성)
         const results: number[] = [];
         while (results.length < 6) {
           const n = Math.floor(Math.random() * 45) + 1;
           if (!results.includes(n)) results.push(n);
         }
-        
         const matchedNums = selectedNumbers.filter(n => results.includes(n));
         const matches = matchedNums.length;
         
-        // 🚩 전술 B: 매칭 개수에 따른 랜덤 티어 박스 시스템
         let reward = 0;
         let obtainedElement: number | null = null;
 
-        if (matches > 0) {
-          reward = matches === 1 ? 500 : matches === 2 ? 1500 : matches === 3 ? 5000 : matches === 4 ? 20000 : matches === 5 ? 100000 : 314159;
+        if (matches > 0 || Math.random() > 0.7) { // 테스트 보정용
+          const actualMatches = matches > 0 ? matches : 1;
+          reward = actualMatches === 1 ? 500 : actualMatches === 2 ? 1500 : actualMatches === 3 ? 5000 : actualMatches === 4 ? 20000 : actualMatches === 5 ? 100000 : 314159;
           
-          if (matches === 1) obtainedElement = Math.floor(Math.random() * 15) + 1; // 1~15 (하급)
-          else if (matches === 2) obtainedElement = Math.floor(Math.random() * 10) + 16; // 16~25 (중급)
-          else if (matches === 3) obtainedElement = Math.floor(Math.random() * 10) + 26; // 26~35 (고급)
-          else obtainedElement = Math.floor(Math.random() * 10) + 36; // 36~45 (최상급)
+          if (actualMatches === 1) obtainedElement = Math.floor(Math.random() * 15) + 1; 
+          else if (actualMatches === 2) obtainedElement = Math.floor(Math.random() * 10) + 16; 
+          else if (actualMatches === 3) obtainedElement = Math.floor(Math.random() * 10) + 26; 
+          else obtainedElement = Math.floor(Math.random() * 10) + 36; 
 
           setEarnedElement(obtainedElement);
-          
           setInventory(prevInv => {
             const updatedInv = { ...prevInv };
-            if (obtainedElement) {
-              updatedInv[obtainedElement] = (updatedInv[obtainedElement] || 0) + 1;
-              localStorage.setItem('marpo_inventory', JSON.stringify(updatedInv));
-            }
+            updatedInv[obtainedElement!] = (updatedInv[obtainedElement!] || 0) + 1;
+            localStorage.setItem('marpo_inventory', JSON.stringify(updatedInv));
             return updatedInv;
           });
-        } else {
-          // 데모 버전을 위해 강제 승리 확률 30% 부여 (테스트용)
-          if (Math.random() > 0.7) {
-             reward = 500;
-             obtainedElement = Math.floor(Math.random() * 15) + 1;
-             setEarnedElement(obtainedElement);
-             setInventory(prevInv => {
-               const updatedInv = { ...prevInv };
-               updatedInv[obtainedElement!] = (updatedInv[obtainedElement!] || 0) + 1;
-               localStorage.setItem('marpo_inventory', JSON.stringify(updatedInv));
-               return updatedInv;
-             });
-          }
         }
 
         setWonAmount(reward);
@@ -171,17 +179,87 @@ export default function MarpoSpiritPage({ lang = 'ko' }: { lang?: 'ko' | 'en' })
     }
   };
 
-  const renderCoalParticles = () => {
+  // --- [챕터 2: 융합 로직] ---
+  const handleSelectForFusion = (num: number) => {
+    let available = inventory[num] || 0;
+    if (slotA === num) available--;
+    if (slotB === num) available--;
+
+    if (available > 0) {
+      if (!slotA) setSlotA(num);
+      else if (!slotB) setSlotB(num);
+    }
+  };
+
+  const handleRemoveFromSlot = (slot: 'A'|'B') => {
+    if (slot === 'A') setSlotA(null);
+    if (slot === 'B') setSlotB(null);
+  };
+
+  const executeFusion = () => {
+    if (!slotA || !slotB) return;
+    const cost = calcFusionCost(slotA, slotB);
+    
+    if (ohmBalance < cost) {
+      alert(lang === 'ko' ? `융합 비용(${cost} Ω)이 부족합니다!` : `Not enough Ω (${cost} required)!`);
+      return;
+    }
+
+    // 1. 소각(Burn) 및 재료 차감
+    setOhmBalance(prev => prev - cost);
+    setInventory(prev => {
+      const next = { ...prev };
+      next[slotA]! -= 1;
+      next[slotB]! -= 1;
+      return next;
+    });
+
+    // 2. 융합 결과 계산 (사령관 로직)
+    const chance = calcFusionChance(slotA, slotB);
+    const isSuccess = (Math.random() * 100) <= chance;
+    
+    // 성공 시 합산 (최대 45), 실패 시 낮은 숫자로 퇴화
+    const resultNum = isSuccess ? Math.min(45, slotA + slotB) : Math.min(slotA, slotB);
+    setFusionResultNode(resultNum);
+
+    // 3. 연출 시작
+    setGameState('fusion_analyzing');
+    setLoadingProgress(0);
+    const progInt = setInterval(() => setLoadingProgress(p => p >= 100 ? 100 : p + 1), 40);
+
+    setTimeout(() => {
+      clearInterval(progInt);
+      
+      if (isSuccess) setGameState('fusion_success');
+      else setGameState('fusion_fail');
+
+      // 4. 결과물 인벤토리에 추가
+      setInventory(prev => {
+        const next = { ...prev };
+        next[resultNum] = (next[resultNum] || 0) + 1;
+        localStorage.setItem('marpo_inventory', JSON.stringify(next));
+        return next;
+      });
+
+      // 5. 융합소로 복귀
+      setTimeout(() => {
+        setGameState('idle');
+        setSlotA(null);
+        setSlotB(null);
+        setFusionResultNode(null);
+      }, 5000); 
+    }, 4000);
+  };
+
+  // --- [공용 컴포넌트] ---
+  const renderCoalParticles = (isRed = false) => {
     const particles = [];
-    const colors = ['#0a0a0a', '#1a1a1a', '#2a2a2a', '#3a3a3a'];
+    const colors = isRed ? ['#4a0404', '#7a0505', '#ff0000', '#2a0000'] : ['#0a0a0a', '#1a1a1a', '#2a2a2a', '#3a3a3a'];
     for (let i = 0; i < 80; i++) {
       const style = {
-        '--dir-x': `${Math.random() * 800 - 400}px`,
-        '--dir-y': `${Math.random() * 800 - 400}px`,
-        '--rot': `${Math.random() * 720}deg`,
-        '--delay': `${Math.random() * 0.3}s`,
-        'width': `${Math.random() * 15 + 8}px`,
-        'height': `${Math.random() * 15 + 8}px`,
+        '--dir-x': `${Math.random() * 800 - 400}px`, '--dir-y': `${Math.random() * 800 - 400}px`,
+        '--rot': `${Math.random() * 720}deg`, '--delay': `${Math.random() * 0.3}s`,
+        'width': `${Math.random() * 15 + 8}px`, 'height': `${Math.random() * 15 + 8}px`,
         'background': colors[Math.floor(Math.random() * colors.length)],
       } as React.CSSProperties;
       particles.push(<div key={i} className="coal-particle" style={style} />);
@@ -193,6 +271,7 @@ export default function MarpoSpiritPage({ lang = 'ko' }: { lang?: 'ko' | 'en' })
     <div className="min-h-screen bg-[#050505] text-white p-6 pb-48 flex flex-col items-center font-sans relative overflow-hidden">
       <div className="absolute inset-0 opacity-[0.03] pointer-events-none fixed" style={{ backgroundImage: "radial-gradient(#f39c12 1px, transparent 1px)", backgroundSize: "40px 40px" }}></div>
 
+      {/* 🏁 [공용 모달] 채굴 & 분석 연출 */}
       {gameState === 'mining_video' && (
         <div className="fixed inset-0 z-[1000] bg-black flex flex-col items-center justify-center">
           <video autoPlay muted loop playsInline className="absolute inset-0 w-full h-full object-cover opacity-80"><source src="/mining-video.mp4" type="video/mp4" /></video>
@@ -215,6 +294,7 @@ export default function MarpoSpiritPage({ lang = 'ko' }: { lang?: 'ko' | 'en' })
         </div>
       )}
 
+      {/* 🏁 [챕터 1] 결과 화면 */}
       {gameState === 'win_result' && (
         <div className="fixed inset-0 z-[1200] bg-black/95 flex flex-col items-center justify-center p-6 animate-in zoom-in duration-300">
           <div className="relative z-10 text-center flex flex-col items-center">
@@ -222,21 +302,15 @@ export default function MarpoSpiritPage({ lang = 'ko' }: { lang?: 'ko' | 'en' })
             <h2 className="text-6xl font-black text-amber-500 mb-2 italic uppercase tracking-tighter">SUCCESS!</h2>
             <p className="text-4xl font-black text-white mb-6">+{wonAmount.toLocaleString()} Ω</p>
             
-            {/* 🚩 획득한 원석을 직관적으로 보여주는 UI 추가 */}
             {earnedElement && (
               <div className="flex items-center gap-4 bg-zinc-900/90 px-6 py-3 rounded-[2rem] border-2 border-lime-500 shadow-[0_0_20px_rgba(132,204,22,0.4)] animate-in slide-in-from-bottom duration-500 delay-300">
-                <div className="relative w-12 h-12">
-                  <Image src={getElementIcon(earnedElement)} alt={`Element ${earnedElement}`} fill className="object-contain" unoptimized />
-                </div>
+                <div className="relative w-12 h-12"><Image src={getElementIcon(earnedElement)} alt={`Element ${earnedElement}`} fill className="object-contain" unoptimized /></div>
                 <div className="text-left">
                   <p className="text-[10px] text-lime-400 font-black uppercase tracking-widest">Loot Box Unlocked</p>
-                  <p className="text-xl font-black text-white">
-                    {lang === 'ko' ? `${earnedElement}번 원석 획득!` : `Obtained #${earnedElement}!`}
-                  </p>
+                  <p className="text-xl font-black text-white">{lang === 'ko' ? `${earnedElement}번 원석 획득!` : `Obtained #${earnedElement}!`}</p>
                 </div>
               </div>
             )}
-
             <div className="firework-container absolute inset-0 -z-10 overflow-hidden">{[...Array(10)].map((_, i) => ( <div key={i} className="firework" style={{ top: `${Math.random()*100}%`, left: `${Math.random()*100}%`, background: '#f39c12' }}></div> ))}</div>
           </div>
         </div>
@@ -244,21 +318,60 @@ export default function MarpoSpiritPage({ lang = 'ko' }: { lang?: 'ko' | 'en' })
 
       {gameState === 'fail_result' && (
         <div className="fixed inset-0 z-[1200] bg-black/95 flex flex-col items-center justify-center p-6 animate-in fade-in duration-500 overflow-hidden">
-          <div className="fixed inset-0 z-0 flex items-center justify-center pointer-events-none">
-            {renderCoalParticles()}
-          </div>
+          <div className="fixed inset-0 z-0 flex items-center justify-center pointer-events-none">{renderCoalParticles()}</div>
           <div className="relative z-10 flex flex-col items-center">
-            <div className="relative w-72 h-72 mb-12">
-              <Image src="/당황토끼.png" alt="Failed Rabbit" fill className="object-contain" unoptimized />
-            </div>
+            <div className="relative w-72 h-72 mb-12"><Image src="/당황토끼.png" alt="Failed Rabbit" fill className="object-contain" unoptimized /></div>
             <h2 className="text-4xl font-black text-zinc-500 uppercase tracking-widest mb-4">Analysis Failed</h2>
-            <p className="text-zinc-400 font-bold italic text-center px-10 break-keep">
-              {lang === 'ko' ? "원소 결합에 실패했습니다. 다시 도전 하세요." : "Element combination failed. Try again!"}
+            <p className="text-zinc-400 font-bold italic text-center px-10 break-keep">{lang === 'ko' ? "원소 결합에 실패했습니다. 다시 도전 하세요." : "Element combination failed. Try again!"}</p>
+          </div>
+        </div>
+      )}
+
+      {/* 🔥 [챕터 2] 융합소 결과 화면 (최상위 z-index) */}
+      {gameState === 'fusion_analyzing' && (
+        <div className="fixed inset-0 z-[2600] bg-black flex flex-col items-center justify-center overflow-hidden">
+          <div className="absolute inset-0 w-full h-full z-0 opacity-40 mix-blend-color-burn bg-red-900"></div>
+          <div className="absolute inset-0 w-full h-full z-0"><Image src="/모래시계.png" alt="Hourglass" fill className="object-cover opacity-80 hue-rotate-180 brightness-150 contrast-150" priority unoptimized /></div>
+          <div className="relative z-10 w-full max-w-md flex flex-col items-center gap-10 px-10">
+            <p className="text-4xl font-black text-red-500 uppercase tracking-widest animate-infinite-blink [text-shadow:0_0_20px_rgba(255,0,0,1)]">FUSING ELEMENTS...</p>
+            <div className="w-full h-4 bg-black/50 rounded-full overflow-hidden border-2 border-red-900">
+              <div className="h-full bg-red-500" style={{ width: `${loadingProgress}%` }}></div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {gameState === 'fusion_success' && fusionResultNode && (
+        <div className="fixed inset-0 z-[2600] bg-black/95 flex flex-col items-center justify-center p-6 animate-in zoom-in duration-300">
+           <div className="relative z-10 text-center flex flex-col items-center">
+             <h2 className="text-6xl font-black text-red-500 mb-6 italic uppercase tracking-tighter drop-shadow-[0_0_30px_rgba(255,0,0,0.8)]">FUSION SUCCESS!</h2>
+             <div className="relative w-48 h-48 mb-8 animate-bounce-in shadow-[0_0_100px_rgba(255,0,0,0.5)] rounded-full">
+               <Image src={getElementIcon(fusionResultNode)} alt="Fused Element" fill className="object-contain" unoptimized />
+             </div>
+             <p className="text-3xl font-black text-white bg-red-900/50 px-8 py-4 rounded-full border border-red-500/50">
+               {lang === 'ko' ? `${fusionResultNode}번 원석으로 진화했습니다!` : `Evolved into #${fusionResultNode}!`}
+             </p>
+             <div className="firework-container absolute inset-0 -z-10 overflow-hidden">{[...Array(15)].map((_, i) => ( <div key={i} className="firework" style={{ top: `${Math.random()*100}%`, left: `${Math.random()*100}%`, background: '#ef4444' }}></div> ))}</div>
+           </div>
+        </div>
+      )}
+
+      {gameState === 'fusion_fail' && fusionResultNode && (
+        <div className="fixed inset-0 z-[2600] bg-black/95 flex flex-col items-center justify-center p-6 animate-in fade-in duration-500 overflow-hidden">
+          <div className="fixed inset-0 z-0 flex items-center justify-center pointer-events-none">{renderCoalParticles(true)}</div>
+          <div className="relative z-10 flex flex-col items-center">
+            <h2 className="text-5xl font-black text-zinc-600 mb-8 italic uppercase tracking-tighter line-through">FUSION FAILED</h2>
+            <div className="relative w-32 h-32 mb-8 opacity-50 grayscale">
+              <Image src={getElementIcon(fusionResultNode)} alt="Degraded Element" fill className="object-contain" unoptimized />
+            </div>
+            <p className="text-xl font-bold text-zinc-400 bg-zinc-900/80 px-8 py-4 rounded-2xl text-center break-keep border border-zinc-800">
+              {lang === 'ko' ? `에너지가 붕괴하여 ${fusionResultNode}번 원석만 남았습니다.` : `Energy collapsed. Only #${fusionResultNode} remained.`}
             </p>
           </div>
         </div>
       )}
 
+      {/* 메인 로비 (idle) */}
       {gameState === 'idle' && (
         <>
           <div className="w-full max-w-md mt-14 mb-8 flex items-start gap-6 relative z-20">
@@ -332,43 +445,107 @@ export default function MarpoSpiritPage({ lang = 'ko' }: { lang?: 'ko' | 'en' })
         </>
       )}
 
+      {/* 💎 금고(Vault) & 🔥 융합소(Fusion Lab) 통합 모달 */}
       {showVault && (
-        <div className="fixed inset-0 z-[2500] bg-black animate-in slide-in-from-bottom duration-500 flex flex-col p-8 overflow-y-auto">
-          <div className="flex justify-between items-center mb-10 mt-10">
+        <div className={`fixed inset-0 z-[2500] ${isFusionMode ? 'bg-[#0a0000]' : 'bg-black'} animate-in slide-in-from-bottom duration-500 flex flex-col p-8 overflow-y-auto transition-colors`}>
+          
+          <div className="flex justify-between items-center mb-8 mt-6">
             <div>
-              <h2 className="text-4xl font-black italic text-amber-500 tracking-tighter uppercase">Marpo Vault</h2>
-              <p className="text-zinc-500 text-xs font-bold uppercase tracking-widest mt-1">Your Tactical Element Inventory</p>
+              <h2 className={`text-4xl font-black italic tracking-tighter uppercase transition-colors ${isFusionMode ? 'text-red-500' : 'text-amber-500'}`}>
+                {isFusionMode ? 'Fusion Lab' : 'Marpo Vault'}
+              </h2>
+              <p className="text-zinc-500 text-[10px] font-bold uppercase tracking-widest mt-1">
+                {isFusionMode ? 'High Risk High Return Protocol' : 'Your Tactical Element Inventory'}
+              </p>
             </div>
-            <button onClick={() => setShowVault(false)} className="w-12 h-12 bg-zinc-900 rounded-full flex items-center justify-center border border-zinc-800">
+            <button onClick={() => { setShowVault(false); setIsFusionMode(false); setSlotA(null); setSlotB(null); }} className="w-12 h-12 bg-zinc-900 rounded-full flex items-center justify-center border border-zinc-800">
               <X size={24} className="text-white" />
             </button>
           </div>
 
+          {/* 🔥 융합소 UI */}
+          {isFusionMode && (
+            <div className="w-full bg-zinc-900/50 border border-red-900/50 rounded-[3rem] p-6 mb-8 flex flex-col items-center">
+               <div className="flex gap-6 mb-6">
+                 {/* Slot A */}
+                 <button onClick={() => handleRemoveFromSlot('A')} className={`w-24 h-24 rounded-2xl border-2 flex items-center justify-center transition-all ${slotA ? 'border-red-500 bg-black shadow-[0_0_15px_rgba(255,0,0,0.3)]' : 'border-zinc-700 border-dashed bg-zinc-900/50'}`}>
+                    {slotA ? <Image src={getElementIcon(slotA)} alt="A" width={60} height={60} unoptimized /> : <span className="text-zinc-600 font-black">A</span>}
+                 </button>
+                 <div className="flex items-center text-red-500 font-black text-2xl">+</div>
+                 {/* Slot B */}
+                 <button onClick={() => handleRemoveFromSlot('B')} className={`w-24 h-24 rounded-2xl border-2 flex items-center justify-center transition-all ${slotB ? 'border-red-500 bg-black shadow-[0_0_15px_rgba(255,0,0,0.3)]' : 'border-zinc-700 border-dashed bg-zinc-900/50'}`}>
+                    {slotB ? <Image src={getElementIcon(slotB)} alt="B" width={60} height={60} unoptimized /> : <span className="text-zinc-600 font-black">B</span>}
+                 </button>
+               </div>
+
+               {/* Stats Panel */}
+               <div className="w-full bg-black/50 rounded-2xl p-4 flex justify-between items-center mb-6">
+                  <div>
+                    <p className="text-[10px] text-zinc-500 uppercase tracking-widest font-black">Success Rate</p>
+                    <p className={`text-2xl font-black ${(slotA && slotB) ? 'text-lime-400' : 'text-zinc-700'}`}>
+                      {(slotA && slotB) ? `${calcFusionChance(slotA, slotB)}%` : '--%'}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-[10px] text-zinc-500 uppercase tracking-widest font-black">Burn Cost</p>
+                    <p className={`text-2xl font-black italic ${(slotA && slotB) ? 'text-red-500' : 'text-zinc-700'}`}>
+                      {(slotA && slotB) ? `-${calcFusionCost(slotA, slotB)} Ω` : '-- Ω'}
+                    </p>
+                  </div>
+               </div>
+
+               <button onClick={executeFusion} disabled={!slotA || !slotB} className={`w-full py-4 rounded-2xl font-black text-xl tracking-widest uppercase transition-all ${slotA && slotB ? 'bg-red-600 text-white shadow-[0_0_20px_rgba(220,38,38,0.5)] active:scale-95' : 'bg-zinc-800 text-zinc-600'}`}>
+                 {lang === 'ko' ? '융합 실행 (FUSE)' : 'Execute Fusion'}
+               </button>
+            </div>
+          )}
+
+          {/* 💎 인벤토리 그리드 */}
           <div className="grid grid-cols-4 gap-4 mb-20">
             {[...Array(45)].map((_, i) => {
               const num = i + 1;
-              const count = inventory[num] || 0;
+              let count = inventory[num] || 0;
+              if (isFusionMode && slotA === num) count--;
+              if (isFusionMode && slotB === num) count--;
+
+              const isAvailable = count > 0;
+
               return (
-                <div key={num} className={`relative aspect-square rounded-2xl border transition-all ${count > 0 ? 'border-amber-500 bg-zinc-900' : 'border-zinc-800 opacity-20'}`}>
+                <button 
+                  key={num} 
+                  disabled={!isFusionMode || !isAvailable}
+                  onClick={() => handleSelectForFusion(num)}
+                  className={`relative aspect-square rounded-2xl border transition-all 
+                    ${isAvailable ? (isFusionMode ? 'border-red-500 bg-black cursor-pointer hover:scale-105' : 'border-amber-500 bg-zinc-900') : 'border-zinc-800 opacity-20'}`
+                  }>
                    <div className="absolute inset-0 bg-cover bg-center rounded-2xl" style={{ backgroundImage: `url('${getElementIcon(num)}')` }} />
-                   {count > 0 && (
-                     <div className="absolute -top-2 -right-2 bg-amber-500 text-black text-[10px] font-black px-2 py-0.5 rounded-full shadow-lg">
+                   {isAvailable && (
+                     <div className={`absolute -top-2 -right-2 ${isFusionMode ? 'bg-red-500' : 'bg-amber-500'} text-black text-[10px] font-black px-2 py-0.5 rounded-full shadow-lg`}>
                        x{count}
                      </div>
                    )}
                    <div className="absolute bottom-1 left-1/2 -translate-x-1/2 text-[10px] font-black text-white/50">{num}</div>
-                </div>
+                </button>
               );
             })}
           </div>
 
-          <div className="mt-auto bg-zinc-900/80 p-8 rounded-[3rem] border border-amber-500/30 text-center">
-             <p className="text-zinc-400 text-sm font-bold mb-4 italic break-keep">
-               {lang === 'ko' ? "융합 프로토콜(챕터 2) 준비 중... 더 많은 원석을 채굴하십시오." : "Fusion Protocol (Ch.2) Incoming... Keep mining raw elements."}
-             </p>
-             <button onClick={() => setShowVault(false)} className="w-full py-5 bg-amber-500 text-black rounded-2xl font-black text-lg uppercase">
-               {lang === 'ko' ? "채굴장으로 복귀" : "Return to Mining"}
-             </button>
+          {/* 모드 전환 버튼 */}
+          <div className="mt-auto flex gap-4">
+             {isFusionMode ? (
+               <button onClick={() => { setIsFusionMode(false); setSlotA(null); setSlotB(null); }} className="w-full py-5 bg-zinc-800 text-white rounded-2xl font-black text-lg uppercase active:scale-95 transition-transform">
+                 {lang === 'ko' ? "금고로 돌아가기" : "Back to Vault"}
+               </button>
+             ) : (
+               <>
+                 <button onClick={() => setShowVault(false)} className="flex-1 py-5 bg-zinc-800 text-white rounded-2xl font-black text-sm uppercase active:scale-95 transition-transform">
+                   {lang === 'ko' ? "채굴장 복귀" : "Mine"}
+                 </button>
+                 <button onClick={() => setIsFusionMode(true)} className="flex-[2] py-5 bg-red-600 text-white rounded-2xl font-black text-lg uppercase flex justify-center items-center gap-2 shadow-[0_0_20px_rgba(220,38,38,0.4)] active:scale-95 transition-transform">
+                   <Zap size={20} /> {lang === 'ko' ? "융합소 입장" : "Enter Fusion Lab"}
+                 </button>
+               </>
+             )}
           </div>
         </div>
       )}

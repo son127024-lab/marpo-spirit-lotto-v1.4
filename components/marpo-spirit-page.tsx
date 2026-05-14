@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
-import { Lock, Pickaxe, Flame, Sparkles, RefreshCcw, PlaySquare, Lightbulb, Wallet, X, ChevronRight, Target, Zap, Beaker, Gem, Timer, CheckCircle2 } from 'lucide-react';
+import { Lock, Pickaxe, Flame, Sparkles, RefreshCcw, PlaySquare, Lightbulb, Wallet, X, ChevronRight, Target, Zap, Beaker, Gem, Timer, CheckCircle2, Plus } from 'lucide-react';
 
 const iconMap: Record<number, string> = {
   1: "1-In.png", 2: "2-.png", 3: "3-.png", 4: "4-Y.png", 5: "5-.png",
@@ -64,28 +64,24 @@ export default function MarpoSpiritPage({ lang = 'ko' }: { lang?: 'ko' | 'en' })
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [revealedNumber, setRevealedNumber] = useState<number | null>(null);
 
-  // 🚩 신규: 마스터 루프 재화 및 상태
-  const [catalysts, setCatalysts] = useState(5); // 일반 융합제 (테스트용 5개)
-  const [masterCatalysts, setMasterCatalysts] = useState(1); // 무적 융합제 (테스트용 1개)
-  const [dailyFusions, setDailyFusions] = useState(0); // 일일 융합 횟수
-  const [maturingItems, setMaturingItems] = useState<MaturingItem[]>([]); // 12시간 숙성 대기열
-  const [now, setNow] = useState(Date.now()); // 실시간 타이머용
+  const [catalysts, setCatalysts] = useState(5); 
+  const [masterCatalysts, setMasterCatalysts] = useState(1); 
+  const [dailyFusions, setDailyFusions] = useState(0); 
+  const [maturingItems, setMaturingItems] = useState<MaturingItem[]>([]); 
+  const [now, setNow] = useState(Date.now()); 
 
-  // 금고 (Vault)
   const [inventory, setInventory] = useState<Record<number, number>>({});
   const [showVault, setShowVault] = useState(false);
   const [earnedElement, setEarnedElement] = useState<number | null>(null);
 
-  // 융합소 (Fusion Lab)
   const [isFusionMode, setIsFusionMode] = useState(false);
   const [slotA, setSlotA] = useState<number | null>(null);
   const [slotB, setSlotB] = useState<number | null>(null);
   const [fusionResultNode, setFusionResultNode] = useState<number | null>(null);
-  const [useMasterCatalyst, setUseMasterCatalyst] = useState(false); // 무적 융합제 사용 여부
+  const [useMasterCatalyst, setUseMasterCatalyst] = useState(false); 
 
   const currentGuides = guideData[lang] || guideData.ko;
 
-  // 초기화 및 실시간 시계 작동
   useEffect(() => {
     const savedTier = localStorage.getItem('marpo_tier') as UserTier;
     if (savedTier) setUserTier(savedTier);
@@ -96,7 +92,6 @@ export default function MarpoSpiritPage({ lang = 'ko' }: { lang?: 'ko' | 'en' })
     const savedMaturing = localStorage.getItem('marpo_maturing');
     if (savedMaturing) setMaturingItems(JSON.parse(savedMaturing));
 
-    // 일일 융합 횟수 리셋 로직 (자정 기준)
     const today = new Date().toDateString();
     const savedDate = localStorage.getItem('marpo_fusion_date');
     if (savedDate !== today) {
@@ -118,7 +113,6 @@ export default function MarpoSpiritPage({ lang = 'ko' }: { lang?: 'ko' | 'en' })
 
   const isUnlocked = adCount >= 3 || userTier !== 'basic'; 
 
-  // --- [시간 포맷터] ---
   const formatTimeLeft = (unlockAt: number) => {
     const diff = unlockAt - now;
     if (diff <= 0) return "READY";
@@ -128,7 +122,6 @@ export default function MarpoSpiritPage({ lang = 'ko' }: { lang?: 'ko' | 'en' })
     return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
   };
 
-  // --- [사령관 전용 치트: 즉시 숙성 완료] ---
   const devSkipMaturation = (id: string) => {
     setMaturingItems(prev => {
       const next = prev.map(item => item.id === id ? { ...item, unlockAt: Date.now() - 1000 } : item);
@@ -137,7 +130,6 @@ export default function MarpoSpiritPage({ lang = 'ko' }: { lang?: 'ko' | 'en' })
     });
   };
 
-  // --- [수확: 숙성 완료된 원석을 인벤토리로 이동] ---
   const harvestElement = (id: string, num: number) => {
     setMaturingItems(prev => {
       const next = prev.filter(item => item.id !== id);
@@ -164,7 +156,6 @@ export default function MarpoSpiritPage({ lang = 'ko' }: { lang?: 'ko' | 'en' })
     else if (selectedNumbers.length < 6) setSelectedNumbers([...selectedNumbers, num].sort((a, b) => a - b));
   };
 
-  // --- [챕터 1: 채굴 로직 (숙성실로 이동)] ---
   const handleMining = () => {
     if (selectedNumbers.length < 6) return alert(lang === 'ko' ? "원소 샘플 6개를 선택해주세요!" : "Please select 6 element samples!");
     setGameState('mining_video');
@@ -200,11 +191,10 @@ export default function MarpoSpiritPage({ lang = 'ko' }: { lang?: 'ko' | 'en' })
 
           setEarnedElement(obtainedElement);
 
-          // 🚩 즉시 획득이 아닌 인큐베이터(12시간 숙성)로 이동
           const newItem: MaturingItem = {
             id: Math.random().toString(36).substring(2, 11),
             num: obtainedElement,
-            unlockAt: Date.now() + (12 * 60 * 60 * 1000) // 12시간 후
+            unlockAt: Date.now() + (12 * 60 * 60 * 1000) 
           };
 
           setMaturingItems(prev => {
@@ -236,7 +226,6 @@ export default function MarpoSpiritPage({ lang = 'ko' }: { lang?: 'ko' | 'en' })
     else setGameState('idle');
   };
 
-  // --- [챕터 2: 융합 로직] ---
   const handleSelectForFusion = (num: number) => {
     let available = inventory[num] || 0;
     if (slotA === num) available--;
@@ -255,7 +244,6 @@ export default function MarpoSpiritPage({ lang = 'ko' }: { lang?: 'ko' | 'en' })
   const executeFusion = () => {
     if (!slotA || !slotB) return;
     
-    // 🚩 마스터 루프 조건 체크
     if (dailyFusions >= 3) return alert(lang === 'ko' ? "일일 융합 한도(3회)를 초과했습니다." : "Daily fusion limit (3) exceeded.");
     if (useMasterCatalyst && masterCatalysts < 1) return alert(lang === 'ko' ? "무적 융합제가 부족합니다." : "Not enough Master Catalysts.");
     if (!useMasterCatalyst && catalysts < 1) return alert(lang === 'ko' ? "융합제가 부족합니다. 마르포 런에서 획득하세요!" : "Not enough Catalysts.");
@@ -263,7 +251,6 @@ export default function MarpoSpiritPage({ lang = 'ko' }: { lang?: 'ko' | 'en' })
     const cost = calcFusionCost(slotA, slotB);
     if (ohmBalance < cost) return alert(lang === 'ko' ? `융합 비용(${cost} Ω)이 부족합니다!` : `Not enough Ω (${cost})!`);
 
-    // 자원 차감
     setOhmBalance(prev => prev - cost);
     if (useMasterCatalyst) setMasterCatalysts(prev => prev - 1);
     else setCatalysts(prev => prev - 1);
@@ -279,7 +266,6 @@ export default function MarpoSpiritPage({ lang = 'ko' }: { lang?: 'ko' | 'en' })
       return next;
     });
 
-    // 성공 확률 (무적 융합제 사용 시 100%)
     const chance = useMasterCatalyst ? 100 : calcFusionChance(slotA, slotB);
     const isSuccess = (Math.random() * 100) <= chance;
     
@@ -307,7 +293,7 @@ export default function MarpoSpiritPage({ lang = 'ko' }: { lang?: 'ko' | 'en' })
         setSlotA(null);
         setSlotB(null);
         setFusionResultNode(null);
-        setUseMasterCatalyst(false); // 리셋
+        setUseMasterCatalyst(false); 
       }, 5000); 
     }, 4000);
   };
@@ -331,7 +317,6 @@ export default function MarpoSpiritPage({ lang = 'ko' }: { lang?: 'ko' | 'en' })
     <div className="min-h-screen bg-[#050505] text-white p-6 pb-48 flex flex-col items-center font-sans relative overflow-hidden">
       <div className="absolute inset-0 opacity-[0.03] pointer-events-none fixed" style={{ backgroundImage: "radial-gradient(#f39c12 1px, transparent 1px)", backgroundSize: "40px 40px" }}></div>
 
-      {/* 모달: 마이닝 비디오 & 분석 */}
       {gameState === 'mining_video' && (
         <div className="fixed inset-0 z-[1000] bg-black flex flex-col items-center justify-center">
           <video autoPlay muted loop playsInline className="absolute inset-0 w-full h-full object-cover opacity-80"><source src="/mining-video.mp4" type="video/mp4" /></video>
@@ -352,7 +337,7 @@ export default function MarpoSpiritPage({ lang = 'ko' }: { lang?: 'ko' | 'en' })
         </div>
       )}
 
-      {/* 챕터 1 결과 */}
+      {/* 🚩 [수정] 챕터 1 결과: 획득 원석 이미지 크기 30% 축소 */}
       {gameState === 'win_result' && (
         <div className="fixed inset-0 z-[1200] bg-black/95 flex flex-col items-center justify-center p-6 animate-in zoom-in duration-300">
           <div className="relative z-10 text-center flex flex-col items-center">
@@ -363,7 +348,8 @@ export default function MarpoSpiritPage({ lang = 'ko' }: { lang?: 'ko' | 'en' })
             {earnedElement && (
               <div className="flex flex-col items-center gap-2 bg-zinc-900/90 px-8 py-5 rounded-[2rem] border-2 border-lime-500 shadow-[0_0_20px_rgba(132,204,22,0.4)] animate-in slide-in-from-bottom duration-500 delay-300">
                 <div className="flex items-center gap-4">
-                  <div className="relative w-12 h-12"><Image src={getElementIcon(earnedElement)} alt={`Element`} fill className="object-contain" unoptimized /></div>
+                  {/* 🚩 수정된 사이즈: w-12 h-12 -> w-9 h-9 (약 30% 축소) */}
+                  <div className="relative w-9 h-9"><Image src={getElementIcon(earnedElement)} alt={`Element`} fill className="object-contain" unoptimized /></div>
                   <div className="text-left">
                     <p className="text-[10px] text-lime-400 font-black uppercase tracking-widest">Sent to Incubator</p>
                     <p className="text-xl font-black text-white">{lang === 'ko' ? `${earnedElement}번 원석 발견!` : `Found #${earnedElement}!`}</p>
@@ -388,7 +374,6 @@ export default function MarpoSpiritPage({ lang = 'ko' }: { lang?: 'ko' | 'en' })
         </div>
       )}
 
-      {/* 챕터 2 융합 연출 */}
       {gameState === 'fusion_analyzing' && (
         <div className="fixed inset-0 z-[2600] bg-black flex flex-col items-center justify-center overflow-hidden">
           <div className="absolute inset-0 w-full h-full z-0 opacity-40 mix-blend-color-burn bg-red-900"></div>
@@ -435,7 +420,6 @@ export default function MarpoSpiritPage({ lang = 'ko' }: { lang?: 'ko' | 'en' })
             </div>
           </div>
 
-          {/* 🚩 재산 현황 (옴 + 융합제) */}
           <div className="w-full max-w-md grid grid-cols-3 gap-2 mb-8 relative z-20">
              <div className="col-span-3 bg-gradient-to-br from-[#1a1a1a] to-[#050505] p-6 rounded-[2.5rem] border border-[#f39c12]/20 flex flex-col items-center justify-center shadow-lg">
                 <p className="text-[10px] text-zinc-500 font-black uppercase tracking-[0.3em] mb-1">Ω Energy Balance</p>
@@ -493,13 +477,13 @@ export default function MarpoSpiritPage({ lang = 'ko' }: { lang?: 'ko' | 'en' })
       {showVault && (
         <div className={`fixed inset-0 z-[2500] ${isFusionMode ? 'bg-[#0a0000]' : 'bg-black'} animate-in slide-in-from-bottom duration-500 flex flex-col p-8 overflow-y-auto transition-colors`}>
           
-          <div className="flex justify-between items-center mb-8 mt-6">
+          <div className="flex justify-between items-center mb-6 mt-6">
             <div>
               <h2 className={`text-4xl font-black italic tracking-tighter uppercase transition-colors ${isFusionMode ? 'text-red-500' : 'text-amber-500'}`}>
                 {isFusionMode ? 'Fusion Lab' : 'Marpo Vault'}
               </h2>
               {isFusionMode && (
-                 <p className="text-red-400 text-xs font-bold bg-red-900/30 px-3 py-1 rounded-full mt-2 border border-red-500/30 inline-block">
+                 <p className="text-red-400 text-[10px] font-bold bg-red-900/30 px-3 py-1 rounded-full mt-2 border border-red-500/30 inline-block">
                    Daily Limit: {dailyFusions} / 3
                  </p>
               )}
@@ -507,7 +491,6 @@ export default function MarpoSpiritPage({ lang = 'ko' }: { lang?: 'ko' | 'en' })
             <button onClick={() => { setShowVault(false); setIsFusionMode(false); setSlotA(null); setSlotB(null); }} className="w-12 h-12 bg-zinc-900 rounded-full flex items-center justify-center border border-zinc-800"><X size={24} className="text-white" /></button>
           </div>
 
-          {/* 🚩 인큐베이터 (12시간 숙성 대기열) */}
           {!isFusionMode && maturingItems.length > 0 && (
             <div className="mb-10 w-full bg-zinc-900/40 p-5 rounded-[2rem] border border-cyan-900/50">
               <h3 className="text-cyan-400 font-black italic uppercase tracking-widest text-sm mb-4 flex items-center gap-2"><Timer size={16}/> Incubator (Maturing)</h3>
@@ -532,59 +515,71 @@ export default function MarpoSpiritPage({ lang = 'ko' }: { lang?: 'ko' | 'en' })
             </div>
           )}
 
-          {/* 🔥 융합소 UI */}
+          {/* 🚩 [수정] 융합소 UI: 레이아웃 확장, 가려짐 방지, 럭셔리 네온 효과 */}
           {isFusionMode && (
-            <div className="w-full bg-zinc-900/50 border border-red-900/50 rounded-[3rem] p-6 mb-8 flex flex-col items-center relative overflow-hidden">
-               <div className="flex gap-6 mb-6">
-                 <button onClick={() => handleRemoveFromSlot('A')} className={`w-24 h-24 rounded-2xl border-2 flex items-center justify-center transition-all z-10 ${slotA ? 'border-red-500 bg-black shadow-[0_0_15px_rgba(255,0,0,0.3)]' : 'border-zinc-700 border-dashed bg-zinc-900/50'}`}>
-                    {slotA ? <Image src={getElementIcon(slotA)} alt="A" width={60} height={60} unoptimized /> : <span className="text-zinc-600 font-black">A</span>}
-                 </button>
-                 <div className="flex items-center text-red-500 font-black text-2xl z-10">+</div>
-                 <button onClick={() => handleRemoveFromSlot('B')} className={`w-24 h-24 rounded-2xl border-2 flex items-center justify-center transition-all z-10 ${slotB ? 'border-red-500 bg-black shadow-[0_0_15px_rgba(255,0,0,0.3)]' : 'border-zinc-700 border-dashed bg-zinc-900/50'}`}>
-                    {slotB ? <Image src={getElementIcon(slotB)} alt="B" width={60} height={60} unoptimized /> : <span className="text-zinc-600 font-black">B</span>}
-                 </button>
+            <div className="w-full bg-gradient-to-b from-red-950/20 to-black border border-red-500/30 rounded-[3rem] p-8 mb-10 flex flex-col items-center relative overflow-hidden shadow-[0_0_50px_rgba(239,68,68,0.1)]">
+               <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-red-600/10 blur-[100px] pointer-events-none"></div>
+
+               <div className="flex items-center gap-8 mb-8 relative z-10">
+                 <div className="flex flex-col items-center gap-3">
+                    <button onClick={() => handleRemoveFromSlot('A')} className={`w-28 h-28 rounded-3xl border-2 flex items-center justify-center transition-all ${slotA ? 'border-red-500 bg-black shadow-[0_0_25px_rgba(255,0,0,0.4)] scale-105' : 'border-zinc-700 border-dashed bg-zinc-900/30'}`}>
+                        {slotA ? <Image src={getElementIcon(slotA)} alt="A" width={75} height={75} unoptimized className="animate-pulse" /> : <span className="text-zinc-700 font-black text-2xl">A</span>}
+                    </button>
+                    <p className="text-[10px] text-zinc-500 font-black uppercase">Slot Alpha</p>
+                 </div>
+
+                 <div className="flex items-center text-red-500 animate-pulse"><Plus size={32} strokeWidth={3} /></div>
+
+                 <div className="flex flex-col items-center gap-3">
+                    <button onClick={() => handleRemoveFromSlot('B')} className={`w-28 h-28 rounded-3xl border-2 flex items-center justify-center transition-all ${slotB ? 'border-red-500 bg-black shadow-[0_0_25px_rgba(255,0,0,0.4)] scale-105' : 'border-zinc-700 border-dashed bg-zinc-900/30'}`}>
+                        {slotB ? <Image src={getElementIcon(slotB)} alt="B" width={75} height={75} unoptimized className="animate-pulse" /> : <span className="text-zinc-700 font-black text-2xl">B</span>}
+                    </button>
+                    <p className="text-[10px] text-zinc-500 font-black uppercase">Slot Beta</p>
+                 </div>
                </div>
 
-               {/* 무적 융합제 토글 */}
-               <div className="w-full flex justify-between items-center bg-black/60 p-4 rounded-2xl mb-4 border border-zinc-800 z-10">
+               <div className="w-full max-w-sm flex justify-between items-center bg-white/5 backdrop-blur-md p-4 rounded-2xl mb-6 border border-white/10 z-10">
                  <div className="flex items-center gap-3">
-                   <Gem size={20} className={masterCatalysts > 0 ? "text-fuchsia-400" : "text-zinc-600"}/>
+                   <Gem size={22} className={masterCatalysts > 0 ? "text-fuchsia-400" : "text-zinc-600"}/>
                    <div>
-                     <p className="text-xs font-black uppercase text-zinc-400">Master Catalyst</p>
-                     <p className="text-[10px] text-zinc-500">100% Success Rate</p>
+                     <p className="text-xs font-black uppercase text-zinc-300">Master Catalyst</p>
+                     <p className="text-[9px] text-zinc-500">Bypass Failure Risk</p>
                    </div>
                  </div>
-                 <button onClick={() => setUseMasterCatalyst(!useMasterCatalyst)} disabled={masterCatalysts < 1} className={`w-14 h-8 rounded-full flex items-center transition-colors px-1 ${useMasterCatalyst ? 'bg-fuchsia-600 justify-end' : 'bg-zinc-700 justify-start'}`}>
-                   <div className="w-6 h-6 bg-white rounded-full"></div>
+                 <button onClick={() => setUseMasterCatalyst(!useMasterCatalyst)} disabled={masterCatalysts < 1} className={`w-14 h-8 rounded-full flex items-center transition-all px-1 ${useMasterCatalyst ? 'bg-fuchsia-600 justify-end shadow-[0_0_15px_rgba(192,38,211,0.5)]' : 'bg-zinc-800 justify-start'}`}>
+                   <div className="w-6 h-6 bg-white rounded-full shadow-md"></div>
                  </button>
                </div>
 
-               {/* Stats Panel */}
-               <div className="w-full bg-black/50 rounded-2xl p-4 flex justify-between items-center mb-6 z-10">
-                  <div>
-                    <p className="text-[10px] text-zinc-500 uppercase tracking-widest font-black">Success Rate</p>
-                    <p className={`text-2xl font-black ${(slotA && slotB) ? (useMasterCatalyst ? 'text-fuchsia-400' : 'text-lime-400') : 'text-zinc-700'}`}>
+               <div className="w-full max-w-sm bg-black/60 rounded-2xl p-5 flex justify-between items-center mb-8 z-10 border border-zinc-800">
+                  <div className="flex flex-col">
+                    <p className="text-[9px] text-zinc-500 uppercase tracking-widest font-black mb-1">Stability</p>
+                    <p className={`text-3xl font-black ${(slotA && slotB) ? (useMasterCatalyst ? 'text-fuchsia-400' : 'text-lime-400') : 'text-zinc-800'}`}>
                       {(slotA && slotB) ? (useMasterCatalyst ? '100%' : `${calcFusionChance(slotA, slotB)}%`) : '--%'}
                     </p>
                   </div>
-                  <div className="text-right">
-                    <p className="text-[10px] text-zinc-500 uppercase tracking-widest font-black">Burn Cost (Ω)</p>
-                    <p className={`text-2xl font-black italic ${(slotA && slotB) ? 'text-red-500' : 'text-zinc-700'}`}>
-                      {(slotA && slotB) ? `-${calcFusionCost(slotA, slotB)}` : '--'}
+                  <div className="text-right flex flex-col">
+                    <p className="text-[9px] text-zinc-500 uppercase tracking-widest font-black mb-1">Energy Required</p>
+                    <p className={`text-3xl font-black italic ${(slotA && slotB) ? 'text-red-500' : 'text-zinc-800'}`}>
+                      {(slotA && slotB) ? `-${calcFusionCost(slotA, slotB)}` : '--'} <span className="text-sm">Ω</span>
                     </p>
                   </div>
                </div>
 
-               <button onClick={executeFusion} disabled={!slotA || !slotB || dailyFusions >= 3} className={`w-full py-4 rounded-2xl font-black text-xl tracking-widest uppercase transition-all flex justify-center items-center gap-2 z-10 ${slotA && slotB && dailyFusions < 3 ? (useMasterCatalyst ? 'bg-fuchsia-600 shadow-[0_0_20px_rgba(192,38,211,0.5)] text-white' : 'bg-red-600 text-white shadow-[0_0_20px_rgba(220,38,38,0.5)]') : 'bg-zinc-800 text-zinc-600'}`}>
-                 {useMasterCatalyst ? <><Gem size={20}/> MASTER FUSE</> : <><Beaker size={20}/> FUSE (-1 🧪)</>}
+               <button onClick={executeFusion} disabled={!slotA || !slotB || dailyFusions >= 3} className={`w-full max-w-sm py-5 rounded-2xl font-black text-2xl tracking-[0.2em] uppercase transition-all flex justify-center items-center gap-3 z-10 ${slotA && slotB && dailyFusions < 3 ? (useMasterCatalyst ? 'bg-fuchsia-600 shadow-[0_0_30px_rgba(192,38,211,0.6)] text-white' : 'bg-red-600 text-white shadow-[0_0_30px_rgba(220,38,38,0.6)]') : 'bg-zinc-800 text-zinc-600'}`}>
+                 {useMasterCatalyst ? <><Gem size={24}/> MASTER FUSE</> : <><Zap size={24}/> FUSE ELEMENTS</>}
                </button>
             </div>
           )}
 
-          {/* 💎 인벤토리 그리드 (사용 가능 원석만 표시) */}
+          {/* 🚩 [수정] 분리된 리스트 라벨 */}
           <div className="mb-4 flex justify-between items-end">
-            <h3 className="text-amber-500 font-black italic uppercase tracking-widest text-sm">Ready Elements</h3>
+            <h3 className={`font-black italic uppercase tracking-widest text-sm ${isFusionMode ? 'text-red-500' : 'text-amber-500'}`}>
+              {isFusionMode ? 'Select Ingredients' : 'Stored Raw Materials'}
+            </h3>
+            <p className="text-[10px] text-zinc-600">Inventory: {Object.values(inventory).reduce((a,b)=>a+b, 0)} Units</p>
           </div>
+          
           <div className="grid grid-cols-4 gap-4 mb-20">
             {[...Array(45)].map((_, i) => {
               const num = i + 1;

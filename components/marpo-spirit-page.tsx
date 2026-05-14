@@ -25,7 +25,25 @@ const getElementValue = (num: number) => {
   return 1000000;
 };
 
-const calcFusionCost = (a: number, b: number) => Math.floor((getElementValue(a) * 0.1) + (getElementValue(b) * 0.1));
+// 원석 등급별 융합 수수료율
+// 낮은 원석은 진입 장벽을 낮추고, 높은 원석은 Ω 소각량을 강하게 올려 인플레이션을 방어함
+const calcFusionFeeRate = (a: number, b: number) => {
+  const highest = Math.max(a, b);
+
+  if (highest <= 15) return 0.05; // 1~15번: 5%
+  if (highest <= 25) return 0.07; // 16~25번: 7%
+  if (highest <= 35) return 0.10; // 26~35번: 10%
+  if (highest <= 44) return 0.15; // 36~44번: 15%
+  return 0.25; // 45번: 25%
+};
+
+const calcFusionCost = (a: number, b: number) => {
+  const totalValue = getElementValue(a) + getElementValue(b);
+  return Math.floor(totalValue * calcFusionFeeRate(a, b));
+};
+
+const formatFusionFeeRate = (a: number, b: number) => `${Math.round(calcFusionFeeRate(a, b) * 100)}%`;
+
 const calcFusionChance = (a: number, b: number) => Math.max(5, 90 - (Math.abs(a - b) * 2));
 
 const guideData = {
@@ -287,6 +305,9 @@ export default function MarpoSpiritPage({ lang = 'ko' }: { lang?: 'ko' | 'en' })
     setFusionResultNode(resultNum);
 
     setGameState('fusion_analyzing');
+    // 화면 겹침 방지: 융합 연출 시작 시 Vault/Fusion Lab 모달을 먼저 닫음
+    setShowVault(false);
+    setIsFusionMode(false);
     setLoadingProgress(0);
     const progInt = setInterval(() => setLoadingProgress(p => p >= 100 ? 100 : p + 1), 40);
 
@@ -328,8 +349,8 @@ export default function MarpoSpiritPage({ lang = 'ko' }: { lang?: 'ko' | 'en' })
   };
 
   return (
-    <div className="min-h-screen bg-[#050505] text-white p-6 pb-48 flex flex-col items-center font-sans relative overflow-hidden">
-      <div className="absolute inset-0 opacity-[0.03] pointer-events-none fixed" style={{ backgroundImage: "radial-gradient(#f39c12 1px, transparent 1px)", backgroundSize: "40px 40px" }}></div>
+    <div className="min-h-screen bg-[#050505] text-white p-6 pb-48 flex flex-col items-center font-sans relative overflow-x-hidden">
+      <div className="fixed inset-0 opacity-[0.03] pointer-events-none z-0" style={{ backgroundImage: "radial-gradient(#f39c12 1px, transparent 1px)", backgroundSize: "40px 40px" }}></div>
 
       {/* 모달: 마이닝 비디오 & 분석 */}
       {gameState === 'mining_video' && (
@@ -472,7 +493,7 @@ export default function MarpoSpiritPage({ lang = 'ko' }: { lang?: 'ko' | 'en' })
                 const num = i + 1;
                 const isSelected = selectedNumbers.includes(num);
                 return (
-                  <button key={num} onClick={() => handleNumberToggle(num)} className={`relative aspect-square rounded-xl overflow-hidden transition-all duration-300 transform ${isSelected ? 'border-2 border-amber-500 scale-110 z-10 bg-amber-500/20' : 'border border-zinc-800 bg-black'}`}>
+                  <button key={num} onClick={() => handleNumberToggle(num)} className={`relative aspect-square rounded-xl overflow-hidden transition-all duration-300 transform ${isSelected ? 'border-2 border-amber-500 ring-2 ring-amber-500 z-10 bg-amber-500/20' : 'border border-zinc-800 bg-black'}`}>
                     <div className={`absolute inset-0 bg-cover bg-center transition-opacity ${isSelected ? 'opacity-30' : 'opacity-100'}`} style={{ backgroundImage: `url('${getElementIcon(num)}')` }} />
                     <div className={`absolute inset-0 flex items-center justify-center ${isSelected ? 'opacity-100' : 'opacity-0'}`}><span className="text-2xl font-black text-amber-500">{num}</span></div>
                   </button>
@@ -481,7 +502,7 @@ export default function MarpoSpiritPage({ lang = 'ko' }: { lang?: 'ko' | 'en' })
             </div>
           </div>
 
-          <div className="w-full max-w-md mt-auto bg-zinc-900/50 p-6 rounded-[3.5rem] border border-zinc-800 flex justify-center items-center shadow-2xl z-20">
+          <div className="w-full max-w-md bg-zinc-900/50 p-6 rounded-[3.5rem] border border-zinc-800 flex justify-center items-center shadow-2xl z-20 mb-10">
              <button onClick={handleMining} disabled={selectedNumbers.length < 6} className="w-full py-5 rounded-3xl bg-amber-500 text-black font-black text-lg uppercase shadow-[0_0_20px_rgba(243,156,18,0.4)] active:scale-95 transition-all flex justify-center items-center gap-2">
                <Pickaxe size={24} /> {lang === 'ko' ? '채굴 시작 (MINING)' : 'START MINING'}
              </button>
@@ -490,7 +511,7 @@ export default function MarpoSpiritPage({ lang = 'ko' }: { lang?: 'ko' | 'en' })
       )}
 
       {/* 💎 금고(Vault) & 🔥 융합소 모달 */}
-      {showVault && (
+      {showVault && gameState === 'idle' && (
         <div className={`fixed inset-0 z-[2500] ${isFusionMode ? 'bg-[#0a0000]' : 'bg-black'} animate-in slide-in-from-bottom duration-500 flex flex-col p-8 overflow-y-auto transition-colors`}>
           
           <div className="flex justify-between items-center mb-8 mt-6">
@@ -560,17 +581,23 @@ export default function MarpoSpiritPage({ lang = 'ko' }: { lang?: 'ko' | 'en' })
                </div>
 
                {/* Stats Panel */}
-               <div className="w-full bg-black/50 rounded-2xl p-4 flex justify-between items-center mb-6 z-10">
+               <div className="w-full bg-black/50 rounded-2xl p-4 grid grid-cols-3 gap-3 items-center mb-6 z-10">
                   <div>
                     <p className="text-[10px] text-zinc-500 uppercase tracking-widest font-black">Success Rate</p>
                     <p className={`text-2xl font-black ${(slotA && slotB) ? (useMasterCatalyst ? 'text-fuchsia-400' : 'text-lime-400') : 'text-zinc-700'}`}>
                       {(slotA && slotB) ? (useMasterCatalyst ? '100%' : `${calcFusionChance(slotA, slotB)}%`) : '--%'}
                     </p>
                   </div>
+                  <div className="text-center">
+                    <p className="text-[10px] text-zinc-500 uppercase tracking-widest font-black">Burn Rate</p>
+                    <p className={`text-2xl font-black ${(slotA && slotB) ? 'text-orange-400' : 'text-zinc-700'}`}>
+                      {(slotA && slotB) ? formatFusionFeeRate(slotA, slotB) : '--%'}
+                    </p>
+                  </div>
                   <div className="text-right">
                     <p className="text-[10px] text-zinc-500 uppercase tracking-widest font-black">Burn Cost (Ω)</p>
                     <p className={`text-2xl font-black italic ${(slotA && slotB) ? 'text-red-500' : 'text-zinc-700'}`}>
-                      {(slotA && slotB) ? `-${calcFusionCost(slotA, slotB)}` : '--'}
+                      {(slotA && slotB) ? `-${calcFusionCost(slotA, slotB).toLocaleString()}` : '--'}
                     </p>
                   </div>
                </div>

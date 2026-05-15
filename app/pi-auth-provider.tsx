@@ -33,6 +33,8 @@ type PiAuthErrorResponse = {
   error: string;
 };
 
+type PiAuthApiResponse = PiAuthSuccessResponse | PiAuthErrorResponse;
+
 const PiAuthContext = createContext<PiAuthContextValue | null>(null);
 
 export function PiAuthProvider({ children }: { children: React.ReactNode }) {
@@ -99,12 +101,10 @@ export function PiAuthProvider({ children }: { children: React.ReactNode }) {
 
       const responseText = await response.text();
 
-      let data: PiAuthSuccessResponse | PiAuthErrorResponse;
+      let data: PiAuthApiResponse;
 
       try {
-        data = JSON.parse(responseText) as
-          | PiAuthSuccessResponse
-          | PiAuthErrorResponse;
+        data = JSON.parse(responseText) as PiAuthApiResponse;
       } catch {
         throw new Error(
           `Backend did not return valid JSON. Status: ${
@@ -113,7 +113,13 @@ export function PiAuthProvider({ children }: { children: React.ReactNode }) {
         );
       }
 
-      if (!response.ok || data.success !== true) {
+      if (!response.ok) {
+        throw new Error(
+          data.success === false ? data.error : "Pi authentication failed"
+        );
+      }
+
+      if (data.success !== true) {
         throw new Error(data.error || "Pi authentication failed");
       }
 

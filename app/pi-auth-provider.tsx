@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 type PiMeResponse = {
   uid?: string;
@@ -9,8 +10,21 @@ type PiMeResponse = {
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const accessToken = body?.accessToken;
+    let body: { accessToken?: string };
+
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Request body is not valid JSON",
+        },
+        { status: 400 }
+      );
+    }
+
+    const accessToken = body.accessToken;
 
     if (!accessToken || typeof accessToken !== "string") {
       return NextResponse.json(
@@ -26,9 +40,26 @@ export async function POST(request: NextRequest) {
       method: "GET",
       headers: {
         Authorization: `Bearer ${accessToken}`,
+        Accept: "application/json",
       },
       cache: "no-store",
     });
+
+    const piText = await piResponse.text();
+
+    let piUser: PiMeResponse;
+
+    try {
+      piUser = JSON.parse(piText) as PiMeResponse;
+    } catch {
+      return NextResponse.json(
+        {
+          success: false,
+          error: `Pi API did not return valid JSON. Status: ${piResponse.status}`,
+        },
+        { status: 502 }
+      );
+    }
 
     if (!piResponse.ok) {
       return NextResponse.json(
@@ -39,8 +70,6 @@ export async function POST(request: NextRequest) {
         { status: 401 }
       );
     }
-
-    const piUser = (await piResponse.json()) as PiMeResponse;
 
     if (!piUser?.username) {
       return NextResponse.json(
@@ -79,7 +108,9 @@ export async function POST(request: NextRequest) {
     );
 
     return response;
-  } catch {
+  } catch (error) {
+    console.error("Pi auth route error:", error);
+
     return NextResponse.json(
       {
         success: false,

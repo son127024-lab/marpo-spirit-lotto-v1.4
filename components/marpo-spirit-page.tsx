@@ -1,7 +1,8 @@
 "use client";
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
-import { Lock, Pickaxe, Flame, Sparkles, RefreshCcw, PlaySquare, Lightbulb, Wallet, X, ChevronRight, Target, Zap, Beaker, Gem, Timer, CheckCircle2 } from 'lucide-react';
+import Script from 'next/script'; // 🚩 Pi SDK 로드를 위해 추가
+import { Lock, Pickaxe, Flame, Sparkles, RefreshCcw, PlaySquare, Lightbulb, Wallet, X, ChevronRight, Target, Zap, Beaker, Gem, Timer, CheckCircle2, Plus, LogIn } from 'lucide-react';
 
 const iconMap: Record<number, string> = {
   1: "1-In.png", 2: "2-.png", 3: "3-.png", 4: "4-Y.png", 5: "5-.png",
@@ -68,6 +69,10 @@ interface MaturingItem {
 }
 
 export default function MarpoSpiritPage({ lang = 'ko' }: { lang?: 'ko' | 'en' }) {
+  // 🚩 신규: 파이 유저 상태 관리
+  const [piUser, setPiUser] = useState<{ username: string } | null>(null);
+  const [isAuthenticating, setIsAuthenticating] = useState(false);
+
   const [gameState, setGameState] = useState<GameState>('idle');
   const [userTier, setUserTier] = useState<UserTier>('premium'); 
   const [drawCount, setDrawCount] = useState(0); 
@@ -96,6 +101,31 @@ export default function MarpoSpiritPage({ lang = 'ko' }: { lang?: 'ko' | 'en' })
   const [useMasterCatalyst, setUseMasterCatalyst] = useState(false); 
 
   const currentGuides = guideData[lang] || guideData.ko;
+
+  // 🚩 핵심: Pi Network 인증 로직 (이메일 지시사항 완벽 반영)
+  const authenticatePiUser = async () => {
+    if (typeof window === 'undefined' || !(window as any).Pi) {
+      console.log("Pi SDK not loaded yet");
+      return;
+    }
+    
+    setIsAuthenticating(true);
+    try {
+      await (window as any).Pi.init({ version: "2.0", sandbox: true }); 
+      
+      const scopes = ['username'];
+      const onIncompletePaymentFound = (payment: any) => { console.log("Incomplete payment", payment); };
+      
+      const authResult = await (window as any).Pi.authenticate(scopes, onIncompletePaymentFound);
+      setPiUser(authResult.user);
+      console.log("Pi Authentication Success. Access Token:", authResult.accessToken);
+      
+    } catch (error) {
+      console.error("Pi Authentication Failed:", error);
+    } finally {
+      setIsAuthenticating(false);
+    }
+  };
 
   useEffect(() => {
     const savedTier = localStorage.getItem('marpo_tier') as UserTier;
@@ -332,7 +362,30 @@ export default function MarpoSpiritPage({ lang = 'ko' }: { lang?: 'ko' | 'en' })
 
   return (
     <div className="min-h-screen bg-[#050505] text-white p-6 pb-48 flex flex-col items-center font-sans relative overflow-x-hidden">
+      {/* 🚩 파이 SDK 스크립트 로드 (로드 성공 시 즉시 자동 로그인 시도) */}
+      <Script src="https://sdk.minepi.com/pi-sdk.js" onLoad={authenticatePiUser} strategy="lazyOnload" />
+
       <div className="fixed inset-0 opacity-[0.03] pointer-events-none z-0" style={{ backgroundImage: "radial-gradient(#f39c12 1px, transparent 1px)", backgroundSize: "40px 40px" }}></div>
+
+      {/* 🚩 메인 대시보드 상단: 파이 유저 프로필 및 로그인 버튼 */}
+      {gameState === 'idle' && (
+        <div className="w-full max-w-md flex justify-between items-center mb-4 relative z-20 mt-4">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-full bg-purple-900 border border-purple-500 flex items-center justify-center text-white font-bold text-xs">Pi</div>
+            {piUser ? (
+              <span className="text-sm font-bold text-purple-400">@{piUser.username}</span>
+            ) : (
+              <span className="text-sm font-bold text-zinc-500">Not Connected</span>
+            )}
+          </div>
+          {!piUser && (
+            <button onClick={authenticatePiUser} disabled={isAuthenticating} className="px-3 py-1.5 bg-purple-600 hover:bg-purple-500 text-white rounded-lg text-xs font-bold transition flex items-center gap-1">
+              {isAuthenticating ? <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></div> : <LogIn size={14} />}
+              {isAuthenticating ? 'Connecting...' : 'Pi Sign In'}
+            </button>
+          )}
+        </div>
+      )}
 
       {gameState === 'mining_video' && (
         <div className="fixed inset-0 z-[1000] bg-black flex flex-col items-center justify-center">
@@ -364,7 +417,7 @@ export default function MarpoSpiritPage({ lang = 'ko' }: { lang?: 'ko' | 'en' })
             {earnedElement && (
               <div className="flex flex-col items-center gap-2 bg-zinc-900/90 px-8 py-5 rounded-[2rem] border-2 border-lime-500 shadow-[0_0_20px_rgba(132,204,22,0.4)] animate-in slide-in-from-bottom duration-500 delay-300">
                 <div className="flex items-center gap-4">
-                  <div className="relative w-12 h-12"><Image src={getElementIcon(earnedElement)} alt={`Element`} fill className="object-contain" unoptimized /></div>
+                  <div className="relative w-9 h-9"><Image src={getElementIcon(earnedElement)} alt={`Element`} fill className="object-contain" unoptimized /></div>
                   <div className="text-left">
                     <p className="text-[10px] text-lime-400 font-black uppercase tracking-widest">Sent to Incubator</p>
                     <p className="text-xl font-black text-white">{lang === 'ko' ? `${earnedElement}번 원석 발견!` : `Found #${earnedElement}!`}</p>
@@ -425,7 +478,7 @@ export default function MarpoSpiritPage({ lang = 'ko' }: { lang?: 'ko' | 'en' })
       {/* 메인 대시보드 */}
       {gameState === 'idle' && (
         <>
-          <div className="w-full max-w-md mt-14 mb-6 flex items-start gap-6 relative z-20">
+          <div className="w-full max-w-md mb-6 flex items-start gap-6 relative z-20">
             <div className="relative w-28 h-28 shrink-0 bg-gradient-to-tr from-black to-zinc-900 rounded-full border-4 border-amber-500 shadow-[0_0_30px_rgba(243,156,18,0.3)] flex items-center justify-center overflow-hidden animate-bounce-slow">
               <Image src="/marpo-stage-1.png" alt="Rabbit" fill className="object-cover scale-110" priority unoptimized />
             </div>
@@ -457,7 +510,6 @@ export default function MarpoSpiritPage({ lang = 'ko' }: { lang?: 'ko' | 'en' })
              </div>
           </div>
 
-          {/* 🚩 복구된 힌트 보기 버튼 */}
           <div className="w-full max-w-md flex flex-col gap-3 mb-10 relative z-20">
             <button onClick={handleReveal} className="w-full py-5 bg-zinc-900/40 border border-[#f39c12]/40 rounded-3xl flex flex-col items-center active:scale-95 transition-all">
               <div className="flex items-center gap-2 mb-1">
@@ -481,7 +533,7 @@ export default function MarpoSpiritPage({ lang = 'ko' }: { lang?: 'ko' | 'en' })
               {[...Array(45)].map((_, i) => {
                 const num = i + 1;
                 const isSelected = selectedNumbers.includes(num);
-                const isHint = revealedNumber === num; // 🚩 힌트 로직 복구
+                const isHint = revealedNumber === num;
                 return (
                   <button key={num} onClick={() => handleNumberToggle(num)} className={`relative aspect-square rounded-xl overflow-hidden transition-all duration-300 transform ${isSelected ? 'border-2 border-amber-500 ring-2 ring-amber-500 z-10 bg-amber-500/20' : isHint ? 'border-2 border-lime-500 animate-pulse scale-105 z-10 bg-lime-500/20' : 'border border-zinc-800 bg-black'}`}>
                     <div className={`absolute inset-0 bg-cover bg-center transition-opacity ${isSelected || isHint ? 'opacity-30' : 'opacity-100'}`} style={{ backgroundImage: `url('${getElementIcon(num)}')` }} />
@@ -518,7 +570,6 @@ export default function MarpoSpiritPage({ lang = 'ko' }: { lang?: 'ko' | 'en' })
             <button onClick={() => { setShowVault(false); setIsFusionMode(false); setSlotA(null); setSlotB(null); }} className="w-12 h-12 bg-zinc-900 rounded-full flex items-center justify-center border border-zinc-800"><X size={24} className="text-white" /></button>
           </div>
 
-          {/* 🚩 인큐베이터 (12시간 숙성 대기열) */}
           {!isFusionMode && maturingItems.length > 0 && (
             <div className="mb-10 w-full bg-zinc-900/40 p-5 rounded-[2rem] border border-cyan-900/50">
               <h3 className="text-cyan-400 font-black italic uppercase tracking-widest text-sm mb-4 flex items-center gap-2"><Timer size={16}/> Incubator (Maturing)</h3>
@@ -543,88 +594,39 @@ export default function MarpoSpiritPage({ lang = 'ko' }: { lang?: 'ko' | 'en' })
             </div>
           )}
 
-          {/* 🔥 융합소 UI */}
           {isFusionMode && (
-            <div className="w-full min-h-[380px] bg-zinc-900/50 border border-red-900/50 rounded-[2rem] p-6 mb-12 flex flex-col items-center relative overflow-visible shrink-0">
-               <div className="flex gap-6 mb-6">
-                 <button onClick={() => handleRemoveFromSlot('A')} className={`w-24 h-24 rounded-2xl border-2 flex items-center justify-center transition-all z-10 ${slotA ? 'border-red-500 bg-black shadow-[0_0_15px_rgba(255,0,0,0.3)]' : 'border-zinc-700 border-dashed bg-zinc-900/50'}`}>
-                    {slotA ? <Image src={getElementIcon(slotA)} alt="A" width={60} height={60} unoptimized /> : <span className="text-zinc-600 font-black">A</span>}
-                 </button>
-                 <div className="flex items-center text-red-500 font-black text-2xl z-10">+</div>
-                 <button onClick={() => handleRemoveFromSlot('B')} className={`w-24 h-24 rounded-2xl border-2 flex items-center justify-center transition-all z-10 ${slotB ? 'border-red-500 bg-black shadow-[0_0_15px_rgba(255,0,0,0.3)]' : 'border-zinc-700 border-dashed bg-zinc-900/50'}`}>
-                    {slotB ? <Image src={getElementIcon(slotB)} alt="B" width={60} height={60} unoptimized /> : <span className="text-zinc-600 font-black">B</span>}
-                 </button>
-               </div>
-
-               {/* 무적 융합제 토글 */}
-               <div className="w-full flex justify-between items-center bg-black/60 p-4 rounded-2xl mb-4 border border-zinc-800 z-10">
-                 <div className="flex items-center gap-3">
-                   <Gem size={20} className={masterCatalysts > 0 ? "text-fuchsia-400" : "text-zinc-600"}/>
-                   <div>
-                     <p className="text-xs font-black uppercase text-zinc-400">Master Catalyst</p>
-                     <p className="text-[10px] text-zinc-500">100% Success Rate</p>
-                   </div>
+            <div className="w-full relative mt-2 mb-10 shrink-0">
+              <div className="absolute inset-0 bg-gradient-to-b from-[#1a0505] to-black border border-red-900/50 rounded-[2.5rem] shadow-[0_0_40px_rgba(220,38,38,0.15)] pointer-events-none"></div>
+              <div className="relative z-10 flex flex-col items-center p-6 pt-10">
+                 <div className="absolute top-[30%] left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 bg-red-600/20 blur-[80px] pointer-events-none rounded-full"></div>
+                 <div className="flex items-center justify-center gap-4 sm:gap-6 mb-10 w-full relative">
+                   <div className="flex flex-col items-center gap-3"><button onClick={() => handleRemoveFromSlot('A')} className={`relative w-28 h-28 sm:w-32 sm:h-32 rounded-[2rem] flex items-center justify-center transition-all duration-300 ${slotA ? 'bg-gradient-to-br from-zinc-900 to-black border-2 border-red-500 shadow-[0_0_30px_rgba(239,68,68,0.4)] scale-105' : 'bg-black/50 border-2 border-dashed border-zinc-700/80 hover:border-zinc-500'}`}><div className="absolute inset-0 rounded-[2rem] border border-white/5 pointer-events-none"></div>{slotA ? <Image src={getElementIcon(slotA)} alt="A" width={85} height={85} unoptimized className="animate-pulse drop-shadow-[0_0_25px_rgba(255,255,255,0.4)]" /> : <span className="text-zinc-800 font-black text-3xl">A</span>}</button><div className="bg-black/80 px-4 py-1.5 rounded-full border border-red-900/50 shadow-lg"><p className="text-[10px] text-red-400 font-black uppercase tracking-widest">Slot Alpha</p></div></div>
+                   <div className="flex items-center justify-center w-10 h-10 rounded-full bg-black border border-red-600/50 shadow-[0_0_15px_rgba(239,68,68,0.5)] z-10"><Plus size={20} className="text-red-500" strokeWidth={4} /></div>
+                   <div className="flex flex-col items-center gap-3"><button onClick={() => handleRemoveFromSlot('B')} className={`relative w-28 h-28 sm:w-32 sm:h-32 rounded-[2rem] flex items-center justify-center transition-all duration-300 ${slotB ? 'bg-gradient-to-br from-zinc-900 to-black border-2 border-red-500 shadow-[0_0_30px_rgba(239,68,68,0.4)] scale-105' : 'bg-black/50 border-2 border-dashed border-zinc-700/80 hover:border-zinc-500'}`}><div className="absolute inset-0 rounded-[2rem] border border-white/5 pointer-events-none"></div>{slotB ? <Image src={getElementIcon(slotB)} alt="B" width={85} height={85} unoptimized className="animate-pulse drop-shadow-[0_0_25px_rgba(255,255,255,0.4)]" /> : <span className="text-zinc-800 font-black text-3xl">B</span>}</button><div className="bg-black/80 px-4 py-1.5 rounded-full border border-red-900/50 shadow-lg"><p className="text-[10px] text-red-400 font-black uppercase tracking-widest">Slot Beta</p></div></div>
                  </div>
-                 <button onClick={() => setUseMasterCatalyst(!useMasterCatalyst)} disabled={masterCatalysts < 1} className={`w-14 h-8 rounded-full flex items-center transition-colors px-1 ${useMasterCatalyst ? 'bg-fuchsia-600 justify-end' : 'bg-zinc-700 justify-start'}`}>
-                   <div className="w-6 h-6 bg-white rounded-full"></div>
-                 </button>
-               </div>
 
-               {/* Stats Panel */}
-               <div className="w-full bg-black/50 rounded-2xl p-4 grid grid-cols-3 gap-3 items-center mb-6 z-10">
-                  <div>
-                    <p className="text-[10px] text-zinc-500 uppercase tracking-widest font-black">Success Rate</p>
-                    <p className={`text-2xl font-black ${(slotA && slotB) ? (useMasterCatalyst ? 'text-fuchsia-400' : 'text-lime-400') : 'text-zinc-700'}`}>
-                      {(slotA && slotB) ? (useMasterCatalyst ? '100%' : `${calcFusionChance(slotA, slotB)}%`) : '--%'}
-                    </p>
-                  </div>
-                  <div className="text-center">
-                    <p className="text-[10px] text-zinc-500 uppercase tracking-widest font-black">Burn Rate</p>
-                    <p className={`text-2xl font-black ${(slotA && slotB) ? 'text-orange-400' : 'text-zinc-700'}`}>
-                      {(slotA && slotB) ? formatFusionFeeRate(slotA, slotB) : '--%'}
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-[10px] text-zinc-500 uppercase tracking-widest font-black">Burn Cost (Ω)</p>
-                    <p className={`text-2xl font-black italic ${(slotA && slotB) ? 'text-red-500' : 'text-zinc-700'}`}>
-                      {(slotA && slotB) ? `-${calcFusionCost(slotA, slotB).toLocaleString()}` : '--'}
-                    </p>
-                  </div>
-               </div>
+                 <div className="w-full max-w-sm flex justify-between items-center bg-white/5 backdrop-blur-md p-4 rounded-2xl mb-6 border border-white/10 z-10"><div className="flex items-center gap-3"><Gem size={22} className={masterCatalysts > 0 ? "text-fuchsia-400" : "text-zinc-600"}/><div><p className="text-xs font-black uppercase text-zinc-300">Master Catalyst</p><p className="text-[9px] text-zinc-500">Bypass Failure Risk</p></div></div><button onClick={() => setUseMasterCatalyst(!useMasterCatalyst)} disabled={masterCatalysts < 1} className={`w-14 h-8 rounded-full flex items-center transition-all px-1 ${useMasterCatalyst ? 'bg-fuchsia-600 justify-end shadow-[0_0_15px_rgba(192,38,211,0.5)]' : 'bg-zinc-800 justify-start'}`}><div className="w-6 h-6 bg-white rounded-full shadow-md"></div></button></div>
+                 <div className="w-full max-w-sm bg-black/60 rounded-2xl p-5 flex justify-between items-center mb-8 z-10 border border-zinc-800 shadow-inner"><div className="flex flex-col"><p className="text-[9px] text-zinc-500 uppercase tracking-widest font-black mb-1">Stability</p><p className={`text-3xl font-black ${(slotA && slotB) ? (useMasterCatalyst ? 'text-fuchsia-400' : 'text-lime-400') : 'text-zinc-800'}`}>{(slotA && slotB) ? (useMasterCatalyst ? '100%' : `${calcFusionChance(slotA, slotB)}%`) : '--%'}</p></div><div className="text-right flex flex-col"><p className="text-[9px] text-zinc-500 uppercase tracking-widest font-black mb-1">Energy Required</p><p className={`text-3xl font-black italic ${(slotA && slotB) ? 'text-red-500' : 'text-zinc-800'}`}>{(slotA && slotB) ? `-${calcFusionCost(slotA, slotB)}` : '--'} <span className="text-sm">Ω</span></p></div></div>
 
-               <button onClick={executeFusion} disabled={!slotA || !slotB || dailyFusions >= 3} className={`w-full py-4 rounded-2xl font-black text-xl tracking-widest uppercase transition-all flex justify-center items-center gap-2 z-10 ${slotA && slotB && dailyFusions < 3 ? (useMasterCatalyst ? 'bg-fuchsia-600 shadow-[0_0_20px_rgba(192,38,211,0.5)] text-white' : 'bg-red-600 text-white shadow-[0_0_20px_rgba(220,38,38,0.5)]') : 'bg-zinc-800 text-zinc-600'}`}>
-                 {useMasterCatalyst ? <><Gem size={20}/> MASTER FUSE</> : <><Beaker size={20}/> FUSE (-1 🧪)</>}
-               </button>
+                 <button onClick={executeFusion} disabled={!slotA || !slotB || dailyFusions >= 3} className={`w-full max-w-sm py-5 rounded-2xl font-black text-2xl tracking-[0.2em] uppercase transition-all flex justify-center items-center gap-3 z-10 ${slotA && slotB && dailyFusions < 3 ? (useMasterCatalyst ? 'bg-fuchsia-600 shadow-[0_0_30px_rgba(192,38,211,0.6)] text-white' : 'bg-red-600 text-white shadow-[0_0_30px_rgba(220,38,38,0.6)]') : 'bg-zinc-800 text-zinc-600'}`}>{useMasterCatalyst ? <><Gem size={24}/> MASTER FUSE</> : <><Zap size={24}/> FUSE ELEMENTS</>}</button>
+              </div>
             </div>
           )}
 
-          {/* 💎 인벤토리 그리드 (사용 가능 원석만 표시) */}
           <div className="mt-8 mb-4 flex justify-between items-end relative z-10 shrink-0">
-            <h3 className="text-amber-500 font-black italic uppercase tracking-widest text-sm">Ready Elements</h3>
+            <h3 className={`font-black italic uppercase tracking-widest text-sm ${isFusionMode ? 'text-red-500' : 'text-amber-500'}`}>{isFusionMode ? 'Select Ingredients' : 'Stored Raw Materials'}</h3>
+            <p className="text-[10px] text-zinc-600">Inventory: {Object.values(inventory).reduce((a,b)=>a+b, 0)} Units</p>
           </div>
+          
           <div className="grid grid-cols-5 gap-3 mb-32 relative z-10 shrink-0">
             {[...Array(45)].map((_, i) => {
-              const num = i + 1;
-              let count = inventory[num] || 0;
-              if (isFusionMode && slotA === num) count--;
-              if (isFusionMode && slotB === num) count--;
-
+              const num = i + 1; let count = inventory[num] || 0;
+              if (isFusionMode && slotA === num) count--; if (isFusionMode && slotB === num) count--;
               const isAvailable = count > 0;
-
               return (
-                <button 
-                  key={num} 
-                  disabled={!isFusionMode || !isAvailable}
-                  onClick={() => handleSelectForFusion(num)}
-                  className={`relative aspect-square rounded-2xl border transition-all duration-300 transform
-                    ${isAvailable ? (isFusionMode ? 'cursor-pointer hover:scale-110 z-10' : 'z-10') : 'opacity-40'}`
-                  }>
-                   <div className={`absolute inset-0 bg-cover bg-center rounded-xl border-2 ${isAvailable ? (isFusionMode ? 'border-red-500 shadow-[0_0_15px_rgba(239,68,68,0.5)]' : 'border-amber-500') : 'border-zinc-800'}`} style={{ backgroundImage: `url('${getElementIcon(num)}')` }} />
-                   {isAvailable && (
-                     <div className={`absolute -top-2 -right-2 ${isFusionMode ? 'bg-red-500' : 'bg-amber-500'} text-black text-[9px] font-black px-1.5 py-0.5 rounded-full shadow-lg z-20`}>
-                       {count}
-                     </div>
-                   )}
+                <button key={num} disabled={!isFusionMode || !isAvailable} onClick={() => handleSelectForFusion(num)} className={`relative aspect-square rounded-2xl border transition-all duration-300 transform ${isAvailable ? (isFusionMode ? 'cursor-pointer hover:scale-110 z-10' : 'z-10') : 'opacity-40'}`}>
+                   <div className={`absolute inset-0 bg-cover bg-center rounded-2xl border-2 ${isAvailable ? (isFusionMode ? 'border-red-500 shadow-[0_0_15px_rgba(239,68,68,0.5)]' : 'border-amber-500') : 'border-zinc-800'}`} style={{ backgroundImage: `url('${getElementIcon(num)}')` }} />
+                   {isAvailable && (<div className={`absolute -top-2 -right-2 ${isFusionMode ? 'bg-red-500' : 'bg-amber-500'} text-black text-[9px] font-black px-1.5 py-0.5 rounded-full shadow-lg z-20`}>{count}</div>)}
                    <div className="absolute bottom-1 left-1/2 -translate-x-1/2 text-[10px] font-black text-white/80 drop-shadow-md z-10">{num}</div>
                 </button>
               );
@@ -633,18 +635,9 @@ export default function MarpoSpiritPage({ lang = 'ko' }: { lang?: 'ko' | 'en' })
 
           <div className="mt-auto flex gap-4">
              {isFusionMode ? (
-               <button onClick={() => { setIsFusionMode(false); setSlotA(null); setSlotB(null); setUseMasterCatalyst(false); }} className="w-full py-5 bg-zinc-800 text-white rounded-2xl font-black text-lg uppercase active:scale-95 transition-transform">
-                 {lang === 'ko' ? "금고로 돌아가기" : "Back to Vault"}
-               </button>
+               <button onClick={() => { setIsFusionMode(false); setSlotA(null); setSlotB(null); setUseMasterCatalyst(false); }} className="w-full py-5 bg-zinc-800 text-white rounded-2xl font-black text-lg uppercase active:scale-95 transition-transform">{lang === 'ko' ? "금고로 돌아가기" : "Back to Vault"}</button>
              ) : (
-               <>
-                 <button onClick={() => setShowVault(false)} className="flex-1 py-5 bg-zinc-800 text-white rounded-2xl font-black text-sm uppercase active:scale-95 transition-transform">
-                   {lang === 'ko' ? "채굴장 복귀" : "Mine"}
-                 </button>
-                 <button onClick={() => setIsFusionMode(true)} className="flex-[2] py-5 bg-red-600 text-white rounded-2xl font-black text-lg uppercase flex justify-center items-center gap-2 shadow-[0_0_20px_rgba(220,38,38,0.4)] active:scale-95 transition-transform">
-                   <Zap size={20} /> {lang === 'ko' ? "융합소 입장" : "Enter Fusion Lab"}
-                 </button>
-               </>
+               <><button onClick={() => setShowVault(false)} className="flex-1 py-5 bg-zinc-800 text-white rounded-2xl font-black text-sm uppercase active:scale-95 transition-transform">{lang === 'ko' ? "채굴장 복귀" : "Mine"}</button><button onClick={() => setIsFusionMode(true)} className="flex-[2] py-5 bg-red-600 text-white rounded-2xl font-black text-lg uppercase flex justify-center items-center gap-2 shadow-[0_0_20px_rgba(220,38,38,0.4)] active:scale-95 transition-transform"><Zap size={20} /> {lang === 'ko' ? "융합소 입장" : "Enter Fusion Lab"}</button></>
              )}
           </div>
         </div>

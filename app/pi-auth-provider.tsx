@@ -1,124 +1,199 @@
-import PiAuthProvider from "@/contexts/pi-auth-context";
-import { NextRequest, NextResponse } from "next/server";
+"use client";
 
-export const runtime = "nodejs";
-export const dynamic = "force-dynamic";
+import Script from "next/script";
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 
-type PiMeResponse = {
-  uid?: string;
-  username?: string;
+type PiUser = {
+  uid?: string | null;
+  username: string;
 };
 
-export async function POST(request: NextRequest) {
-  try {
-    let body: { accessToken?: string };
+type PiAuthContextValue = {
+  user: PiUser | null;
+  isReady: boolean;
+  isAuthenticating: boolean;
+  error: string | null;
+  signIn: () => Promise<void>;
+};
+
+type PiAuthSuccessResponse = {
+  success: true;
+  user: PiUser;
+};
+
+type PiAuthErrorResponse = {
+  success: false;
+  error: string;
+};
+
+const PiAuthContext = createContext<PiAuthContextValue | null>(null);
+
+export function PiAuthProvider({ children }: { children: React.ReactNode }) {
+  const [user, setUser] = useState<PiUser | null>(null);
+  const [isReady, setIsReady] = useState(false);
+  const [isAuthenticating, setIsAuthenticating] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const initPromiseRef = useRef<Promise<void> | null>(null);
+  const autoAuthStartedRef = useRef(false);
+
+  const initPi = useCallback(async () => {
+    if (typeof window === "undefined" || !window.Pi) {
+      throw new Error("Pi SDK is not loaded");
+    }
+
+    if (!initPromiseRef.current) {
+      initPromiseRef.current = Promise.resolve(
+        window.Pi.init({
+          version: "2.0",
+          sandbox: process.env.NEXT_PUBLIC_PI_SANDBOX === "true",
+        })
+      );
+    }
+
+    await initPromiseRef.current;
+  }, []);
+
+  const signIn = useCallback(async () => {
+    if (typeof window === "undefined" || !window.Pi) {
+      setError("Pi SDK is not loaded");
+      return;
+    }
+
+    if (isAuthenticating) return;
+
+    setIsAuthenticating(true);
+    setError(null);
 
     try {
-      body = await request.json();
-    } catch {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Request body is not valid JSON",
-        },
-        { status: 400 }
+      await initPi();
+
+      const authResult = await window.Pi.authenticate(
+        ["username"],
+        (payment) => {
+          console.log("Incomplete Pi payment found:", payment);
+        }
       );
-    }
 
-    const accessToken = body.accessToken;
-
-    if (!accessToken || typeof accessToken !== "string") {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Missing access token",
-        },
-        { status: 400 }
-      );
-    }
-
-    const piResponse = await fetch("https://api.minepi.com/v2/me", {
-      method: "GET",
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        Accept: "application/json",
-      },
-      cache: "no-store",
-    });
-
-    const piText = await piResponse.text();
-
-    let piUser: PiMeResponse;
-
-    try {
-      piUser = JSON.parse(piText) as PiMeResponse;
-    } catch {
-      return NextResponse.json(
-        {
-          success: false,
-          error: `Pi API did not return valid JSON. Status: ${piResponse.status}`,
-        },
-        { status: 502 }
-      );
-    }
-
-    if (!piResponse.ok) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Invalid Pi access token",
-        },
-        { status: 401 }
-      );
-    }
-
-    if (!piUser?.username) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Pi user verification failed",
-        },
-        { status: 401 }
-      );
-    }
-
-    const sessionPayload = {
-      uid: piUser.uid ?? null,
-      username: piUser.username,
-      verifiedAt: Date.now(),
-    };
-
-    const response = NextResponse.json({
-      success: true,
-      user: {
-        uid: piUser.uid ?? null,
-        username: piUser.username,
-      },
-    });
-
-    response.cookies.set(
-      "marpo_pi_session",
-      Buffer.from(JSON.stringify(sessionPayload)).toString("base64url"),
-      {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
-        path: "/",
-        maxAge: 60 * 60 * 24 * 7,
+      if (!authResult?.accessToken) {
+        throw new Error("Pi access token was not returned");
       }
-    );
 
-    return response;
-  } catch (error) {
-    console.error("Pi auth route error:", error);
+      const response = await fetch("/api/auth/pi", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({
+          accessToken: authResult.accessToken,
+        }),
+      });
 
-    return NextResponse.json(
-      {
-        success: false,
-        error: "Pi authentication server error",
-      },
-      { status: 500 }
-    );
-  }
+      const responseText = await response.text();
+
+      let data: PiAuthSuccessResponse | PiAuthErrorResponse;
+
+      try {
+        data = JSON.parse(responseText) as
+          | PiAuthSuccessResponse
+          | PiAuthErrorResponse;
+      } catch {
+        throw new Error(
+          `Backend did not return valid JSON. Status: ${
+            response.status
+          }. Response: ${responseText.slice(0, 200)}`
+        );
+      }
+
+      if (!response.ok || data.success !== true) {
+        throw new Error(data.error || "Pi authentication failed");
+      }
+
+      setUser(data.user);
+
+      if (window.Pi.Ads?.preloadRewardedVideo) {
+        await Promise.resolve(window.Pi.Ads.preloadRewardedVideo());
+      }
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Pi authentication failed";
+
+      console.error("Pi Authentication Error:", err);
+      setError(message);
+      setUser(null);
+    } finally {
+      setIsAuthenticating(false);
+    }
+  }, [initPi, isAuthenticating]);
+
+  const triggerAutoAuth = useCallback(() => {
+    if (autoAuthStartedRef.current || user) return;
+
+    autoAuthStartedRef.current = true;
+    void signIn();
+  }, [signIn, user]);
+
+  useEffect(() => {
+    if (typeof window !== "undefined" && window.Pi) {
+      setIsReady(true);
+      triggerAutoAuth();
+    }
+  }, [triggerAutoAuth]);
+
+  return (
+    <PiAuthContext.Provider
+      value={{
+        user,
+        isReady,
+        isAuthenticating,
+        error,
+        signIn,
+      }}
+    >
+      <Script
+        src="https://sdk.minepi.com/pi-sdk.js"
+        strategy="afterInteractive"
+        onLoad={() => {
+          setIsReady(true);
+          triggerAutoAuth();
+        }}
+        onError={() => {
+          setError("Failed to load Pi SDK");
+        }}
+      />
+
+      {children}
+
+      {!user && (
+        <button
+          type="button"
+          onClick={signIn}
+          disabled={isAuthenticating}
+          className="fixed right-4 bottom-4 z-[9999] rounded-full bg-purple-600 px-5 py-3 text-sm font-black text-white shadow-2xl disabled:opacity-60"
+        >
+          {isAuthenticating ? "CONNECTING PI..." : "PI SIGN IN"}
+        </button>
+      )}
+    </PiAuthContext.Provider>
+  );
 }
+
+export function usePiAuth() {
+  const context = useContext(PiAuthContext);
+
+  if (!context) {
+    throw new Error("usePiAuth must be used inside PiAuthProvider");
+  }
+
+  return context;
+}
+
 export default PiAuthProvider;

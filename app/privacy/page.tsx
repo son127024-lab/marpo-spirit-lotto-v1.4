@@ -1,6 +1,6 @@
 "use client";
 import React from 'react';
-
+import { usePiAuth } from "../pi-auth-provider";
 export default function PrivacyPage() {
   return (
     <div className="min-h-screen bg-[#050505] text-zinc-300 p-8 md:p-20 font-sans leading-relaxed">

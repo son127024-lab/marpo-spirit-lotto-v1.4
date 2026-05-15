@@ -11,7 +11,6 @@ let client;
 let clientPromise: Promise<MongoClient>;
 
 if (process.env.NODE_ENV === 'development') {
-  // 개발 모드에서는 글로벌 변수를 사용하여 연결을 유지합니다.
   let globalWithMongo = global as typeof globalThis & {
     _mongoClientPromise?: Promise<MongoClient>;
   };
@@ -22,7 +21,6 @@ if (process.env.NODE_ENV === 'development') {
   }
   clientPromise = globalWithMongo._mongoClientPromise;
 } else {
-  // 프로덕션 모드에서는 글로벌 변수를 사용하지 않습니다.
   client = new MongoClient(uri, options);
   clientPromise = client.connect();
 }

@@ -1,8 +1,5 @@
 @import "tailwindcss";
 
-/* 여기가 최신 Tailwind v4의 사령부입니다. 
-  이 변수들이 자동으로 bg-marpo-bg, text-marpo-amber 등의 클래스를 생성합니다.
-*/
 @theme {
   --color-marpo-bg: #050505;
   --color-marpo-amber: #f39c12;
@@ -11,7 +8,6 @@
   --font-urbanist: "Urbanist", sans-serif;
 }
 
-/* 시스템 강제 고정 (안전장치) */
 html, body {
   background-color: var(--color-marpo-bg);
   color: #ffffff;
@@ -20,7 +16,6 @@ html, body {
   overflow-x: hidden;
 }
 
-/* 커스텀 스크롤바 */
 ::-webkit-scrollbar {
   width: 6px;
 }

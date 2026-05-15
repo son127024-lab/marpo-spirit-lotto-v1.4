@@ -3,7 +3,6 @@ import { NextResponse } from 'next/server';
 export async function POST(req: Request) {
   try {
     const { paymentId } = await req.json();
-    // 💡 비밀번호 앞뒤에 실수로 들어간 띄어쓰기(공백)를 자동 제거합니다.
     const piApiKey = process.env.PI_API_KEY?.trim(); 
 
     if (!piApiKey) {

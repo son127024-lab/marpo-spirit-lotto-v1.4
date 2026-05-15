@@ -13,7 +13,7 @@ export default function MainGameLobby() {
   const [piUser, setPiUser] = useState<{username: string} | null>(null);
   const [isAuthenticating, setIsAuthenticating] = useState(false);
 
-  // 🚩 이메일 지시사항 완벽 적용: Promise 기반의 Pi 인증 함수
+  // 🚩 Promise 기반의 Pi 인증 함수
   const authenticatePi = async (isManual = false) => {
     if (typeof window === 'undefined' || !(window as any).Pi) {
       if (isManual) alert(lang === 'ko' ? "파이 브라우저 환경이 아닙니다." : "Not in Pi Browser environment.");
@@ -25,11 +25,9 @@ export default function MainGameLobby() {
     try {
       const Pi = (window as any).Pi;
       
-      // 1. 이메일 지시사항: Pi.init을 Promise로 취급하고 완벽히 await
-      // 🚩 샌드박스 모드 활성화 (테스트넷/미승인 상태 돌파용)
+      // 샌드박스 모드 활성화 (테스트넷/미승인 상태 돌파용)
       await Pi.init({ version: "2.0", sandbox: true }); 
 
-      // 2. 이메일 지시사항: 'username' scope 사용
       const scopes = ['username'];
       const onIncompletePaymentFound = (payment: any) => { console.log("Incomplete payment:", payment); };
       
@@ -38,12 +36,12 @@ export default function MainGameLobby() {
       console.log("Marpo Connect Success:", authResult.user.username);
       setPiUser(authResult.user);
 
-      // 광고 엔진 예열 (인증 성공 후)
+      // 광고 엔진 예열
       if (Pi.Ads && typeof Pi.Ads.preloadRewardedVideo === "function") {
         Pi.Ads.preloadRewardedVideo();
       }
 
-      // 유저가 수동으로 버튼을 눌러 인증에 성공했다면 다음 화면(구독창)으로 즉시 이동
+      // 수동 클릭 인증 시 구독창으로 즉시 이동
       if (isManual) {
         setView('subscription');
       }
@@ -59,7 +57,7 @@ export default function MainGameLobby() {
   useEffect(() => {
     setIsReady(true);
 
-    // 🚩 봇(Bot) 방어선 돌파 전술: SDK가 로드될 때까지 0.5초 간격으로 감시하다가 발견 즉시 자동 인증 발사!
+    // 🚩 봇 방어선 돌파 전술: SDK 로드 감지 후 자동 인증 (프리징 없는 안전한 타이머)
     const checkPiInterval = setInterval(() => {
       if (typeof window !== 'undefined' && (window as any).Pi) {
         clearInterval(checkPiInterval);
@@ -67,15 +65,14 @@ export default function MainGameLobby() {
       }
     }, 500);
 
-    // 5초가 지나도 SDK가 안 불러와지면 타이머 종료 (무한 루프 방지)
     setTimeout(() => {
       clearInterval(checkPiInterval);
     }, 5000);
 
     return () => clearInterval(checkPiInterval);
-  }, []); // 빈 배열로 마운트 시 한 번만 실행
+  }, []);
 
-  // 광고 실행 전술 함수
+  // 광고 실행 함수
   const showRewardedAd = async () => {
     const Pi = (window as any).Pi;
     if (!Pi?.Ads) {
@@ -158,8 +155,8 @@ export default function MainGameLobby() {
   if (view === 'intro') {
     return (
       <div className="min-h-screen bg-[#050505] text-white flex flex-col items-center justify-center p-6 relative overflow-hidden">
-        {/* 🚩 검증 봇 패스를 위해 가장 최우선으로 SDK 로드 (beforeInteractive) */}
-        <Script src="https://sdk.minepi.com/pi-sdk.js" strategy="beforeInteractive" />
+        {/* 🚩 수정됨: 클릭 프리징을 방지하기 위해 strategy를 "afterInteractive"로 변경! */}
+        <Script src="https://sdk.minepi.com/pi-sdk.js" strategy="afterInteractive" />
 
         <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: `radial-gradient(#f39c12 1px, transparent 1px)`, backgroundSize: '40px 40px' }}></div>
         <div className="relative z-10 w-full max-w-4xl flex flex-col items-center gap-6 bg-black/60 p-10 rounded-[3rem] border border-zinc-800 backdrop-blur-md shadow-2xl mt-10">
@@ -193,9 +190,9 @@ export default function MainGameLobby() {
           <button 
             onClick={() => {
               if (!piUser) {
-                authenticatePi(true); // 수동 인증 시작
+                authenticatePi(true); 
               } else {
-                setView('subscription'); // 이미 인증 완료 시 구독창으로 바로 이동
+                setView('subscription'); 
               }
             }} 
             disabled={!agreed || isAuthenticating} 

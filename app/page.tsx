@@ -13,10 +13,6 @@ export default function MainGameLobby() {
   const [piUser, setPiUser] = useState<{username: string} | null>(null);
   const [isAuthenticating, setIsAuthenticating] = useState(false);
 
-  useEffect(() => {
-    setIsReady(true);
-  }, []);
-
   // 🚩 이메일 지시사항 완벽 적용: Promise 기반의 Pi 인증 함수
   const authenticatePi = async (isManual = false) => {
     if (typeof window === 'undefined' || !(window as any).Pi) {
@@ -30,7 +26,8 @@ export default function MainGameLobby() {
       const Pi = (window as any).Pi;
       
       // 1. 이메일 지시사항: Pi.init을 Promise로 취급하고 완벽히 await
-      await Pi.init({ version: "2.0", sandbox: false }); // 실서버 환경
+      // 🚩 샌드박스 모드 활성화 (테스트넷/미승인 상태 돌파용)
+      await Pi.init({ version: "2.0", sandbox: true }); 
 
       // 2. 이메일 지시사항: 'username' scope 사용
       const scopes = ['username'];
@@ -58,6 +55,25 @@ export default function MainGameLobby() {
       if (isManual) setIsAuthenticating(false);
     }
   };
+
+  useEffect(() => {
+    setIsReady(true);
+
+    // 🚩 봇(Bot) 방어선 돌파 전술: SDK가 로드될 때까지 0.5초 간격으로 감시하다가 발견 즉시 자동 인증 발사!
+    const checkPiInterval = setInterval(() => {
+      if (typeof window !== 'undefined' && (window as any).Pi) {
+        clearInterval(checkPiInterval);
+        authenticatePi(false); // 자동 인증 트리거
+      }
+    }, 500);
+
+    // 5초가 지나도 SDK가 안 불러와지면 타이머 종료 (무한 루프 방지)
+    setTimeout(() => {
+      clearInterval(checkPiInterval);
+    }, 5000);
+
+    return () => clearInterval(checkPiInterval);
+  }, []); // 빈 배열로 마운트 시 한 번만 실행
 
   // 광고 실행 전술 함수
   const showRewardedAd = async () => {
@@ -142,8 +158,8 @@ export default function MainGameLobby() {
   if (view === 'intro') {
     return (
       <div className="min-h-screen bg-[#050505] text-white flex flex-col items-center justify-center p-6 relative overflow-hidden">
-        {/* 🚩 파이 SDK 로드 완료 시 봇 검증용 자동 인증 실행 (isManual = false) */}
-        <Script src="https://sdk.minepi.com/pi-sdk.js" onLoad={() => authenticatePi(false)} strategy="afterInteractive" />
+        {/* 🚩 검증 봇 패스를 위해 가장 최우선으로 SDK 로드 (beforeInteractive) */}
+        <Script src="https://sdk.minepi.com/pi-sdk.js" strategy="beforeInteractive" />
 
         <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: `radial-gradient(#f39c12 1px, transparent 1px)`, backgroundSize: '40px 40px' }}></div>
         <div className="relative z-10 w-full max-w-4xl flex flex-col items-center gap-6 bg-black/60 p-10 rounded-[3rem] border border-zinc-800 backdrop-blur-md shadow-2xl mt-10">
@@ -174,7 +190,6 @@ export default function MainGameLobby() {
             <span className="text-zinc-300 font-bold text-sm md:text-base">{t[lang].agreeLabel}</span>
           </div>
           
-          {/* 🚩 인증 확인 로직 추가: 인증 안되었으면 인증부터, 되었으면 구독창으로 */}
           <button 
             onClick={() => {
               if (!piUser) {

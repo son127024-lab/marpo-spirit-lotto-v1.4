@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
+import type { ReactNode } from "react";
 import "./globals.css";
-import PiAuthProvider from "./pi-auth-provider";
+import { PiAuthProvider } from "./pi-auth-provider";
 
 export const metadata: Metadata = {
   title: "Marpo Oracle Command",
@@ -10,7 +11,7 @@ export const metadata: Metadata = {
 export default function RootLayout({
   children,
 }: {
-  children: React.ReactNode;
+  children: ReactNode;
 }) {
   return (
     <html lang="ko" className="dark">

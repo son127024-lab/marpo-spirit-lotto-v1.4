@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
-import Script from 'next/script'; // 🚩 Pi SDK 로드를 위해 추가
+import Script from 'next/script'; 
 import MarpoSpiritPage from '../components/marpo-spirit-page'; 
 
 export default function MainGameLobby() {
@@ -13,27 +13,37 @@ export default function MainGameLobby() {
   const [piUser, setPiUser] = useState<{username: string} | null>(null);
   const [isAuthenticating, setIsAuthenticating] = useState(false);
 
-  // 🚩 Promise 기반의 Pi 인증 함수
-  const authenticatePi = async (isManual = false) => {
+  useEffect(() => {
+    setIsReady(true);
+  }, []);
+
+  // 1. Pi 공식 가이드를 준수한 정석 인증 함수
+  const authenticatePi = async () => {
     if (typeof window === 'undefined' || !(window as any).Pi) {
-      if (isManual) alert(lang === 'ko' ? "파이 브라우저 환경이 아닙니다." : "Not in Pi Browser environment.");
+      alert(lang === 'ko' ? "Pi SDK가 아직 로드되지 않았습니다." : "Pi SDK is not loaded yet.");
       return;
     }
 
-    if (isManual) setIsAuthenticating(true);
+    setIsAuthenticating(true);
     
     try {
       const Pi = (window as any).Pi;
       
-      // 샌드박스 모드 활성화 (테스트넷/미승인 상태 돌파용)
-      await Pi.init({ version: "2.0", sandbox: true }); 
+      // 2. 동적 환경 설정 (Vercel 배포 시에는 자동으로 sandbox: false 적용)
+      await Pi.init({ 
+        version: "2.0", 
+        sandbox: process.env.NODE_ENV !== "production" 
+      }); 
 
-      const scopes = ['username'];
-      const onIncompletePaymentFound = (payment: any) => { console.log("Incomplete payment:", payment); };
+      // 3. payments 스코프 추가
+      const scopes = ['username', 'payments'];
+      const onIncompletePaymentFound = (payment: any) => { 
+        console.log("Incomplete payment found:", payment); 
+      };
       
       const authResult = await Pi.authenticate(scopes, onIncompletePaymentFound);
       
-      console.log("Marpo Connect Success:", authResult.user.username);
+      console.log("Pi Authentication Success:", authResult.user.username);
       setPiUser(authResult.user);
 
       // 광고 엔진 예열
@@ -41,38 +51,17 @@ export default function MainGameLobby() {
         Pi.Ads.preloadRewardedVideo();
       }
 
-      // 수동 클릭 인증 시 구독창으로 즉시 이동
-      if (isManual) {
-        setView('subscription');
-      }
+      // 인증 성공 시 구독 화면으로 전환
+      setView('subscription');
 
     } catch (error) {
-      console.error("Marpo Connect Error:", error);
-      if (isManual) alert(lang === 'ko' ? "파이 네트워크 인증에 실패했습니다." : "Pi Network Authentication failed.");
+      console.error("Pi Authentication Error:", error);
+      alert(lang === 'ko' ? "Pi 인증에 실패했습니다." : "Pi authentication failed.");
     } finally {
-      if (isManual) setIsAuthenticating(false);
+      setIsAuthenticating(false);
     }
   };
 
-  useEffect(() => {
-    setIsReady(true);
-
-    // 🚩 봇 방어선 돌파 전술: SDK 로드 감지 후 자동 인증 (프리징 없는 안전한 타이머)
-    const checkPiInterval = setInterval(() => {
-      if (typeof window !== 'undefined' && (window as any).Pi) {
-        clearInterval(checkPiInterval);
-        authenticatePi(false); // 자동 인증 트리거
-      }
-    }, 500);
-
-    setTimeout(() => {
-      clearInterval(checkPiInterval);
-    }, 5000);
-
-    return () => clearInterval(checkPiInterval);
-  }, []);
-
-  // 광고 실행 함수
   const showRewardedAd = async () => {
     const Pi = (window as any).Pi;
     if (!Pi?.Ads) {
@@ -89,7 +78,6 @@ export default function MainGameLobby() {
     }
   };
 
-  // 구독 및 결제 로직
   const handlePayment = async (tier: string) => {
     if (tier === 'basic') {
       const isFinished = await showRewardedAd(); 
@@ -107,7 +95,6 @@ export default function MainGameLobby() {
 
   if (!isReady) return null;
 
-  // 🌐 다국어 데이터베이스 
   const t = {
     ko: {
       warnSub: "본 애플리케이션은 파이 코어팀(Pi Core Team) 및 생태계 검증을 위한 데모 버전입니다. 실제 Pi 코인은 차감되지 않습니다.",
@@ -151,121 +138,109 @@ export default function MainGameLobby() {
     }
   };
 
-  // 🏁 1단계: 인트로 UI
-  if (view === 'intro') {
-    return (
-      <div className="min-h-screen bg-[#050505] text-white flex flex-col items-center justify-center p-6 relative overflow-hidden">
-        {/* 🚩 수정됨: 클릭 프리징을 방지하기 위해 strategy를 "afterInteractive"로 변경! */}
-        <Script src="https://sdk.minepi.com/pi-sdk.js" strategy="afterInteractive" />
+  // 4. 조건부 렌더링 밖으로 스크립트를 빼내기 위한 통합 return 구조
+  return (
+    <>
+      <Script src="https://sdk.minepi.com/pi-sdk.js" strategy="afterInteractive" />
 
-        <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: `radial-gradient(#f39c12 1px, transparent 1px)`, backgroundSize: '40px 40px' }}></div>
-        <div className="relative z-10 w-full max-w-4xl flex flex-col items-center gap-6 bg-black/60 p-10 rounded-[3rem] border border-zinc-800 backdrop-blur-md shadow-2xl mt-10">
-          <div className="w-full bg-gradient-to-r from-red-600/80 via-red-500/80 to-red-600/80 p-3 rounded-2xl border-2 border-red-400 text-center mb-4 shadow-[0_0_20px_rgba(239,68,68,0.3)] animate-pulse">
-            <h2 className="text-white font-black uppercase tracking-widest text-sm md:text-base">⚠️ Official Beta Testnet Demo ⚠️</h2>
-            <p className="text-white/90 text-xs mt-1 font-bold">{t[lang].warnSub}</p>
-          </div>
-          <div className="relative w-40 h-40 md:w-48 md:h-48 mb-2 animate-pulse-slow">
-            <Image src="/marpo-logo.png" alt="MARPO GROUP LOGO" fill className="object-contain drop-shadow-[0_0_30px_rgba(185,28,28,0.4)]" priority />
-          </div>
-          <div className="text-center flex flex-col items-center">
-            <h1 className="text-5xl md:text-7xl font-black tracking-tighter text-amber-500 italic uppercase leading-none">MARPO SPIRIT</h1>
-            <p className="text-2xl md:text-3xl font-black text-white mt-3 italic tracking-widest">Mar point</p>
-            <div className="mt-4 flex flex-col items-center gap-1">
-              <p className="text-lg md:text-xl font-black text-amber-400 tracking-[0.3em] uppercase">L.O.T.T.O WORLD</p>
-              <p className="text-[10px] md:text-xs font-bold text-zinc-500 uppercase tracking-widest">( Loyalty Optimized Token Tactical Operations )</p>
+      {/* 🏁 1단계: 인트로 UI */}
+      {view === 'intro' && (
+        <div className="min-h-screen bg-[#050505] text-white flex flex-col items-center justify-center p-6 relative overflow-hidden">
+          <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: `radial-gradient(#f39c12 1px, transparent 1px)`, backgroundSize: '40px 40px' }}></div>
+          <div className="relative z-10 w-full max-w-4xl flex flex-col items-center gap-6 bg-black/60 p-10 rounded-[3rem] border border-zinc-800 backdrop-blur-md shadow-2xl mt-10">
+            <div className="w-full bg-gradient-to-r from-red-600/80 via-red-500/80 to-red-600/80 p-3 rounded-2xl border-2 border-red-400 text-center mb-4 shadow-[0_0_20px_rgba(239,68,68,0.3)] animate-pulse">
+              <h2 className="text-white font-black uppercase tracking-widest text-sm md:text-base">⚠️ Official Beta Testnet Demo ⚠️</h2>
+              <p className="text-white/90 text-xs mt-1 font-bold">{t[lang].warnSub}</p>
             </div>
-          </div>
-          <div className="w-full bg-zinc-900/80 p-6 md:p-8 rounded-3xl border border-zinc-700 text-left mt-2">
-            <h2 className="text-xl font-black text-amber-500 mb-4 uppercase tracking-widest">The Circular Economy Vision</h2>
-            <p className="text-zinc-200 text-sm md:text-lg leading-relaxed mb-6 font-bold">{t[lang].bold1} <span className="text-amber-400">{t[lang].bold2}</span></p>
-            <div className="space-y-4 text-zinc-400 text-[12px] md:text-sm leading-relaxed"><p>{t[lang].desc1}</p><p>{t[lang].desc2}</p></div>
-          </div>
-          <button onClick={() => setLang(lang === 'ko' ? 'en' : 'ko')} className="px-5 py-2.5 rounded-full border border-zinc-700 bg-zinc-800/80 text-zinc-300 text-xs font-bold uppercase">{lang === 'ko' ? '🇺🇸 Read in English' : '🇰🇷 한국어로 보기'}</button>
-          
-          <div onClick={() => setAgreed(!agreed)} className="flex items-center gap-4 cursor-pointer p-2 rounded-xl hover:bg-zinc-900/50 w-full justify-center">
-            <div className={`w-7 h-7 rounded-lg border-2 flex items-center justify-center ${agreed ? 'bg-amber-500 border-amber-500' : 'border-zinc-500'}`}>{agreed && <span className="text-black font-black">✓</span>}</div>
-            <span className="text-zinc-300 font-bold text-sm md:text-base">{t[lang].agreeLabel}</span>
-          </div>
-          
-          <button 
-            onClick={() => {
-              if (!piUser) {
-                authenticatePi(true); 
-              } else {
-                setView('subscription'); 
-              }
-            }} 
-            disabled={!agreed || isAuthenticating} 
-            className={`font-black uppercase italic tracking-widest px-12 py-5 rounded-2xl transition-all ${agreed ? 'bg-amber-500 text-black hover:scale-105 shadow-[0_0_30px_rgba(243,156,18,0.4)]' : 'bg-zinc-800 text-zinc-600 cursor-not-allowed'}`}
-          >
-            {isAuthenticating ? "CONNECTING PI..." : t[lang].accessBtn}
-          </button>
-
-          {piUser && (
-            <p className="text-xs font-bold text-lime-400 mt-2">Verified as @{piUser.username}</p>
-          )}
-        </div>
-      </div>
-    );
-  }
-
-  // 💳 2단계: 구독 선택 UI
-  if (view === 'subscription') {
-    return (
-      <div className="min-h-screen bg-[#050505] text-white flex flex-col items-center justify-center p-6 relative">
-        <h2 className="text-3xl md:text-4xl font-black text-white italic uppercase mb-10 tracking-widest">Select Tier Protocol</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-6xl">
-          <div className="bg-zinc-900 border border-zinc-700 rounded-[3.5rem] p-8 flex flex-col items-center">
-            <h3 className="text-xl font-black text-zinc-400 uppercase mb-2">Basic</h3>
-            <p className="text-3xl font-black text-white mb-6">0 Pi</p>
-            <ul className="text-zinc-500 text-[11px] font-bold space-y-3 mb-8">
-              <li>{t[lang].subBasicDesc1}</li>
-              <li>{t[lang].subBasicDesc2}</li>
-              <li>{t[lang].subBasicDesc3}</li>
-            </ul>
-            <button onClick={() => handlePayment('basic')} className="w-full py-4 bg-zinc-800 text-white rounded-xl font-black uppercase text-xs">Free Access (Ad Required)</button>
-          </div>
-          <div className="bg-zinc-900 border-2 border-amber-500 rounded-[3.5rem] p-8 flex flex-col items-center transform md:-translate-y-4">
-             <h3 className="text-xl font-black text-amber-500 uppercase mb-2">Premium</h3>
-             <p className="text-5xl font-black text-white mb-6">1 Pi</p>
-             <button onClick={() => handlePayment('premium')} className="w-full py-5 bg-amber-500 text-black rounded-xl font-black uppercase text-sm">Mock Pi Payment</button>
-          </div>
-          <div className="bg-zinc-900 border border-lime-500/50 rounded-[3.5rem] p-8 flex flex-col items-center">
-             <h3 className="text-xl font-black text-lime-400 uppercase mb-2">VIP</h3>
-             <p className="text-3xl font-black text-white mb-6">3 Pi</p>
-             <button onClick={() => handlePayment('vip')} className="w-full py-4 bg-lime-500 text-black rounded-xl font-black uppercase text-xs">Mock Pi Payment</button>
+            <div className="relative w-40 h-40 md:w-48 md:h-48 mb-2 animate-pulse-slow">
+              <Image src="/marpo-logo.png" alt="MARPO GROUP LOGO" fill className="object-contain drop-shadow-[0_0_30px_rgba(185,28,28,0.4)]" priority />
+            </div>
+            <div className="text-center flex flex-col items-center">
+              <h1 className="text-5xl md:text-7xl font-black tracking-tighter text-amber-500 italic uppercase leading-none">MARPO SPIRIT</h1>
+              <p className="text-2xl md:text-3xl font-black text-white mt-3 italic tracking-widest">Mar point</p>
+              <div className="mt-4 flex flex-col items-center gap-1">
+                <p className="text-lg md:text-xl font-black text-amber-400 tracking-[0.3em] uppercase">L.O.T.T.O WORLD</p>
+                <p className="text-[10px] md:text-xs font-bold text-zinc-500 uppercase tracking-widest">( Loyalty Optimized Token Tactical Operations )</p>
+              </div>
+            </div>
+            <div className="w-full bg-zinc-900/80 p-6 md:p-8 rounded-3xl border border-zinc-700 text-left mt-2">
+              <h2 className="text-xl font-black text-amber-500 mb-4 uppercase tracking-widest">The Circular Economy Vision</h2>
+              <p className="text-zinc-200 text-sm md:text-lg leading-relaxed mb-6 font-bold">{t[lang].bold1} <span className="text-amber-400">{t[lang].bold2}</span></p>
+              <div className="space-y-4 text-zinc-400 text-[12px] md:text-sm leading-relaxed"><p>{t[lang].desc1}</p><p>{t[lang].desc2}</p></div>
+            </div>
+            <button onClick={() => setLang(lang === 'ko' ? 'en' : 'ko')} className="px-5 py-2.5 rounded-full border border-zinc-700 bg-zinc-800/80 text-zinc-300 text-xs font-bold uppercase">{lang === 'ko' ? '🇺🇸 Read in English' : '🇰🇷 한국어로 보기'}</button>
+            
+            <div onClick={() => setAgreed(!agreed)} className="flex items-center gap-4 cursor-pointer p-2 rounded-xl hover:bg-zinc-900/50 w-full justify-center">
+              <div className={`w-7 h-7 rounded-lg border-2 flex items-center justify-center ${agreed ? 'bg-amber-500 border-amber-500' : 'border-zinc-500'}`}>{agreed && <span className="text-black font-black">✓</span>}</div>
+              <span className="text-zinc-300 font-bold text-sm md:text-base">{t[lang].agreeLabel}</span>
+            </div>
+            
+            <button 
+              onClick={authenticatePi} 
+              disabled={!agreed || isAuthenticating} 
+              className={`font-black uppercase italic tracking-widest px-12 py-5 rounded-2xl transition-all ${agreed ? 'bg-amber-500 text-black hover:scale-105 shadow-[0_0_30px_rgba(243,156,18,0.4)]' : 'bg-zinc-800 text-zinc-600 cursor-not-allowed'}`}
+            >
+              {isAuthenticating ? "CONNECTING PI..." : t[lang].accessBtn}
+            </button>
           </div>
         </div>
-        <button onClick={() => setView('intro')} className="mt-12 text-zinc-500 text-[10px] font-bold underline">{t[lang].cancelBtn}</button>
-      </div>
-    );
-  }
+      )}
 
-  // 🏁 3단계: 메인 대시보드
-  if (view === 'dashboard') {
-    return (
-      <div className="min-h-screen bg-[#050505] text-white relative flex flex-col items-center">
-        <header className="w-full p-4 md:px-10 flex justify-between items-center z-50 bg-black/50 backdrop-blur-md sticky top-0 border-b border-zinc-800">
-          <div className="flex items-center gap-3">
-             <div className="relative w-8 h-8"><Image src="/marpo-logo.png" alt="Symbol" fill className="object-contain" /></div>
-             <div className="flex flex-col">
-               <h2 className="text-[10px] md:text-xs font-black text-zinc-400 uppercase italic tracking-widest flex items-center gap-2">
-                 <span className="w-1.5 h-1.5 bg-yellow-500 rounded-full animate-pulse"></span> Pi Connected
-               </h2>
-               <span className="text-[8px] text-amber-500 font-bold uppercase">Web3 SaaS Demo</span>
-             </div>
-          </div>
-          <div className="flex items-center gap-4">
-            <div className="text-[10px] font-bold text-amber-400 uppercase">
-              Commander: {piUser ? piUser.username : "Verified"}
+      {/* 💳 2단계: 구독 선택 UI */}
+      {view === 'subscription' && (
+        <div className="min-h-screen w-full bg-[#050505] text-white flex flex-col items-center justify-center p-6 relative">
+          <h2 className="text-3xl md:text-4xl font-black text-white italic uppercase mb-10 tracking-widest">Select Tier Protocol</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-6xl">
+            <div className="bg-zinc-900 border border-zinc-700 rounded-[3.5rem] p-8 flex flex-col items-center">
+              <h3 className="text-xl font-black text-zinc-400 uppercase mb-2">Basic</h3>
+              <p className="text-3xl font-black text-white mb-6">0 Pi</p>
+              <ul className="text-zinc-500 text-[11px] font-bold space-y-3 mb-8">
+                <li>{t[lang].subBasicDesc1}</li>
+                <li>{t[lang].subBasicDesc2}</li>
+                <li>{t[lang].subBasicDesc3}</li>
+              </ul>
+              <button onClick={() => handlePayment('basic')} className="w-full py-4 bg-zinc-800 text-white rounded-xl font-black uppercase text-xs">Free Access (Ad Required)</button>
             </div>
-            <button onClick={() => { localStorage.removeItem('marpo_session'); setView('intro'); }} className="text-zinc-500 hover:text-amber-500 text-[9px] font-bold uppercase border border-zinc-800 px-3 py-1 rounded-full">Disconnect</button>
+            <div className="bg-zinc-900 border-2 border-amber-500 rounded-[3.5rem] p-8 flex flex-col items-center transform md:-translate-y-4">
+               <h3 className="text-xl font-black text-amber-500 uppercase mb-2">Premium</h3>
+               <p className="text-5xl font-black text-white mb-6">1 Pi</p>
+               <button onClick={() => handlePayment('premium')} className="w-full py-5 bg-amber-500 text-black rounded-xl font-black uppercase text-sm">Mock Pi Payment</button>
+            </div>
+            <div className="bg-zinc-900 border border-lime-500/50 rounded-[3.5rem] p-8 flex flex-col items-center">
+               <h3 className="text-xl font-black text-lime-400 uppercase mb-2">VIP</h3>
+               <p className="text-3xl font-black text-white mb-6">3 Pi</p>
+               <button onClick={() => handlePayment('vip')} className="w-full py-4 bg-lime-500 text-black rounded-xl font-black uppercase text-xs">Mock Pi Payment</button>
+            </div>
           </div>
-        </header>
-        <main className="w-full flex-1 relative">
-          <MarpoSpiritPage lang={lang} />
-        </main>
-      </div>
-    );
-  }
+          <button onClick={() => setView('intro')} className="mt-12 text-zinc-500 text-[10px] font-bold underline">{t[lang].cancelBtn}</button>
+        </div>
+      )}
+
+      {/* 🏁 3단계: 메인 대시보드 */}
+      {view === 'dashboard' && (
+        <div className="min-h-screen w-full bg-[#050505] text-white relative flex flex-col items-center">
+          <header className="w-full p-4 md:px-10 flex justify-between items-center z-50 bg-black/50 backdrop-blur-md sticky top-0 border-b border-zinc-800">
+            <div className="flex items-center gap-3">
+               <div className="relative w-8 h-8"><Image src="/marpo-logo.png" alt="Symbol" fill className="object-contain" /></div>
+               <div className="flex flex-col">
+                 <h2 className="text-[10px] md:text-xs font-black text-zinc-400 uppercase italic tracking-widest flex items-center gap-2">
+                   <span className="w-1.5 h-1.5 bg-yellow-500 rounded-full animate-pulse"></span> Pi Connected
+                 </h2>
+                 <span className="text-[8px] text-amber-500 font-bold uppercase">Web3 SaaS Demo</span>
+               </div>
+            </div>
+            <div className="flex items-center gap-4">
+              <div className="text-[10px] font-bold text-amber-400 uppercase">
+                Commander: {piUser ? piUser.username : "Verified"}
+              </div>
+              <button onClick={() => { localStorage.removeItem('marpo_session'); setView('intro'); }} className="text-zinc-500 hover:text-amber-500 text-[9px] font-bold uppercase border border-zinc-800 px-3 py-1 rounded-full">Disconnect</button>
+            </div>
+          </header>
+          <main className="w-full flex-1 relative">
+            <MarpoSpiritPage lang={lang} />
+          </main>
+        </div>
+      )}
+    </>
+  );
 }

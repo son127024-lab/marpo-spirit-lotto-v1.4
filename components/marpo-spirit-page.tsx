@@ -1,8 +1,8 @@
 "use client";
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
-import Script from 'next/script'; // 🚩 Pi SDK 로드를 위해 추가
-import { Lock, Pickaxe, Flame, Sparkles, RefreshCcw, PlaySquare, Lightbulb, Wallet, X, ChevronRight, Target, Zap, Beaker, Gem, Timer, CheckCircle2, Plus, LogIn } from 'lucide-react';
+import { Pickaxe, Wallet, X, ChevronRight, Target, Zap, Beaker, Gem, Timer, CheckCircle2, Plus } from 'lucide-react';
+import { usePiAuth } from '@/app/pi-auth-provider';
 
 const iconMap: Record<number, string> = {
   1: "1-In.png", 2: "2-.png", 3: "3-.png", 4: "4-Y.png", 5: "5-.png",
@@ -69,10 +69,6 @@ interface MaturingItem {
 }
 
 export default function MarpoSpiritPage({ lang = 'ko' }: { lang?: 'ko' | 'en' }) {
-  // 🚩 신규: 파이 유저 상태 관리
-  const [piUser, setPiUser] = useState<{ username: string } | null>(null);
-  const [isAuthenticating, setIsAuthenticating] = useState(false);
-
   const [gameState, setGameState] = useState<GameState>('idle');
   const [userTier, setUserTier] = useState<UserTier>('premium'); 
   const [drawCount, setDrawCount] = useState(0); 
@@ -101,31 +97,7 @@ export default function MarpoSpiritPage({ lang = 'ko' }: { lang?: 'ko' | 'en' })
   const [useMasterCatalyst, setUseMasterCatalyst] = useState(false); 
 
   const currentGuides = guideData[lang] || guideData.ko;
-
-  // 🚩 핵심: Pi Network 인증 로직 (이메일 지시사항 완벽 반영)
-  const authenticatePiUser = async () => {
-    if (typeof window === 'undefined' || !(window as any).Pi) {
-      console.log("Pi SDK not loaded yet");
-      return;
-    }
-    
-    setIsAuthenticating(true);
-    try {
-      await (window as any).Pi.init({ version: "2.0", sandbox: true }); 
-      
-      const scopes = ['username'];
-      const onIncompletePaymentFound = (payment: any) => { console.log("Incomplete payment", payment); };
-      
-      const authResult = await (window as any).Pi.authenticate(scopes, onIncompletePaymentFound);
-      setPiUser(authResult.user);
-      console.log("Pi Authentication Success. Access Token:", authResult.accessToken);
-      
-    } catch (error) {
-      console.error("Pi Authentication Failed:", error);
-    } finally {
-      setIsAuthenticating(false);
-    }
-  };
+  const { user: piUser, isAuthenticating, signIn } = usePiAuth();
 
   useEffect(() => {
     const savedTier = localStorage.getItem('marpo_tier') as UserTier;
@@ -362,12 +334,8 @@ export default function MarpoSpiritPage({ lang = 'ko' }: { lang?: 'ko' | 'en' })
 
   return (
     <div className="min-h-screen bg-[#050505] text-white p-6 pb-48 flex flex-col items-center font-sans relative overflow-x-hidden">
-      {/* 🚩 파이 SDK 스크립트 로드 (로드 성공 시 즉시 자동 로그인 시도) */}
-      <Script src="https://sdk.minepi.com/pi-sdk.js" onLoad={authenticatePiUser} strategy="lazyOnload" />
-
       <div className="fixed inset-0 opacity-[0.03] pointer-events-none z-0" style={{ backgroundImage: "radial-gradient(#f39c12 1px, transparent 1px)", backgroundSize: "40px 40px" }}></div>
 
-      {/* 🚩 메인 대시보드 상단: 파이 유저 프로필 및 로그인 버튼 */}
       {gameState === 'idle' && (
         <div className="w-full max-w-md flex justify-between items-center mb-4 relative z-20 mt-4">
           <div className="flex items-center gap-2">
@@ -379,8 +347,8 @@ export default function MarpoSpiritPage({ lang = 'ko' }: { lang?: 'ko' | 'en' })
             )}
           </div>
           {!piUser && (
-            <button onClick={authenticatePiUser} disabled={isAuthenticating} className="px-3 py-1.5 bg-purple-600 hover:bg-purple-500 text-white rounded-lg text-xs font-bold transition flex items-center gap-1">
-              {isAuthenticating ? <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></div> : <LogIn size={14} />}
+            <button onClick={signIn} disabled={isAuthenticating} className="px-3 py-1.5 bg-purple-600 hover:bg-purple-500 text-white rounded-lg text-xs font-bold transition flex items-center gap-1 disabled:opacity-60">
+              {isAuthenticating && <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></div>}
               {isAuthenticating ? 'Connecting...' : 'Pi Sign In'}
             </button>
           )}

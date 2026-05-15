@@ -1,6 +1,7 @@
 "use client";
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
+import Script from 'next/script'; // 🚩 Pi SDK 로드를 위해 추가
 import MarpoSpiritPage from '../components/marpo-spirit-page'; 
 
 export default function MainGameLobby() {
@@ -8,47 +9,57 @@ export default function MainGameLobby() {
   const [view, setView] = useState<'intro' | 'subscription' | 'dashboard'>('intro');
   const [agreed, setAgreed] = useState(false);
   const [lang, setLang] = useState<'ko' | 'en'>('ko');
+  
   const [piUser, setPiUser] = useState<{username: string} | null>(null);
+  const [isAuthenticating, setIsAuthenticating] = useState(false);
 
   useEffect(() => {
     setIsReady(true);
-    
-    // 1. 파이 SDK 시동 및 초기화
-    const Pi = (typeof window !== 'undefined') ? (window as any).Pi : null;
-    
-    if (Pi) {
-      // 실서버(.pinet.com) 환경을 위해 sandbox: false 설정
-      Pi.init({ version: "2.0", sandbox: false });
-
-      // 2. 광고 엔진 예열 (미리 로드)
-      // Pi Browser / Pi SDK 환경이 아니거나,
-       // preloadRewardedVideo 함수가 없는 경우 앱이 터지지 않도록 안전 체크
-      if (typeof window !== "undefined") {
-      const pi = (window as any).Pi;
-
-      if (pi?.Ads && typeof pi.Ads.preloadRewardedVideo === "function") {
-      pi.Ads.preloadRewardedVideo();
-      } else {
-      console.warn("Pi Ads preloadRewardedVideo is not available. Skipping preload.");
-  }
-}
-        
-
-      // 3. 파이오니어 인증 (로그인)
-      Pi.authenticate(['username'], function (incompletePayment: any) {
-        // 미완료 결제건 처리 로직 (필요 시)
-      })
-      .then(function (auth: any) {
-        console.log("Marpo Connect Success:", auth.user.username);
-        setPiUser(auth.user);
-      })
-      .catch(function (error: any) {
-        console.error("Marpo Connect Error:", error);
-      });
-    }
   }, []);
 
-  // 4. 광고 실행 전술 함수 (위치를 catch 밖으로 독립시켰습니다)
+  // 🚩 이메일 지시사항 완벽 적용: Promise 기반의 Pi 인증 함수
+  const authenticatePi = async (isManual = false) => {
+    if (typeof window === 'undefined' || !(window as any).Pi) {
+      if (isManual) alert(lang === 'ko' ? "파이 브라우저 환경이 아닙니다." : "Not in Pi Browser environment.");
+      return;
+    }
+
+    if (isManual) setIsAuthenticating(true);
+    
+    try {
+      const Pi = (window as any).Pi;
+      
+      // 1. 이메일 지시사항: Pi.init을 Promise로 취급하고 완벽히 await
+      await Pi.init({ version: "2.0", sandbox: false }); // 실서버 환경
+
+      // 2. 이메일 지시사항: 'username' scope 사용
+      const scopes = ['username'];
+      const onIncompletePaymentFound = (payment: any) => { console.log("Incomplete payment:", payment); };
+      
+      const authResult = await Pi.authenticate(scopes, onIncompletePaymentFound);
+      
+      console.log("Marpo Connect Success:", authResult.user.username);
+      setPiUser(authResult.user);
+
+      // 광고 엔진 예열 (인증 성공 후)
+      if (Pi.Ads && typeof Pi.Ads.preloadRewardedVideo === "function") {
+        Pi.Ads.preloadRewardedVideo();
+      }
+
+      // 유저가 수동으로 버튼을 눌러 인증에 성공했다면 다음 화면(구독창)으로 즉시 이동
+      if (isManual) {
+        setView('subscription');
+      }
+
+    } catch (error) {
+      console.error("Marpo Connect Error:", error);
+      if (isManual) alert(lang === 'ko' ? "파이 네트워크 인증에 실패했습니다." : "Pi Network Authentication failed.");
+    } finally {
+      if (isManual) setIsAuthenticating(false);
+    }
+  };
+
+  // 광고 실행 전술 함수
   const showRewardedAd = async () => {
     const Pi = (window as any).Pi;
     if (!Pi?.Ads) {
@@ -57,7 +68,7 @@ export default function MainGameLobby() {
     }
     try {
       const adResult = await Pi.Ads.showRewardedVideo();
-      return adResult.adFinished; // 광고 끝까지 시청 시 true 반환
+      return adResult.adFinished; 
     } catch (err) {
       console.error("광고 호출 실패:", err);
       alert("시청 가능한 광고가 없습니다.");
@@ -65,11 +76,11 @@ export default function MainGameLobby() {
     }
   };
 
-  // 5. 구독 및 결제 로직 (Basic 등급 시 광고 강제 호출)
+  // 구독 및 결제 로직
   const handlePayment = async (tier: string) => {
     if (tier === 'basic') {
-      const isFinished = await showRewardedAd(); // 광고 발사
-      if (!isFinished) return; // 광고 시청 실패 시 중단
+      const isFinished = await showRewardedAd(); 
+      if (!isFinished) return; 
     }
     
     alert(lang === 'ko' 
@@ -83,7 +94,7 @@ export default function MainGameLobby() {
 
   if (!isReady) return null;
 
-  // 🌐 다국어 데이터베이스 (기존 내용 유지)
+  // 🌐 다국어 데이터베이스 
   const t = {
     ko: {
       warnSub: "본 애플리케이션은 파이 코어팀(Pi Core Team) 및 생태계 검증을 위한 데모 버전입니다. 실제 Pi 코인은 차감되지 않습니다.",
@@ -131,6 +142,9 @@ export default function MainGameLobby() {
   if (view === 'intro') {
     return (
       <div className="min-h-screen bg-[#050505] text-white flex flex-col items-center justify-center p-6 relative overflow-hidden">
+        {/* 🚩 파이 SDK 로드 완료 시 봇 검증용 자동 인증 실행 (isManual = false) */}
+        <Script src="https://sdk.minepi.com/pi-sdk.js" onLoad={() => authenticatePi(false)} strategy="afterInteractive" />
+
         <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: `radial-gradient(#f39c12 1px, transparent 1px)`, backgroundSize: '40px 40px' }}></div>
         <div className="relative z-10 w-full max-w-4xl flex flex-col items-center gap-6 bg-black/60 p-10 rounded-[3rem] border border-zinc-800 backdrop-blur-md shadow-2xl mt-10">
           <div className="w-full bg-gradient-to-r from-red-600/80 via-red-500/80 to-red-600/80 p-3 rounded-2xl border-2 border-red-400 text-center mb-4 shadow-[0_0_20px_rgba(239,68,68,0.3)] animate-pulse">
@@ -154,11 +168,30 @@ export default function MainGameLobby() {
             <div className="space-y-4 text-zinc-400 text-[12px] md:text-sm leading-relaxed"><p>{t[lang].desc1}</p><p>{t[lang].desc2}</p></div>
           </div>
           <button onClick={() => setLang(lang === 'ko' ? 'en' : 'ko')} className="px-5 py-2.5 rounded-full border border-zinc-700 bg-zinc-800/80 text-zinc-300 text-xs font-bold uppercase">{lang === 'ko' ? '🇺🇸 Read in English' : '🇰🇷 한국어로 보기'}</button>
+          
           <div onClick={() => setAgreed(!agreed)} className="flex items-center gap-4 cursor-pointer p-2 rounded-xl hover:bg-zinc-900/50 w-full justify-center">
             <div className={`w-7 h-7 rounded-lg border-2 flex items-center justify-center ${agreed ? 'bg-amber-500 border-amber-500' : 'border-zinc-500'}`}>{agreed && <span className="text-black font-black">✓</span>}</div>
             <span className="text-zinc-300 font-bold text-sm md:text-base">{t[lang].agreeLabel}</span>
           </div>
-          <button onClick={() => setView('subscription')} disabled={!agreed} className={`font-black uppercase italic tracking-widest px-12 py-5 rounded-2xl transition-all ${agreed ? 'bg-amber-500 text-black hover:scale-105 shadow-[0_0_30px_rgba(243,156,18,0.4)]' : 'bg-zinc-800 text-zinc-600 cursor-not-allowed'}`}>{t[lang].accessBtn}</button>
+          
+          {/* 🚩 인증 확인 로직 추가: 인증 안되었으면 인증부터, 되었으면 구독창으로 */}
+          <button 
+            onClick={() => {
+              if (!piUser) {
+                authenticatePi(true); // 수동 인증 시작
+              } else {
+                setView('subscription'); // 이미 인증 완료 시 구독창으로 바로 이동
+              }
+            }} 
+            disabled={!agreed || isAuthenticating} 
+            className={`font-black uppercase italic tracking-widest px-12 py-5 rounded-2xl transition-all ${agreed ? 'bg-amber-500 text-black hover:scale-105 shadow-[0_0_30px_rgba(243,156,18,0.4)]' : 'bg-zinc-800 text-zinc-600 cursor-not-allowed'}`}
+          >
+            {isAuthenticating ? "CONNECTING PI..." : t[lang].accessBtn}
+          </button>
+
+          {piUser && (
+            <p className="text-xs font-bold text-lime-400 mt-2">Verified as @{piUser.username}</p>
+          )}
         </div>
       </div>
     );
@@ -170,7 +203,6 @@ export default function MainGameLobby() {
       <div className="min-h-screen bg-[#050505] text-white flex flex-col items-center justify-center p-6 relative">
         <h2 className="text-3xl md:text-4xl font-black text-white italic uppercase mb-10 tracking-widest">Select Tier Protocol</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-6xl">
-          {/* Basic Tier (광고 포함) */}
           <div className="bg-zinc-900 border border-zinc-700 rounded-[3.5rem] p-8 flex flex-col items-center">
             <h3 className="text-xl font-black text-zinc-400 uppercase mb-2">Basic</h3>
             <p className="text-3xl font-black text-white mb-6">0 Pi</p>
@@ -181,7 +213,6 @@ export default function MainGameLobby() {
             </ul>
             <button onClick={() => handlePayment('basic')} className="w-full py-4 bg-zinc-800 text-white rounded-xl font-black uppercase text-xs">Free Access (Ad Required)</button>
           </div>
-          {/* Premium & VIP (기존 로직 유지) */}
           <div className="bg-zinc-900 border-2 border-amber-500 rounded-[3.5rem] p-8 flex flex-col items-center transform md:-translate-y-4">
              <h3 className="text-xl font-black text-amber-500 uppercase mb-2">Premium</h3>
              <p className="text-5xl font-black text-white mb-6">1 Pi</p>
@@ -214,7 +245,7 @@ export default function MainGameLobby() {
           </div>
           <div className="flex items-center gap-4">
             <div className="text-[10px] font-bold text-amber-400 uppercase">
-              Commander: {piUser ? piUser.username : "Connecting..."}
+              Commander: {piUser ? piUser.username : "Verified"}
             </div>
             <button onClick={() => { localStorage.removeItem('marpo_session'); setView('intro'); }} className="text-zinc-500 hover:text-amber-500 text-[9px] font-bold uppercase border border-zinc-800 px-3 py-1 rounded-full">Disconnect</button>
           </div>

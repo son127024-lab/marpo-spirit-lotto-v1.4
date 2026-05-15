@@ -4,6 +4,10 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 type PiMeResponse = {
+  user?: {
+    uid?: string;
+    username?: string;
+  };
   uid?: string;
   username?: string;
 };
@@ -71,7 +75,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (!piUser?.username) {
+    const uid = piUser.user?.uid ?? piUser.uid ?? null;
+    const username = piUser.user?.username ?? piUser.username ?? null;
+
+    if (!username) {
       return NextResponse.json(
         {
           success: false,
@@ -82,16 +89,16 @@ export async function POST(request: NextRequest) {
     }
 
     const sessionPayload = {
-      uid: piUser.uid ?? null,
-      username: piUser.username,
+      uid,
+      username,
       verifiedAt: Date.now(),
     };
 
     const response = NextResponse.json({
       success: true,
       user: {
-        uid: piUser.uid ?? null,
-        username: piUser.username,
+        uid,
+        username,
       },
     });
 

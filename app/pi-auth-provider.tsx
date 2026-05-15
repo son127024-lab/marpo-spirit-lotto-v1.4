@@ -1,3 +1,4 @@
+import PiAuthProvider from "@/contexts/pi-auth-context";
 import { NextRequest, NextResponse } from "next/server";
 
 export const runtime = "nodejs";
@@ -120,3 +121,4 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+export default PiAuthProvider;

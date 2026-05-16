@@ -1,10 +1,14 @@
 "use client";
 
-import { usePiAuth } from "@/contexts/pi-auth-context";
+import { usePiAuth } from "@/app/pi-auth-provider";
 
 export function AuthLoadingScreen() {
-  const { authMessage, reinitialize } = usePiAuth();
-  const isError = authMessage.toLowerCase().includes("failed");
+  const { error, isAuthenticating, signIn } = usePiAuth();
+  const message = error
+    ? error
+    : isAuthenticating
+      ? "Waiting for Pi sign-in..."
+      : "Pi authentication is required.";
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background">
@@ -20,16 +24,16 @@ export function AuthLoadingScreen() {
           <h2 className="text-2xl font-semibold">Pi Network Authentication</h2>
           <p
             className={`text-sm ${
-              isError ? "text-destructive" : "text-muted-foreground"
+              error ? "text-destructive" : "text-muted-foreground"
             }`}
           >
-            {authMessage}
+            {message}
           </p>
         </div>
 
-        {isError && (
+        {error && (
           <button
-            onClick={reinitialize}
+            onClick={signIn}
             className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
           >
             Try Again

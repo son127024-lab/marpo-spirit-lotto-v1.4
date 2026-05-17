@@ -1,28 +1,33 @@
-import { MongoClient } from 'mongodb';
-
-if (!process.env.MONGODB_URI) {
-  throw new Error('Please add your Mongo URI to .env.local');
-}
+import { MongoClient, Db } from "mongodb";
 
 const uri = process.env.MONGODB_URI;
+
+if (!uri) {
+  throw new Error("Missing MONGODB_URI environment variable");
+}
+
 const options = {};
 
-let client;
+declare global {
+  // eslint-disable-next-line no-var
+  var _marpoMongoClientPromise: Promise<MongoClient> | undefined;
+}
+
 let clientPromise: Promise<MongoClient>;
 
-if (process.env.NODE_ENV === 'development') {
-  let globalWithMongo = global as typeof globalThis & {
-    _mongoClientPromise?: Promise<MongoClient>;
-  };
-
-  if (!globalWithMongo._mongoClientPromise) {
-    client = new MongoClient(uri, options);
-    globalWithMongo._mongoClientPromise = client.connect();
+if (process.env.NODE_ENV === "development") {
+  if (!global._marpoMongoClientPromise) {
+    const client = new MongoClient(uri, options);
+    global._marpoMongoClientPromise = client.connect();
   }
-  clientPromise = globalWithMongo._mongoClientPromise;
+
+  clientPromise = global._marpoMongoClientPromise;
 } else {
-  client = new MongoClient(uri, options);
+  const client = new MongoClient(uri, options);
   clientPromise = client.connect();
 }
 
-export default clientPromise;
+export async function getMarpoDb(): Promise<Db> {
+  const client = await clientPromise;
+  return client.db("marpo_group");
+}

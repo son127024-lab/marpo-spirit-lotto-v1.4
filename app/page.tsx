@@ -221,8 +221,7 @@ export default function MainGameLobby() {
   const t = {
     ko: {
       warnSub:
-        warnSub:
-           "MARPO SPIRIT은 Pi Network 기반 Web3 유틸리티 리워드 플랫폼입니다. 본 앱은 도박, 베팅, 현실 화폐 로또, 증권, 투자 서비스를 제공하지 않습니다.",
+        "MARPO SPIRIT은 Pi Network 기반 Web3 유틸리티 리워드 플랫폼입니다. 본 앱은 도박, 베팅, 현실 화폐 로또, 증권, 투자 서비스를 제공하지 않습니다.",
       bold1: "마르포 그룹은 ",
       bold2: "이 Web3 SaaS 시스템을 활용하여, 파이 생태계의 순환경제를 완성합니다.",
       desc1:
@@ -245,7 +244,6 @@ export default function MainGameLobby() {
       cancelBtn: "나중에 하기 (로비로 이동)",
     },
     en: {
-      warnSub:
         warnSub:
            "MARPO SPIRIT is a Pi Network-based Web3 utility reward platform. It does not provide gambling, betting, cash lottery, securities, or investment services.",
       bold1: "Marpo Group ",

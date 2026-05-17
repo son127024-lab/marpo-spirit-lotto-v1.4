@@ -183,18 +183,37 @@ export default function MainGameLobby() {
 
     if (tier === "basic") {
       const isFinished = await showRewardedAd();
+
       if (!isFinished) return;
+
+      localStorage.setItem("marpo_session", "active");
+      localStorage.setItem("marpo_tier", "basic");
+      setView("dashboard");
+      return;
     }
 
-    alert(
-      lang === "ko"
-        ? `[Demo Mode] Web3 SaaS 구독 시뮬레이션입니다.\n${tier.toUpperCase()} 등급 프로토콜이 가동됩니다.`
-        : `[Demo Mode] Web3 SaaS Subscription Simulation.\n${tier.toUpperCase()} protocol activated.`
-    );
+    try {
+      await createSubscriptionPayment(tier);
 
-    localStorage.setItem("marpo_session", "active");
-    localStorage.setItem("marpo_tier", tier);
-    setView("dashboard");
+      alert(
+        lang === "ko"
+          ? `${tier.toUpperCase()} 구독 결제가 완료되었습니다.`
+          : `${tier.toUpperCase()} subscription payment completed.`
+      );
+
+      setView("dashboard");
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Payment failed.";
+
+      console.error("Subscription payment error:", error);
+
+      alert(
+        lang === "ko"
+          ? `Pi 결제에 실패했습니다. ${message}`
+          : `Pi payment failed. ${message}`
+      );
+    }
   };
 
   if (!isReady) return null;
@@ -202,7 +221,8 @@ export default function MainGameLobby() {
   const t = {
     ko: {
       warnSub:
-        "본 애플리케이션은 파이 코어팀(Pi Core Team) 및 생태계 검증을 위한 데모 버전입니다. 실제 Pi 코인은 차감되지 않습니다.",
+        warnSub:
+           "MARPO SPIRIT은 Pi Network 기반 Web3 유틸리티 리워드 플랫폼입니다. 본 앱은 도박, 베팅, 현실 화폐 로또, 증권, 투자 서비스를 제공하지 않습니다.",
       bold1: "마르포 그룹은 ",
       bold2: "이 Web3 SaaS 시스템을 활용하여, 파이 생태계의 순환경제를 완성합니다.",
       desc1:
@@ -211,7 +231,7 @@ export default function MainGameLobby() {
         "우리는 파이오니어들의 장기적인 참여와 기여를 이끌어내는 고유의 전술적 운영 프로토콜을 통해, 공급과 수요의 균형을 맞추고 Pi의 거시적 희소성을 보호하는 '디플레이션 선순환' 체계를 구축하고자 합니다.",
       langBtn: "Read in English",
       agreeLabel: "마르포 그룹의 생태계 순환경제 비전에 동의합니다.",
-      accessBtn: "Access Demo Subscription",
+      accessBtn: "구독 페이지 접속",
       signInBtn: "Sign in with Pi",
       subBasicDesc1: "기본 원소 탐색 권한",
       subBasicDesc2: "매회 광고 시청 필수",
@@ -226,7 +246,8 @@ export default function MainGameLobby() {
     },
     en: {
       warnSub:
-        "This application is a demo version for Pi Core Team and ecosystem validation. Real Pi coins will not be deducted.",
+        warnSub:
+           "MARPO SPIRIT is a Pi Network-based Web3 utility reward platform. It does not provide gambling, betting, cash lottery, securities, or investment services.",
       bold1: "Marpo Group ",
       bold2: "completes the circular economy of the Pi ecosystem by utilizing this Web3 SaaS system.",
       desc1:

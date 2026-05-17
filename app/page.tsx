@@ -185,7 +185,9 @@ export default function MainGameLobby() {
     }
   };
 
-  const handleIncompletePayment = async (payment: unknown) => {
+  const handleIncompletePayment = async (
+    payment: unknown
+  ): Promise<boolean> => {
     const incompletePayment = payment as PiIncompletePayment;
 
     const paymentId =
@@ -220,14 +222,14 @@ export default function MainGameLobby() {
 
     if (!paymentId || !txid || (tier !== "premium" && tier !== "vip")) {
       console.warn("Incomplete payment could not be recovered safely.");
-      return;
+      return false;
     }
 
     const expectedAmount = tier === "premium" ? 1 : 3;
 
     if (amount !== expectedAmount) {
       console.warn("Incomplete payment amount does not match tier.");
-      return;
+      return false;
     }
 
     const response = await fetch("/api/payments/complete", {
@@ -272,20 +274,28 @@ export default function MainGameLobby() {
     localStorage.setItem("marpo_payment_txid", txid);
 
     setView("dashboard");
+    return true;
   };
 
-  const requestPiPaymentPermission = async () => {
+  const requestPiPaymentPermission = async (): Promise<boolean> => {
     if (!window.Pi) {
       throw new Error("Pi SDK is not loaded.");
     }
 
-    await window.Pi.authenticate(["username", "payments"], async (payment) => {
-      try {
-        await handleIncompletePayment(payment);
-      } catch (error) {
+    let recoveryPromise: Promise<boolean> | null = null;
+
+    await window.Pi.authenticate(["username", "payments"], (payment) => {
+      recoveryPromise = handleIncompletePayment(payment).catch((error) => {
         console.error("Failed to handle incomplete Pi payment:", error);
-      }
+        return false;
+      });
     });
+
+    if (recoveryPromise) {
+      return recoveryPromise;
+    }
+
+    return false;
   };
 
   const createSubscriptionPayment = async (tier: "premium" | "vip") => {
@@ -297,10 +307,14 @@ export default function MainGameLobby() {
       throw new Error("Pi payment SDK is not available.");
     }
 
+    const recoveredIncompletePayment = await requestPiPaymentPermission();
+
+    if (recoveredIncompletePayment) {
+      return;
+    }
+
     const amount = tier === "premium" ? 1 : 3;
     const orderId = `marpo_${tier}_${Date.now()}`;
-
-    await requestPiPaymentPermission();
 
     return new Promise<void>((resolve, reject) => {
       let finished = false;
@@ -726,6 +740,7 @@ export default function MainGameLobby() {
             <p className="text-zinc-400 text-[11px] md:text-xs leading-relaxed">
               {t[lang].noticeDesc}
             </p>
+
             <p className="text-amber-400 text-[10px] md:text-xs leading-relaxed mt-3 font-bold">
               {lang === "ko"
                 ? "현재 이 기능은 Pi Testnet 자동구독 프로토타입입니다. 자동구독 활성화 시 테스트 주기에 따라 Test Pi 반복 결제를 시뮬레이션하며, 사용자는 언제든지 구독을 취소할 수 있습니다."
@@ -770,7 +785,7 @@ export default function MainGameLobby() {
                 onClick={() => handlePayment("premium")}
                 className="w-full py-5 bg-amber-500 text-black rounded-xl font-black uppercase text-sm"
               >
-                Pay 1 Pi
+                Activate Premium Beta - 1 Pi
               </button>
             </div>
 
@@ -790,7 +805,7 @@ export default function MainGameLobby() {
                 onClick={() => handlePayment("vip")}
                 className="w-full py-4 bg-lime-500 text-black rounded-xl font-black uppercase text-xs"
               >
-                Pay 3 Pi
+                Activate VIP Beta - 3 Pi
               </button>
             </div>
           </div>
@@ -839,7 +854,7 @@ export default function MainGameLobby() {
                   <span>Tier: {subscription.tier}</span>
                   <span>Status: {subscription.status}</span>
                   <span>
-                    Next Test Billing: {" "}
+                    Next Test Billing:{" "}
                     {new Date(subscription.nextBillingAt).toLocaleDateString()}
                   </span>
                 </div>

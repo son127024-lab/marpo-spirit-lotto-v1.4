@@ -12,6 +12,7 @@ type PaymentApiResponse = {
   error?: string;
   [key: string]: unknown;
 };
+
 type PiIncompletePayment = {
   identifier?: string;
   paymentId?: string;
@@ -29,6 +30,19 @@ type PiIncompletePayment = {
   };
   txid?: string;
 };
+
+type MarpoSubscription = {
+  status: "active" | "cancelled" | "expired";
+  tier: "premium" | "vip";
+  amount: number;
+  paymentId?: string;
+  txid?: string;
+  orderId?: string;
+  activatedAt: number;
+  nextBillingAt: number;
+  cancelAtPeriodEnd: boolean;
+};
+
 export default function MainGameLobby() {
   const [isReady, setIsReady] = useState(false);
   const [view, setView] = useState<"intro" | "subscription" | "dashboard">(
@@ -36,6 +50,9 @@ export default function MainGameLobby() {
   );
   const [agreed, setAgreed] = useState(false);
   const [lang, setLang] = useState<"ko" | "en">("ko");
+  const [subscription, setSubscription] = useState<MarpoSubscription | null>(
+    null
+  );
 
   const {
     user: piUser,
@@ -43,10 +60,6 @@ export default function MainGameLobby() {
     error: authError,
     signIn,
   } = usePiAuth();
-
-  useEffect(() => {
-    setIsReady(true);
-  }, []);
 
   const readApiResponse = async (
     response: Response
@@ -66,6 +79,94 @@ export default function MainGameLobby() {
     }
   };
 
+  const saveSubscription = (data: MarpoSubscription) => {
+    localStorage.setItem("marpo_subscription_state", JSON.stringify(data));
+    localStorage.setItem("marpo_session", "active");
+    localStorage.setItem("marpo_tier", data.tier);
+    setSubscription(data);
+  };
+
+  const loadSubscription = () => {
+    const raw = localStorage.getItem("marpo_subscription_state");
+
+    if (!raw) return null;
+
+    try {
+      const parsed = JSON.parse(raw) as MarpoSubscription;
+
+      if (!parsed?.status || !parsed?.tier || !parsed?.activatedAt) {
+        return null;
+      }
+
+      if (
+        parsed.status === "active" &&
+        parsed.nextBillingAt &&
+        Date.now() > parsed.nextBillingAt
+      ) {
+        const expiredSubscription: MarpoSubscription = {
+          ...parsed,
+          status: "expired",
+        };
+
+        localStorage.setItem(
+          "marpo_subscription_state",
+          JSON.stringify(expiredSubscription)
+        );
+
+        return expiredSubscription;
+      }
+
+      return parsed;
+    } catch {
+      return null;
+    }
+  };
+
+  const cancelSubscription = () => {
+    const current = loadSubscription();
+
+    if (!current) {
+      alert(
+        lang === "ko"
+          ? "취소할 구독 상태가 없습니다."
+          : "No subscription status found."
+      );
+      return;
+    }
+
+    const cancelled: MarpoSubscription = {
+      ...current,
+      status: "cancelled",
+      cancelAtPeriodEnd: true,
+    };
+
+    localStorage.setItem("marpo_subscription_state", JSON.stringify(cancelled));
+    setSubscription(cancelled);
+
+    alert(
+      lang === "ko"
+        ? "구독이 취소되었습니다. 현재 Testnet 프로토타입에서는 추가 자동 결제가 진행되지 않습니다."
+        : "Subscription cancelled. In this Testnet prototype, no further automatic billing will continue."
+    );
+  };
+
+  useEffect(() => {
+    const savedSubscription = loadSubscription();
+
+    if (
+      savedSubscription &&
+      savedSubscription.status === "active" &&
+      savedSubscription.cancelAtPeriodEnd === false
+    ) {
+      setSubscription(savedSubscription);
+      setView("dashboard");
+    } else if (savedSubscription) {
+      setSubscription(savedSubscription);
+    }
+
+    setIsReady(true);
+  }, []);
+
   const showRewardedAd = async () => {
     const Pi = window.Pi;
 
@@ -83,7 +184,8 @@ export default function MainGameLobby() {
       return false;
     }
   };
-    const handleIncompletePayment = async (payment: unknown) => {
+
+  const handleIncompletePayment = async (payment: unknown) => {
     const incompletePayment = payment as PiIncompletePayment;
 
     const paymentId =
@@ -151,8 +253,21 @@ export default function MainGameLobby() {
       );
     }
 
-    localStorage.setItem("marpo_session", "active");
-    localStorage.setItem("marpo_tier", tier);
+    const activatedAt = Date.now();
+    const nextBillingAt = activatedAt + 30 * 24 * 60 * 60 * 1000;
+
+    saveSubscription({
+      status: "active",
+      tier,
+      amount: expectedAmount,
+      paymentId,
+      txid,
+      orderId,
+      activatedAt,
+      nextBillingAt,
+      cancelAtPeriodEnd: false,
+    });
+
     localStorage.setItem("marpo_payment_id", paymentId);
     localStorage.setItem("marpo_payment_txid", txid);
 
@@ -279,8 +394,21 @@ export default function MainGameLobby() {
                 );
               }
 
-              localStorage.setItem("marpo_session", "active");
-              localStorage.setItem("marpo_tier", tier);
+              const activatedAt = Date.now();
+              const nextBillingAt = activatedAt + 30 * 24 * 60 * 60 * 1000;
+
+              saveSubscription({
+                status: "active",
+                tier,
+                amount,
+                paymentId,
+                txid,
+                orderId,
+                activatedAt,
+                nextBillingAt,
+                cancelAtPeriodEnd: false,
+              });
+
               localStorage.setItem("marpo_payment_id", paymentId);
               localStorage.setItem("marpo_payment_txid", txid);
 
@@ -332,8 +460,8 @@ export default function MainGameLobby() {
 
       alert(
         lang === "ko"
-          ? `${tier.toUpperCase()} 구독 결제가 완료되었습니다.`
-          : `${tier.toUpperCase()} subscription payment completed.`
+          ? `${tier.toUpperCase()} Testnet 자동구독 프로토타입이 활성화되었습니다.`
+          : `${tier.toUpperCase()} Testnet auto-subscription prototype activated.`
       );
 
       setView("dashboard");
@@ -598,6 +726,11 @@ export default function MainGameLobby() {
             <p className="text-zinc-400 text-[11px] md:text-xs leading-relaxed">
               {t[lang].noticeDesc}
             </p>
+            <p className="text-amber-400 text-[10px] md:text-xs leading-relaxed mt-3 font-bold">
+              {lang === "ko"
+                ? "현재 이 기능은 Pi Testnet 자동구독 프로토타입입니다. 자동구독 활성화 시 테스트 주기에 따라 Test Pi 반복 결제를 시뮬레이션하며, 사용자는 언제든지 구독을 취소할 수 있습니다."
+                : "This feature is a Pi Testnet auto-subscription prototype. When activated, it simulates recurring Test Pi billing on a test schedule, and users can cancel the subscription at any time."}
+            </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-6xl">
@@ -701,12 +834,34 @@ export default function MainGameLobby() {
                 Commander: {piUser ? piUser.username : "Verified"}
               </div>
 
+              {subscription && (
+                <div className="hidden md:flex flex-col text-[9px] text-zinc-400 font-bold uppercase">
+                  <span>Tier: {subscription.tier}</span>
+                  <span>Status: {subscription.status}</span>
+                  <span>
+                    Next Test Billing: {" "}
+                    {new Date(subscription.nextBillingAt).toLocaleDateString()}
+                  </span>
+                </div>
+              )}
+
+              {subscription?.status === "active" && (
+                <button
+                  onClick={cancelSubscription}
+                  className="text-red-400 hover:text-red-300 text-[9px] font-bold uppercase border border-red-900/60 px-3 py-1 rounded-full"
+                >
+                  Cancel Subscription
+                </button>
+              )}
+
               <button
                 onClick={() => {
                   localStorage.removeItem("marpo_session");
                   localStorage.removeItem("marpo_tier");
                   localStorage.removeItem("marpo_payment_id");
                   localStorage.removeItem("marpo_payment_txid");
+                  localStorage.removeItem("marpo_subscription_state");
+                  setSubscription(null);
                   setView("intro");
                 }}
                 className="text-zinc-500 hover:text-amber-500 text-[9px] font-bold uppercase border border-zinc-800 px-3 py-1 rounded-full"

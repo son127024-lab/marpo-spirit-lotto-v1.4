@@ -218,53 +218,86 @@ export default function MainGameLobby() {
 
   if (!isReady) return null;
 
-  const t = {
+   const t = {
     ko: {
       warnSub:
         "MARPO SPIRIT은 Pi Network 기반 Web3 유틸리티 리워드 플랫폼입니다. 본 앱은 도박, 베팅, 현실 화폐 로또, 증권, 투자 서비스를 제공하지 않습니다.",
-      bold1: "마르포 그룹은 ",
-      bold2: "이 Web3 SaaS 시스템을 활용하여, 파이 생태계의 순환경제를 완성합니다.",
-      desc1:
-        "단순한 일회성 결제를 넘어, SaaS(Software as a Service) 기반의 지속 가능한 구독 모델을 통해 Pi의 상시 유틸리티를 창출합니다. 이는 생태계 내에 고여있는 토큰을 끊임없이 순환시키고 가치를 재분배하는 강력한 혈관 역할을 수행합니다.",
-      desc2:
-        "우리는 파이오니어들의 장기적인 참여와 기여를 이끌어내는 고유의 전술적 운영 프로토콜을 통해, 공급과 수요의 균형을 맞추고 Pi의 거시적 희소성을 보호하는 '디플레이션 선순환' 체계를 구축하고자 합니다.",
+
+      platformTitle: "Pi Network 기반 Web3 유틸리티 리워드 플랫폼",
+      visionTitle: "MARPO GROUP 순환경제 비전",
+
+      visionDesc1:
+        "MARPO SPIRIT은 Pi 생태계 안에서 순환형 참여 경제를 만들기 위해 설계되었습니다. 사용자는 Pi 인증을 통해 접속하고, MAR 에너지, 디지털 원소 발견, 숙성, 금고 보관, 융합 시스템을 통해 앱 내부 유틸리티 경제에 참여합니다.",
+
+      visionDesc2:
+        "이 앱에 참여하는 것은 Pi의 실제 사용성, 앱 기반 활동, 생태계 내부 순환에 기여하는 것을 목표로 합니다. Pi를 단순히 보유하는 것에 머무르지 않고, 실제 서비스 안에서 사용하고 참여하는 경험을 제공합니다.",
+
+      visionDesc3:
+        "MAR Energy는 앱 내부 참여도와 진행 상태를 나타내는 유틸리티 포인트입니다. 향후 기술 개발, 생태계 규칙, 준법 요건을 충족하는 경우 MARPO GROUP 산하의 디지털 서비스 또는 MARPO 관련 유틸리티 시스템과 연동될 수 있습니다.",
+
+      noticeTitle: "중요 안내",
+
+      noticeDesc:
+        "MARPO SPIRIT은 엔터테인먼트 및 유틸리티 기반 리워드 플랫폼입니다. 본 앱은 도박, 베팅, 현실 화폐 로또, 증권, 투자 서비스를 제공하지 않습니다. 앱 내부의 포인트, 원소, 융합제, 융합 결과는 앱 유틸리티와 참여 경험을 위한 목적으로만 사용됩니다. 금전적 수익, 토큰 가치, 보상은 보장되지 않습니다.",
+
       langBtn: "Read in English",
       agreeLabel: "마르포 그룹의 생태계 순환경제 비전에 동의합니다.",
       accessBtn: "구독 페이지 접속",
-      signInBtn: "Sign in with Pi",
+      signInBtn: "Pi로 로그인",
+
       subBasicDesc1: "기본 원소 탐색 권한",
       subBasicDesc2: "매회 광고 시청 필수",
       subBasicDesc3: "SaaS 기본 모듈 접속",
+
       subPremDesc1: "4시간 내 5회 연속 프리드로우",
       subPremDesc2: "광고 최소화 프로토콜 적용",
       subPremDesc3: "프리미엄 리워드 배율 적용",
-      subVipDesc1: "10회 연속 압도적 프리드로우",
+
+      subVipDesc1: "10회 연속 향상된 프리드로우",
       subVipDesc2: "VIP 전용 에어드랍 알고리즘",
       subVipDesc3: "생태계 최우선권 보장",
+
       cancelBtn: "나중에 하기 (로비로 이동)",
     },
+
     en: {
-        warnSub:
-           "MARPO SPIRIT is a Pi Network-based Web3 utility reward platform. It does not provide gambling, betting, cash lottery, securities, or investment services.",
-      bold1: "Marpo Group ",
-      bold2: "completes the circular economy of the Pi ecosystem by utilizing this Web3 SaaS system.",
-      desc1:
-        "Beyond simple one-off payments, we create constant utility for Pi through a sustainable SaaS based subscription model. This acts as a powerful vascular system, continuously circulating stagnant tokens within the ecosystem and redistributing value.",
-      desc2:
-        "Through our unique tactical operational protocol that drives long-term participation and contribution from Pioneers, we aim to build a deflationary virtuous cycle system that balances supply and demand and protects the macroeconomic scarcity of Pi.",
+      warnSub:
+        "MARPO SPIRIT is a Pi Network-based Web3 utility reward platform. It does not provide gambling, betting, cash lottery, securities, or investment services.",
+
+      platformTitle: "Web3 Utility Reward Platform on Pi Network",
+      visionTitle: "MARPO GROUP Circular Economy Vision",
+
+      visionDesc1:
+        "MARPO SPIRIT is designed to create a circular participation economy inside the Pi ecosystem. Users sign in with Pi and participate in an in-app utility economy through MAR Energy, digital element discovery, maturation, vault storage, and fusion mechanics.",
+
+      visionDesc2:
+        "Participation in this app is intended to support Pi utility, app-based activity, and ecosystem circulation. The goal is to help Pi move beyond passive holding and into real service-based usage and engagement.",
+
+      visionDesc3:
+        "MAR Energy is an in-app utility point system that reflects user participation and progression. In the future, subject to technical development, ecosystem rules, and compliance requirements, MAR Energy may connect with MARPO GROUP digital services or MARPO-related utility systems.",
+
+      noticeTitle: "Important Notice",
+
+      noticeDesc:
+        "MARPO SPIRIT is an entertainment and utility-based reward platform. It does not provide gambling, betting, real-money lottery, securities, or investment services. All in-app points, elements, catalysts, and fusion results are for app utility and engagement purposes only. No financial return, token value, or monetary reward is guaranteed.",
+
       langBtn: "한국어로 보기",
       agreeLabel: "I agree with Marpo Group's vision of the ecosystem's circular economy.",
-      accessBtn: "Access Demo Subscription",
+      accessBtn: "Access Subscription",
       signInBtn: "Sign in with Pi",
+
       subBasicDesc1: "Basic element search access",
       subBasicDesc2: "Ad watching required per try",
       subBasicDesc3: "Basic SaaS module access",
+
       subPremDesc1: "5 consecutive free draws per 4 hrs",
       subPremDesc2: "Ad-minimization protocol applied",
       subPremDesc3: "Premium reward multiplier",
-      subVipDesc1: "10 consecutive dominant free draws",
+
+      subVipDesc1: "10 enhanced consecutive free draws",
       subVipDesc2: "VIP-exclusive airdrop algorithm",
       subVipDesc3: "Top priority in the ecosystem",
+
       cancelBtn: "Cancel & Go Back",
     },
   };
@@ -319,21 +352,30 @@ export default function MainGameLobby() {
               </div>
             </div>
 
-            <div className="w-full bg-zinc-900/80 p-6 md:p-8 rounded-3xl border border-zinc-700 text-left mt-2">
-              <h2 className="text-xl font-black text-amber-500 mb-4 uppercase tracking-widest">
-                The Circular Economy Vision
-              </h2>
+           <div className="w-full bg-zinc-900/80 p-6 md:p-8 rounded-3xl border border-zinc-700 text-left mt-2">
+             <h2 className="text-xl font-black text-amber-500 mb-2 uppercase tracking-widest">
+              {t[lang].visionTitle}
+            </h2>
 
-              <p className="text-zinc-200 text-sm md:text-lg leading-relaxed mb-6 font-bold">
-                {t[lang].bold1}
-                <span className="text-amber-400">{t[lang].bold2}</span>
-              </p>
+            <p className="text-sm md:text-base text-zinc-300 font-bold mb-4">
+              {t[lang].platformTitle}
+            </p>
 
-              <div className="space-y-4 text-zinc-400 text-[12px] md:text-sm leading-relaxed">
-                <p>{t[lang].desc1}</p>
-                <p>{t[lang].desc2}</p>
-              </div>
-            </div>
+           <div className="space-y-4 text-zinc-400 text-[12px] md:text-sm leading-relaxed">
+             <p>{t[lang].visionDesc1}</p>
+             <p>{t[lang].visionDesc2}</p>
+             <p>{t[lang].visionDesc3}</p>
+           </div>
+
+           <div className="mt-6 bg-black/60 border border-amber-500/30 rounded-2xl p-4">
+             <h3 className="text-amber-400 text-xs font-black uppercase tracking-widest mb-2">
+               {t[lang].noticeTitle}
+             </h3>
+             <p className="text-zinc-400 text-[11px] md:text-xs leading-relaxed">
+               {t[lang].noticeDesc}
+             </p>
+           </div>
+         </div>
 
             <button
               onClick={() => setLang(lang === "ko" ? "en" : "ko")}

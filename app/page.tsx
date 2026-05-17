@@ -43,6 +43,10 @@ type MarpoSubscription = {
   cancelAtPeriodEnd: boolean;
 };
 
+type SubscriptionApiResponse = PaymentApiResponse & {
+  subscription?: (MarpoSubscription & Record<string, unknown>) | null;
+};
+
 export default function MainGameLobby() {
   const [isReady, setIsReady] = useState(false);
   const [view, setView] = useState<"intro" | "subscription" | "dashboard">(
@@ -79,11 +83,106 @@ export default function MainGameLobby() {
     }
   };
 
-  const saveSubscription = (data: MarpoSubscription) => {
+  const persistSubscriptionLocally = (data: MarpoSubscription) => {
     localStorage.setItem("marpo_subscription_state", JSON.stringify(data));
     localStorage.setItem("marpo_session", "active");
     localStorage.setItem("marpo_tier", data.tier);
     setSubscription(data);
+  };
+
+  const clearSubscriptionLocally = () => {
+    localStorage.removeItem("marpo_subscription_state");
+    localStorage.removeItem("marpo_session");
+    localStorage.removeItem("marpo_tier");
+    localStorage.removeItem("marpo_payment_id");
+    localStorage.removeItem("marpo_payment_txid");
+    setSubscription(null);
+  };
+
+  const normalizeServerSubscription = (
+    data: SubscriptionApiResponse["subscription"]
+  ): MarpoSubscription | null => {
+    if (!data) return null;
+
+    if (
+      data.status !== "active" &&
+      data.status !== "cancelled" &&
+      data.status !== "expired"
+    ) {
+      return null;
+    }
+
+    if (data.tier !== "premium" && data.tier !== "vip") {
+      return null;
+    }
+
+    if (typeof data.amount !== "number") return null;
+    if (typeof data.activatedAt !== "number") return null;
+    if (typeof data.nextBillingAt !== "number") return null;
+
+    return {
+      status: data.status,
+      tier: data.tier,
+      amount: data.amount,
+      paymentId: typeof data.paymentId === "string" ? data.paymentId : undefined,
+      txid: typeof data.txid === "string" ? data.txid : undefined,
+      orderId: typeof data.orderId === "string" ? data.orderId : undefined,
+      activatedAt: data.activatedAt,
+      nextBillingAt: data.nextBillingAt,
+      cancelAtPeriodEnd: data.cancelAtPeriodEnd === true,
+    };
+  };
+
+  const syncSubscriptionToServer = async (data: MarpoSubscription) => {
+    try {
+      const response = await fetch("/api/subscriptions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify(data),
+      });
+
+      const result = (await readApiResponse(response)) as SubscriptionApiResponse;
+
+      if (!response.ok || result.success !== true) {
+        console.warn("Subscription server sync failed:", result.error);
+        return false;
+      }
+
+      return true;
+    } catch (error) {
+      console.error("Subscription server sync error:", error);
+      return false;
+    }
+  };
+
+  const fetchSubscriptionFromServer = async () => {
+    try {
+      const response = await fetch("/api/subscriptions", {
+        method: "GET",
+        credentials: "include",
+        cache: "no-store",
+      });
+
+      const result = (await readApiResponse(response)) as SubscriptionApiResponse;
+
+      if (!response.ok || result.success !== true) {
+        console.warn("Subscription server fetch failed:", result.error);
+        return null;
+      }
+
+      return normalizeServerSubscription(result.subscription);
+    } catch (error) {
+      console.error("Subscription server fetch error:", error);
+      return null;
+    }
+  };
+
+  const saveSubscription = (data: MarpoSubscription) => {
+    persistSubscriptionLocally(data);
+    void syncSubscriptionToServer(data);
   };
 
   const loadSubscription = () => {
@@ -113,6 +212,8 @@ export default function MainGameLobby() {
           JSON.stringify(expiredSubscription)
         );
 
+        void syncSubscriptionToServer(expiredSubscription);
+
         return expiredSubscription;
       }
 
@@ -122,8 +223,12 @@ export default function MainGameLobby() {
     }
   };
 
-  const cancelSubscription = () => {
-    const current = loadSubscription();
+  const cancelSubscription = async () => {
+    let current = loadSubscription();
+
+    if (!current) {
+      current = await fetchSubscriptionFromServer();
+    }
 
     if (!current) {
       alert(
@@ -140,8 +245,24 @@ export default function MainGameLobby() {
       cancelAtPeriodEnd: true,
     };
 
-    localStorage.setItem("marpo_subscription_state", JSON.stringify(cancelled));
-    setSubscription(cancelled);
+    persistSubscriptionLocally(cancelled);
+
+    try {
+      const response = await fetch("/api/subscriptions/cancel", {
+        method: "POST",
+        credentials: "include",
+      });
+
+      const result = (await readApiResponse(response)) as SubscriptionApiResponse;
+
+      if (!response.ok || result.success !== true) {
+        console.warn("Server subscription cancel failed:", result.error);
+        void syncSubscriptionToServer(cancelled);
+      }
+    } catch (error) {
+      console.error("Server subscription cancel error:", error);
+      void syncSubscriptionToServer(cancelled);
+    }
 
     alert(
       lang === "ko"
@@ -166,6 +287,33 @@ export default function MainGameLobby() {
 
     setIsReady(true);
   }, []);
+
+  useEffect(() => {
+    if (!piUser) return;
+
+    let isMounted = true;
+
+    const syncFromServer = async () => {
+      const serverSubscription = await fetchSubscriptionFromServer();
+
+      if (!isMounted || !serverSubscription) return;
+
+      persistSubscriptionLocally(serverSubscription);
+
+      if (
+        serverSubscription.status === "active" &&
+        serverSubscription.cancelAtPeriodEnd === false
+      ) {
+        setView("dashboard");
+      }
+    };
+
+    void syncFromServer();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [piUser]);
 
   const showRewardedAd = async () => {
     const Pi = window.Pi;
@@ -871,12 +1019,7 @@ export default function MainGameLobby() {
 
               <button
                 onClick={() => {
-                  localStorage.removeItem("marpo_session");
-                  localStorage.removeItem("marpo_tier");
-                  localStorage.removeItem("marpo_payment_id");
-                  localStorage.removeItem("marpo_payment_txid");
-                  localStorage.removeItem("marpo_subscription_state");
-                  setSubscription(null);
+                  clearSubscriptionLocally();
                   setView("intro");
                 }}
                 className="text-zinc-500 hover:text-amber-500 text-[9px] font-bold uppercase border border-zinc-800 px-3 py-1 rounded-full"

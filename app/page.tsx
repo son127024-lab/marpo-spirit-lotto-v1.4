@@ -7,9 +7,17 @@ import { usePiAuth } from "./pi-auth-provider";
 
 type UserTier = "basic" | "premium" | "vip";
 
+type PaymentApiResponse = {
+  success?: boolean;
+  error?: string;
+  [key: string]: unknown;
+};
+
 export default function MainGameLobby() {
   const [isReady, setIsReady] = useState(false);
-  const [view, setView] = useState<"intro" | "subscription" | "dashboard">("intro");
+  const [view, setView] = useState<"intro" | "subscription" | "dashboard">(
+    "intro"
+  );
   const [agreed, setAgreed] = useState(false);
   const [lang, setLang] = useState<"ko" | "en">("ko");
 
@@ -23,6 +31,24 @@ export default function MainGameLobby() {
   useEffect(() => {
     setIsReady(true);
   }, []);
+
+  const readApiResponse = async (
+    response: Response
+  ): Promise<PaymentApiResponse> => {
+    const text = await response.text();
+
+    try {
+      return JSON.parse(text) as PaymentApiResponse;
+    } catch {
+      return {
+        success: false,
+        error: `Server did not return valid JSON. Status: ${response.status}. Response: ${text.slice(
+          0,
+          200
+        )}`,
+      };
+    }
+  };
 
   const showRewardedAd = async () => {
     const Pi = window.Pi;
@@ -40,7 +66,9 @@ export default function MainGameLobby() {
       alert("시청 가능한 광고가 없습니다.");
       return false;
     }
-  };  const requestPiPaymentPermission = async () => {
+  };
+
+  const requestPiPaymentPermission = async () => {
     if (!window.Pi) {
       throw new Error("Pi SDK is not loaded.");
     }
@@ -65,20 +93,21 @@ export default function MainGameLobby() {
     await requestPiPaymentPermission();
 
     return new Promise<void>((resolve, reject) => {
-      let settled = false;
+      let finished = false;
 
-      const safeResolve = () => {
-        if (!settled) {
-          settled = true;
-          resolve();
-        }
+      const finishSuccess = () => {
+        if (finished) return;
+        finished = true;
+        resolve();
       };
 
-      const safeReject = (error: unknown) => {
-        if (!settled) {
-          settled = true;
-          reject(error);
-        }
+      const finishFail = (error: unknown) => {
+        if (finished) return;
+        finished = true;
+
+        reject(
+          error instanceof Error ? error : new Error("Pi payment failed.")
+        );
       };
 
       window.Pi!.createPayment!(
@@ -113,13 +142,17 @@ export default function MainGameLobby() {
                 }),
               });
 
-              const data = await response.json();
+              const data = await readApiResponse(response);
 
               if (!response.ok || data.success !== true) {
-                throw new Error(data.error || "Payment approval failed.");
+                throw new Error(
+                  data.error ||
+                    `Payment approval failed. Status: ${response.status}`
+                );
               }
             } catch (error) {
-              safeReject(error);
+              console.error("Payment approval error:", error);
+              finishFail(error);
             }
           },
 
@@ -142,10 +175,13 @@ export default function MainGameLobby() {
                 }),
               });
 
-              const data = await response.json();
+              const data = await readApiResponse(response);
 
               if (!response.ok || data.success !== true) {
-                throw new Error(data.error || "Payment completion failed.");
+                throw new Error(
+                  data.error ||
+                    `Payment completion failed. Status: ${response.status}`
+                );
               }
 
               localStorage.setItem("marpo_session", "active");
@@ -153,20 +189,24 @@ export default function MainGameLobby() {
               localStorage.setItem("marpo_payment_id", paymentId);
               localStorage.setItem("marpo_payment_txid", txid);
 
-              safeResolve();
+              finishSuccess();
             } catch (error) {
-              safeReject(error);
+              console.error("Payment completion error:", error);
+              finishFail(error);
             }
           },
 
           onCancel: (paymentId: string) => {
             console.log("Pi payment cancelled:", paymentId);
-            safeReject(new Error("Payment was cancelled."));
+            finishFail(new Error("Payment was cancelled."));
           },
 
           onError: (error: unknown, payment?: unknown) => {
             console.error("Pi payment error:", error, payment);
-            safeReject(
+
+            if (finished) return;
+
+            finishFail(
               error instanceof Error ? error : new Error("Pi payment failed.")
             );
           },
@@ -218,7 +258,7 @@ export default function MainGameLobby() {
 
   if (!isReady) return null;
 
-   const t = {
+  const t = {
     ko: {
       warnSub:
         "MARPO SPIRIT은 Pi Network 기반 Web3 유틸리티 리워드 플랫폼입니다. 본 앱은 도박, 베팅, 현실 화폐 로또, 증권, 투자 서비스를 제공하지 않습니다.",
@@ -282,7 +322,8 @@ export default function MainGameLobby() {
         "MARPO SPIRIT is an entertainment and utility-based reward platform. It does not provide gambling, betting, real-money lottery, securities, or investment services. All in-app points, elements, catalysts, and fusion results are for app utility and engagement purposes only. No financial return, token value, or monetary reward is guaranteed.",
 
       langBtn: "한국어로 보기",
-      agreeLabel: "I agree with Marpo Group's vision of the ecosystem's circular economy.",
+      agreeLabel:
+        "I agree with Marpo Group's vision of the ecosystem's circular economy.",
       accessBtn: "Access Subscription",
       signInBtn: "Sign in with Pi",
 
@@ -317,7 +358,7 @@ export default function MainGameLobby() {
           <div className="relative z-10 w-full max-w-4xl flex flex-col items-center gap-6 bg-black/60 p-10 rounded-[3rem] border border-zinc-800 backdrop-blur-md shadow-2xl mt-10">
             <div className="w-full bg-gradient-to-r from-red-600/80 via-red-500/80 to-red-600/80 p-3 rounded-2xl border-2 border-red-400 text-center mb-4 shadow-[0_0_20px_rgba(239,68,68,0.3)] animate-pulse">
               <h2 className="text-white font-black uppercase tracking-widest text-sm md:text-base">
-                ⚠️ Official Beta Testnet Demo ⚠️
+                ⚠️ Official Beta Testnet Utility Notice ⚠️
               </h2>
               <p className="text-white/90 text-xs mt-1 font-bold">
                 {t[lang].warnSub}
@@ -352,30 +393,30 @@ export default function MainGameLobby() {
               </div>
             </div>
 
-           <div className="w-full bg-zinc-900/80 p-6 md:p-8 rounded-3xl border border-zinc-700 text-left mt-2">
-             <h2 className="text-xl font-black text-amber-500 mb-2 uppercase tracking-widest">
-              {t[lang].visionTitle}
-            </h2>
+            <div className="w-full bg-zinc-900/80 p-6 md:p-8 rounded-3xl border border-zinc-700 text-left mt-2">
+              <h2 className="text-xl font-black text-amber-500 mb-2 uppercase tracking-widest">
+                {t[lang].visionTitle}
+              </h2>
 
-            <p className="text-sm md:text-base text-zinc-300 font-bold mb-4">
-              {t[lang].platformTitle}
-            </p>
+              <p className="text-sm md:text-base text-zinc-300 font-bold mb-4">
+                {t[lang].platformTitle}
+              </p>
 
-           <div className="space-y-4 text-zinc-400 text-[12px] md:text-sm leading-relaxed">
-             <p>{t[lang].visionDesc1}</p>
-             <p>{t[lang].visionDesc2}</p>
-             <p>{t[lang].visionDesc3}</p>
-           </div>
+              <div className="space-y-4 text-zinc-400 text-[12px] md:text-sm leading-relaxed">
+                <p>{t[lang].visionDesc1}</p>
+                <p>{t[lang].visionDesc2}</p>
+                <p>{t[lang].visionDesc3}</p>
+              </div>
 
-           <div className="mt-6 bg-black/60 border border-amber-500/30 rounded-2xl p-4">
-             <h3 className="text-amber-400 text-xs font-black uppercase tracking-widest mb-2">
-               {t[lang].noticeTitle}
-             </h3>
-             <p className="text-zinc-400 text-[11px] md:text-xs leading-relaxed">
-               {t[lang].noticeDesc}
-             </p>
-           </div>
-         </div>
+              <div className="mt-6 bg-black/60 border border-amber-500/30 rounded-2xl p-4">
+                <h3 className="text-amber-400 text-xs font-black uppercase tracking-widest mb-2">
+                  {t[lang].noticeTitle}
+                </h3>
+                <p className="text-zinc-400 text-[11px] md:text-xs leading-relaxed">
+                  {t[lang].noticeDesc}
+                </p>
+              </div>
+            </div>
 
             <button
               onClick={() => setLang(lang === "ko" ? "en" : "ko")}
@@ -451,9 +492,18 @@ export default function MainGameLobby() {
 
       {view === "subscription" && (
         <div className="min-h-screen w-full bg-[#050505] text-white flex flex-col items-center justify-center p-6 relative">
-          <h2 className="text-3xl md:text-4xl font-black text-white italic uppercase mb-10 tracking-widest">
+          <h2 className="text-3xl md:text-4xl font-black text-white italic uppercase mb-6 tracking-widest">
             Select Tier Protocol
           </h2>
+
+          <div className="w-full max-w-4xl bg-black/60 border border-amber-500/30 rounded-3xl p-5 mb-8 text-center">
+            <h3 className="text-amber-400 text-xs font-black uppercase tracking-widest mb-2">
+              {t[lang].noticeTitle}
+            </h3>
+            <p className="text-zinc-400 text-[11px] md:text-xs leading-relaxed">
+              {t[lang].noticeDesc}
+            </p>
+          </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-6xl">
             <div className="bg-zinc-900 border border-zinc-700 rounded-[3.5rem] p-8 flex flex-col items-center">
@@ -482,11 +532,17 @@ export default function MainGameLobby() {
               </h3>
               <p className="text-5xl font-black text-white mb-6">1 Pi</p>
 
+              <ul className="text-zinc-500 text-[11px] font-bold space-y-3 mb-8">
+                <li>{t[lang].subPremDesc1}</li>
+                <li>{t[lang].subPremDesc2}</li>
+                <li>{t[lang].subPremDesc3}</li>
+              </ul>
+
               <button
                 onClick={() => handlePayment("premium")}
                 className="w-full py-5 bg-amber-500 text-black rounded-xl font-black uppercase text-sm"
               >
-                pay 1 pi
+                Pay 1 Pi
               </button>
             </div>
 
@@ -496,11 +552,17 @@ export default function MainGameLobby() {
               </h3>
               <p className="text-3xl font-black text-white mb-6">3 Pi</p>
 
+              <ul className="text-zinc-500 text-[11px] font-bold space-y-3 mb-8">
+                <li>{t[lang].subVipDesc1}</li>
+                <li>{t[lang].subVipDesc2}</li>
+                <li>{t[lang].subVipDesc3}</li>
+              </ul>
+
               <button
                 onClick={() => handlePayment("vip")}
                 className="w-full py-4 bg-lime-500 text-black rounded-xl font-black uppercase text-xs"
               >
-                pay 3 pi
+                Pay 3 Pi
               </button>
             </div>
           </div>
@@ -534,7 +596,7 @@ export default function MainGameLobby() {
                 </h2>
 
                 <span className="text-[8px] text-amber-500 font-bold uppercase">
-                  Web3 SaaS Demo
+                  Web3 SaaS Utility
                 </span>
               </div>
             </div>
@@ -547,6 +609,9 @@ export default function MainGameLobby() {
               <button
                 onClick={() => {
                   localStorage.removeItem("marpo_session");
+                  localStorage.removeItem("marpo_tier");
+                  localStorage.removeItem("marpo_payment_id");
+                  localStorage.removeItem("marpo_payment_txid");
                   setView("intro");
                 }}
                 className="text-zinc-500 hover:text-amber-500 text-[9px] font-bold uppercase border border-zinc-800 px-3 py-1 rounded-full"

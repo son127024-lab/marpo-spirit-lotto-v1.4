@@ -107,8 +107,9 @@ export async function POST(req: Request) {
       return NextResponse.json(
         {
           success: false,
-          error: `Pi complete API did not return valid JSON. Status: ${piResponse.status}`,
-          details: piText.slice(0, 500),
+          error: "Pi complete API did not return valid JSON",
+          status: piResponse.status,
+          raw: piText.slice(0, 500),
         },
         { status: 502 }
       );
@@ -154,6 +155,7 @@ export async function POST(req: Request) {
         tier,
         amount,
         orderId: orderId ?? null,
+        subscription: subscriptionPayload,
         pi: piData,
       },
       { status: 200 }
@@ -161,7 +163,7 @@ export async function POST(req: Request) {
 
     response.cookies.set(
       "marpo_subscription",
-      JSON.stringify(subscriptionPayload),
+      Buffer.from(JSON.stringify(subscriptionPayload)).toString("base64url"),
       {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",

@@ -68,15 +68,15 @@ export default function MainGameLobby() {
     }
   };
 
-  const requestPiPaymentPermission = async () => {
+      const requestPiPaymentPermission = async () => {
     if (!window.Pi) {
       throw new Error("Pi SDK is not loaded.");
     }
 
-    await window.Pi.authenticate(["payments"], (payment) => {
+      await window.Pi.authenticate(["username", "payments"], (payment) => {
       console.log("Incomplete Pi payment found:", payment);
-    });
-  };
+     });
+  }; 
 
   const createSubscriptionPayment = async (tier: "premium" | "vip") => {
     if (!window.Pi) {

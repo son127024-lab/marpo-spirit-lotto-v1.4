@@ -12,7 +12,23 @@ type PaymentApiResponse = {
   error?: string;
   [key: string]: unknown;
 };
-
+type PiIncompletePayment = {
+  identifier?: string;
+  paymentId?: string;
+  amount?: number;
+  memo?: string;
+  metadata?: {
+    tier?: "premium" | "vip";
+    amount?: number;
+    orderId?: string;
+    [key: string]: unknown;
+  };
+  transaction?: {
+    txid?: string;
+    _id?: string;
+  };
+  txid?: string;
+};
 export default function MainGameLobby() {
   const [isReady, setIsReady] = useState(false);
   const [view, setView] = useState<"intro" | "subscription" | "dashboard">(
@@ -67,16 +83,95 @@ export default function MainGameLobby() {
       return false;
     }
   };
+    const handleIncompletePayment = async (payment: unknown) => {
+    const incompletePayment = payment as PiIncompletePayment;
 
-      const requestPiPaymentPermission = async () => {
+    const paymentId =
+      incompletePayment.identifier ?? incompletePayment.paymentId ?? null;
+
+    const txid =
+      incompletePayment.transaction?.txid ??
+      incompletePayment.transaction?._id ??
+      incompletePayment.txid ??
+      null;
+
+    const tier = incompletePayment.metadata?.tier;
+
+    const amount =
+      typeof incompletePayment.metadata?.amount === "number"
+        ? incompletePayment.metadata.amount
+        : incompletePayment.amount;
+
+    const orderId =
+      typeof incompletePayment.metadata?.orderId === "string"
+        ? incompletePayment.metadata.orderId
+        : `recovered_${Date.now()}`;
+
+    console.log("Incomplete Pi payment found:", {
+      paymentId,
+      txid,
+      tier,
+      amount,
+      orderId,
+      payment: incompletePayment,
+    });
+
+    if (!paymentId || !txid || (tier !== "premium" && tier !== "vip")) {
+      console.warn("Incomplete payment could not be recovered safely.");
+      return;
+    }
+
+    const expectedAmount = tier === "premium" ? 1 : 3;
+
+    if (amount !== expectedAmount) {
+      console.warn("Incomplete payment amount does not match tier.");
+      return;
+    }
+
+    const response = await fetch("/api/payments/complete", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        paymentId,
+        txid,
+        tier,
+        amount,
+        orderId,
+      }),
+    });
+
+    const data = await readApiResponse(response);
+
+    if (!response.ok || data.success !== true) {
+      throw new Error(
+        data.error ||
+          `Incomplete payment recovery failed. Status: ${response.status}`
+      );
+    }
+
+    localStorage.setItem("marpo_session", "active");
+    localStorage.setItem("marpo_tier", tier);
+    localStorage.setItem("marpo_payment_id", paymentId);
+    localStorage.setItem("marpo_payment_txid", txid);
+
+    setView("dashboard");
+  };
+
+  const requestPiPaymentPermission = async () => {
     if (!window.Pi) {
       throw new Error("Pi SDK is not loaded.");
     }
 
-      await window.Pi.authenticate(["username", "payments"], (payment) => {
-      console.log("Incomplete Pi payment found:", payment);
-     });
-  }; 
+    await window.Pi.authenticate(["username", "payments"], async (payment) => {
+      try {
+        await handleIncompletePayment(payment);
+      } catch (error) {
+        console.error("Failed to handle incomplete Pi payment:", error);
+      }
+    });
+  };
 
   const createSubscriptionPayment = async (tier: "premium" | "vip") => {
     if (!window.Pi) {

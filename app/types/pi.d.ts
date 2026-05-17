@@ -19,6 +19,20 @@ declare global {
         };
       }>;
 
+      createPayment?: (
+        paymentData: {
+          amount: number;
+          memo: string;
+          metadata: Record<string, unknown>;
+        },
+        callbacks: {
+          onReadyForServerApproval: (paymentId: string) => void;
+          onReadyForServerCompletion: (paymentId: string, txid: string) => void;
+          onCancel: (paymentId: string) => void;
+          onError: (error: unknown, payment?: unknown) => void;
+        }
+      ) => Promise<unknown> | void;
+
       Ads?: {
         preloadRewardedVideo?: () => Promise<unknown> | void;
         showRewardedVideo?: () => Promise<{

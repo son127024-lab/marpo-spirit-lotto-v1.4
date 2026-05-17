@@ -40,6 +40,139 @@ export default function MainGameLobby() {
       alert("시청 가능한 광고가 없습니다.");
       return false;
     }
+  };  const requestPiPaymentPermission = async () => {
+    if (!window.Pi) {
+      throw new Error("Pi SDK is not loaded.");
+    }
+
+    await window.Pi.authenticate(["payments"], (payment) => {
+      console.log("Incomplete Pi payment found:", payment);
+    });
+  };
+
+  const createSubscriptionPayment = async (tier: "premium" | "vip") => {
+    if (!window.Pi) {
+      throw new Error("Pi SDK is not loaded.");
+    }
+
+    if (!window.Pi.createPayment) {
+      throw new Error("Pi payment SDK is not available.");
+    }
+
+    const amount = tier === "premium" ? 1 : 3;
+    const orderId = `marpo_${tier}_${Date.now()}`;
+
+    await requestPiPaymentPermission();
+
+    return new Promise<void>((resolve, reject) => {
+      let settled = false;
+
+      const safeResolve = () => {
+        if (!settled) {
+          settled = true;
+          resolve();
+        }
+      };
+
+      const safeReject = (error: unknown) => {
+        if (!settled) {
+          settled = true;
+          reject(error);
+        }
+      };
+
+      window.Pi!.createPayment!(
+        {
+          amount,
+          memo:
+            tier === "premium"
+              ? "MARPO SPIRIT Premium Subscription Access"
+              : "MARPO SPIRIT VIP Subscription Access",
+          metadata: {
+            app: "MARPO_SPIRIT",
+            type: "subscription",
+            tier,
+            amount,
+            orderId,
+            purpose: "utility_access",
+          },
+        },
+        {
+          onReadyForServerApproval: async (paymentId: string) => {
+            try {
+              const response = await fetch("/api/payments/approve", {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                  paymentId,
+                  tier,
+                  amount,
+                  orderId,
+                }),
+              });
+
+              const data = await response.json();
+
+              if (!response.ok || data.success !== true) {
+                throw new Error(data.error || "Payment approval failed.");
+              }
+            } catch (error) {
+              safeReject(error);
+            }
+          },
+
+          onReadyForServerCompletion: async (
+            paymentId: string,
+            txid: string
+          ) => {
+            try {
+              const response = await fetch("/api/payments/complete", {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                  paymentId,
+                  txid,
+                  tier,
+                  amount,
+                  orderId,
+                }),
+              });
+
+              const data = await response.json();
+
+              if (!response.ok || data.success !== true) {
+                throw new Error(data.error || "Payment completion failed.");
+              }
+
+              localStorage.setItem("marpo_session", "active");
+              localStorage.setItem("marpo_tier", tier);
+              localStorage.setItem("marpo_payment_id", paymentId);
+              localStorage.setItem("marpo_payment_txid", txid);
+
+              safeResolve();
+            } catch (error) {
+              safeReject(error);
+            }
+          },
+
+          onCancel: (paymentId: string) => {
+            console.log("Pi payment cancelled:", paymentId);
+            safeReject(new Error("Payment was cancelled."));
+          },
+
+          onError: (error: unknown, payment?: unknown) => {
+            console.error("Pi payment error:", error, payment);
+            safeReject(
+              error instanceof Error ? error : new Error("Pi payment failed.")
+            );
+          },
+        }
+      );
+    });
   };
 
   const handlePayment = async (tier: UserTier) => {
@@ -292,7 +425,7 @@ export default function MainGameLobby() {
                 onClick={() => handlePayment("premium")}
                 className="w-full py-5 bg-amber-500 text-black rounded-xl font-black uppercase text-sm"
               >
-                Mock Pi Payment
+                pay 1 pi
               </button>
             </div>
 
@@ -306,7 +439,7 @@ export default function MainGameLobby() {
                 onClick={() => handlePayment("vip")}
                 className="w-full py-4 bg-lime-500 text-black rounded-xl font-black uppercase text-xs"
               >
-                Mock Pi Payment
+                pay 3 pi
               </button>
             </div>
           </div>

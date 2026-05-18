@@ -288,11 +288,39 @@ export default function MarpoSpiritDashboardV2({
           <p className="text-[10px] font-black uppercase tracking-[0.3em] text-lime-300">
             Safe Utility
           </p>
-          <h3 className="mt-2 text-2xl font-black uppercase">Reward Inventory</h3>
+          <h3 className="mt-2 text-2xl font-black uppercase">
+            Reward Inventory
+          </h3>
           <p className="mt-3 text-sm leading-relaxed text-zinc-400">
             Future home for Energy history, Spirit Points, and utility rewards.
             No betting or cash-prize mechanic is included in this phase.
           </p>
+        </div>
+      </div>
+
+      <div className="mt-6 rounded-[2rem] border border-amber-500/40 bg-black/40 p-5">
+        <div className="flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
+          <div>
+            <p className="text-[10px] font-black uppercase tracking-[0.35em] text-amber-300">
+              World Gate
+            </p>
+            <h3 className="mt-2 text-2xl font-black uppercase italic">
+              채굴장 진입 루프
+            </h3>
+            <p className="mt-2 max-w-2xl text-sm leading-relaxed text-zinc-300">
+              Guide Rabbit will enter the mining loop, pass through the
+              blackhole gate, and arrive at the MAR world.
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={onEnterMarWorld}
+            className="rounded-3xl bg-amber-400 px-8 py-5 text-sm font-black uppercase text-black shadow-[0_0_30px_rgba(251,191,36,0.35)] transition hover:scale-105 disabled:opacity-50"
+            disabled={!onEnterMarWorld}
+          >
+            채굴장 진입 루프
+          </button>
         </div>
       </div>
     </section>

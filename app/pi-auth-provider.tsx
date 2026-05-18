@@ -23,17 +23,14 @@ type PiAuthContextValue = {
   signIn: () => Promise<void>;
 };
 
-type PiAuthSuccessResponse = {
-  success: true;
-  user: PiUser;
+type PiAuthApiResponse = {
+  success: boolean;
+  error?: string;
+  user?: {
+    uid?: string | null;
+    username?: string;
+  };
 };
-
-type PiAuthErrorResponse = {
-  success: false;
-  error: string;
-};
-
-type PiAuthApiResponse = PiAuthSuccessResponse | PiAuthErrorResponse;
 
 const PiAuthContext = createContext<PiAuthContextValue | null>(null);
 
@@ -123,7 +120,24 @@ export function PiAuthProvider({ children }: { children: React.ReactNode }) {
         throw new Error(data.error || "Pi authentication failed");
       }
 
-      setUser(data.user);
+      if (!data.user || !data.user.username) {
+        throw new Error("Pi authentication succeeded but user data is missing.");
+      }
+
+      const authenticatedUser: PiUser = {
+        uid: data.user.uid ?? null,
+        username: data.user.username,
+      };
+
+      localStorage.setItem("marpo_pi_username", authenticatedUser.username);
+
+      if (authenticatedUser.uid) {
+        localStorage.setItem("marpo_pi_uid", authenticatedUser.uid);
+      } else {
+        localStorage.removeItem("marpo_pi_uid");
+      }
+
+      setUser(authenticatedUser);
 
       if (window.Pi.Ads?.preloadRewardedVideo) {
         await Promise.resolve(window.Pi.Ads.preloadRewardedVideo());
@@ -135,6 +149,8 @@ export function PiAuthProvider({ children }: { children: React.ReactNode }) {
       console.error("Pi Authentication Error:", err);
       setError(message);
       setUser(null);
+      localStorage.removeItem("marpo_pi_username");
+      localStorage.removeItem("marpo_pi_uid");
     } finally {
       setIsAuthenticating(false);
     }

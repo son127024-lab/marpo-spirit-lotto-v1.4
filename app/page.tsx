@@ -133,9 +133,26 @@ export default function MainGameLobby() {
     };
   };
 
-    const syncSubscriptionToServer = async (data: MarpoSubscription) => {
-    if (!piUser?.username) {
-      console.warn("Subscription server sync skipped: missing Pi user.");
+      const getCurrentPiUsername = () => {
+    const stateUsername = piUser?.username?.trim();
+    const storedUsername = localStorage.getItem("marpo_pi_username")?.trim();
+
+    return stateUsername || storedUsername || null;
+  };
+
+  const getCurrentPiUid = () => {
+    const stateUid = piUser?.uid;
+    const storedUid = localStorage.getItem("marpo_pi_uid");
+
+    return stateUid ?? storedUid ?? null;
+  };
+
+  const syncSubscriptionToServer = async (data: MarpoSubscription) => {
+    const username = getCurrentPiUsername();
+    const uid = getCurrentPiUid();
+
+    if (!username) {
+      console.warn("Subscription server sync skipped: missing Pi username.");
       return false;
     }
 
@@ -144,13 +161,13 @@ export default function MainGameLobby() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "x-pi-username": piUser.username,
+          "x-pi-username": username,
         },
         credentials: "include",
         body: JSON.stringify({
           ...data,
-          username: piUser.username,
-          uid: piUser.uid ?? null,
+          username,
+          uid,
         }),
       });
 
@@ -169,18 +186,23 @@ export default function MainGameLobby() {
       return false;
     }
   };
-    const fetchSubscriptionFromServer = async () => {
-    if (!piUser?.username) {
+     const fetchSubscriptionFromServer = async () => {
+    const username = getCurrentPiUsername();
+
+    if (!username) {
       return null;
     }
 
     try {
       const params = new URLSearchParams({
-        username: piUser.username,
+        username,
       });
 
       const response = await fetch(`/api/subscriptions?${params.toString()}`, {
         method: "GET",
+        headers: {
+          "x-pi-username": username,
+        },
         credentials: "include",
         cache: "no-store",
       });
@@ -275,7 +297,7 @@ export default function MainGameLobby() {
     }
   };
 
-   const cancelSubscription = async () => {
+     const cancelSubscription = async () => {
     const current = loadSubscription();
 
     if (!current) {
@@ -295,7 +317,10 @@ export default function MainGameLobby() {
 
     persistSubscriptionLocally(cancelled);
 
-    if (!piUser?.username) {
+    const username = getCurrentPiUsername();
+    const uid = getCurrentPiUid();
+
+    if (!username) {
       alert(
         lang === "ko"
           ? "구독이 로컬에서 취소되었습니다. Pi 사용자 정보가 없어 서버 취소는 건너뛰었습니다."
@@ -309,12 +334,12 @@ export default function MainGameLobby() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "x-pi-username": piUser.username,
+          "x-pi-username": username,
         },
         credentials: "include",
         body: JSON.stringify({
-          username: piUser.username,
-          uid: piUser.uid ?? null,
+          username,
+          uid,
         }),
       });
 

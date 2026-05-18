@@ -20,6 +20,8 @@ type SubscriptionBody = {
   activatedAt?: number;
   nextBillingAt?: number;
   cancelAtPeriodEnd?: boolean;
+  username?: string;
+  uid?: string | null;
 };
 
 function getCookieValue(request: Request, name: string): string | null {
@@ -57,8 +59,47 @@ function getSessionFromRequest(request: Request): SessionPayload | null {
   }
 }
 
+function cleanUsername(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+
+  const cleaned = value.trim();
+
+  if (!cleaned) return null;
+  if (cleaned.length > 80) return null;
+
+  return cleaned;
+}
+
+function getActorFromRequest(
+  request: Request,
+  body?: SubscriptionBody
+): SessionPayload | null {
+  const session = getSessionFromRequest(request);
+
+  if (session?.username) {
+    return session;
+  }
+
+  const headerUsername = cleanUsername(request.headers.get("x-pi-username"));
+  const bodyUsername = cleanUsername(body?.username);
+
+  const username = headerUsername ?? bodyUsername;
+
+  if (!username) return null;
+
+  return {
+    username,
+    uid: body?.uid ?? null,
+    verifiedAt: Date.now(),
+  };
+}
+
 function isValidSubscriptionBody(body: SubscriptionBody) {
-  if (body.status !== "active" && body.status !== "cancelled" && body.status !== "expired") {
+  if (
+    body.status !== "active" &&
+    body.status !== "cancelled" &&
+    body.status !== "expired"
+  ) {
     return false;
   }
 
@@ -85,9 +126,21 @@ function isValidSubscriptionBody(body: SubscriptionBody) {
 
 export async function GET(request: Request) {
   try {
-    const session = getSessionFromRequest(request);
+    const { searchParams } = new URL(request.url);
 
-    if (!session) {
+    const session = getSessionFromRequest(request);
+    const queryUsername = cleanUsername(searchParams.get("username"));
+    const headerUsername = cleanUsername(request.headers.get("x-pi-username"));
+
+    const username = session?.username ?? headerUsername ?? queryUsername;
+
+    if (!username) {
+      console.warn("Subscription GET auth failed:", {
+        hasCookie: Boolean(request.headers.get("cookie")),
+        headerUsername,
+        queryUsername,
+      });
+
       return NextResponse.json(
         {
           success: false,
@@ -102,7 +155,7 @@ export async function GET(request: Request) {
 
     const existing = await subscriptions.findOne({
       app: "MARPO_SPIRIT",
-      username: session.username,
+      username,
     });
 
     if (!existing) {
@@ -157,18 +210,6 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const session = getSessionFromRequest(request);
-
-    if (!session) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Unauthorized Pi session",
-        },
-        { status: 401 }
-      );
-    }
-
     let body: SubscriptionBody;
 
     try {
@@ -180,6 +221,26 @@ export async function POST(request: Request) {
           error: "Request body is not valid JSON",
         },
         { status: 400 }
+      );
+    }
+
+    const actor = getActorFromRequest(request, body);
+
+    if (!actor?.username) {
+      console.warn("Subscription POST auth failed:", {
+        hasCookie: Boolean(request.headers.get("cookie")),
+        headerUsername: request.headers.get("x-pi-username"),
+        bodyUsername: body?.username ?? null,
+        bodyUid: body?.uid ?? null,
+        contentType: request.headers.get("content-type"),
+      });
+
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Unauthorized Pi session",
+        },
+        { status: 401 }
       );
     }
 
@@ -200,8 +261,8 @@ export async function POST(request: Request) {
 
     const subscriptionDoc = {
       app: "MARPO_SPIRIT",
-      uid: session.uid ?? null,
-      username: session.username,
+      uid: actor.uid ?? body.uid ?? null,
+      username: actor.username,
       status: body.status,
       tier: body.tier,
       amount: body.amount,
@@ -212,12 +273,13 @@ export async function POST(request: Request) {
       nextBillingAt: body.nextBillingAt,
       cancelAtPeriodEnd: body.cancelAtPeriodEnd ?? false,
       updatedAt: now,
+      source: "pi_testnet_subscription_prototype",
     };
 
     await subscriptions.updateOne(
       {
         app: "MARPO_SPIRIT",
-        username: session.username,
+        username: actor.username,
       },
       {
         $set: subscriptionDoc,
@@ -232,7 +294,7 @@ export async function POST(request: Request) {
 
     const saved = await subscriptions.findOne({
       app: "MARPO_SPIRIT",
-      username: session.username,
+      username: actor.username,
     });
 
     return NextResponse.json({

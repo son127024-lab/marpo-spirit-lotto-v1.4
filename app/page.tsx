@@ -133,18 +133,30 @@ export default function MainGameLobby() {
     };
   };
 
-  const syncSubscriptionToServer = async (data: MarpoSubscription) => {
+    const syncSubscriptionToServer = async (data: MarpoSubscription) => {
+    if (!piUser?.username) {
+      console.warn("Subscription server sync skipped: missing Pi user.");
+      return false;
+    }
+
     try {
       const response = await fetch("/api/subscriptions", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "x-pi-username": piUser.username,
         },
         credentials: "include",
-        body: JSON.stringify(data),
+        body: JSON.stringify({
+          ...data,
+          username: piUser.username,
+          uid: piUser.uid ?? null,
+        }),
       });
 
-      const result = (await readApiResponse(response)) as SubscriptionApiResponse;
+      const result = (await readApiResponse(
+        response
+      )) as SubscriptionApiResponse;
 
       if (!response.ok || result.success !== true) {
         console.warn("Subscription server sync failed:", result.error);
@@ -157,23 +169,63 @@ export default function MainGameLobby() {
       return false;
     }
   };
+    const fetchSubscriptionFromServer = async () => {
+    if (!piUser?.username) {
+      return null;
+    }
 
-  const fetchSubscriptionFromServer = async () => {
     try {
-      const response = await fetch("/api/subscriptions", {
+      const params = new URLSearchParams({
+        username: piUser.username,
+      });
+
+      const response = await fetch(`/api/subscriptions?${params.toString()}`, {
         method: "GET",
         credentials: "include",
         cache: "no-store",
       });
 
-      const result = (await readApiResponse(response)) as SubscriptionApiResponse;
+      const result = (await readApiResponse(
+        response
+      )) as SubscriptionApiResponse;
 
       if (!response.ok || result.success !== true) {
         console.warn("Subscription server fetch failed:", result.error);
         return null;
       }
 
-      return normalizeServerSubscription(result.subscription);
+      if (!result.subscription) {
+        return null;
+      }
+
+      const serverSubscription = result.subscription;
+
+      if (
+        serverSubscription.status !== "active" &&
+        serverSubscription.status !== "cancelled" &&
+        serverSubscription.status !== "expired"
+      ) {
+        return null;
+      }
+
+      if (
+        serverSubscription.tier !== "premium" &&
+        serverSubscription.tier !== "vip"
+      ) {
+        return null;
+      }
+
+      return {
+        status: serverSubscription.status,
+        tier: serverSubscription.tier,
+        amount: serverSubscription.amount,
+        paymentId: serverSubscription.paymentId,
+        txid: serverSubscription.txid,
+        orderId: serverSubscription.orderId,
+        activatedAt: serverSubscription.activatedAt,
+        nextBillingAt: serverSubscription.nextBillingAt,
+        cancelAtPeriodEnd: serverSubscription.cancelAtPeriodEnd,
+      } as MarpoSubscription;
     } catch (error) {
       console.error("Subscription server fetch error:", error);
       return null;
@@ -223,12 +275,8 @@ export default function MainGameLobby() {
     }
   };
 
-  const cancelSubscription = async () => {
-    let current = loadSubscription();
-
-    if (!current) {
-      current = await fetchSubscriptionFromServer();
-    }
+   const cancelSubscription = async () => {
+    const current = loadSubscription();
 
     if (!current) {
       alert(
@@ -247,13 +295,32 @@ export default function MainGameLobby() {
 
     persistSubscriptionLocally(cancelled);
 
+    if (!piUser?.username) {
+      alert(
+        lang === "ko"
+          ? "구독이 로컬에서 취소되었습니다. Pi 사용자 정보가 없어 서버 취소는 건너뛰었습니다."
+          : "Subscription cancelled locally. Server cancellation was skipped because Pi user info is missing."
+      );
+      return;
+    }
+
     try {
       const response = await fetch("/api/subscriptions/cancel", {
         method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-pi-username": piUser.username,
+        },
         credentials: "include",
+        body: JSON.stringify({
+          username: piUser.username,
+          uid: piUser.uid ?? null,
+        }),
       });
 
-      const result = (await readApiResponse(response)) as SubscriptionApiResponse;
+      const result = (await readApiResponse(
+        response
+      )) as SubscriptionApiResponse;
 
       if (!response.ok || result.success !== true) {
         console.warn("Server subscription cancel failed:", result.error);
@@ -270,7 +337,6 @@ export default function MainGameLobby() {
         : "Subscription cancelled. In this Testnet prototype, no further automatic billing will continue."
     );
   };
-
   useEffect(() => {
     const savedSubscription = loadSubscription();
 

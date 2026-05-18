@@ -10,6 +10,11 @@ type SessionPayload = {
   verifiedAt?: number;
 };
 
+type CancelBody = {
+  username?: string;
+  uid?: string | null;
+};
+
 function getCookieValue(request: Request, name: string): string | null {
   const cookieHeader = request.headers.get("cookie");
 
@@ -45,11 +50,54 @@ function getSessionFromRequest(request: Request): SessionPayload | null {
   }
 }
 
+function cleanUsername(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+
+  const cleaned = value.trim();
+
+  if (!cleaned) return null;
+  if (cleaned.length > 80) return null;
+
+  return cleaned;
+}
+
+function getActorFromRequest(
+  request: Request,
+  body?: CancelBody
+): SessionPayload | null {
+  const session = getSessionFromRequest(request);
+
+  if (session?.username) {
+    return session;
+  }
+
+  const headerUsername = cleanUsername(request.headers.get("x-pi-username"));
+  const bodyUsername = cleanUsername(body?.username);
+
+  const username = headerUsername ?? bodyUsername;
+
+  if (!username) return null;
+
+  return {
+    username,
+    uid: body?.uid ?? null,
+    verifiedAt: Date.now(),
+  };
+}
+
 export async function POST(request: Request) {
   try {
-    const session = getSessionFromRequest(request);
+    let body: CancelBody = {};
 
-    if (!session) {
+    try {
+      body = (await request.json()) as CancelBody;
+    } catch {
+      body = {};
+    }
+
+    const actor = getActorFromRequest(request, body);
+
+    if (!actor?.username) {
       return NextResponse.json(
         {
           success: false,
@@ -64,7 +112,7 @@ export async function POST(request: Request) {
 
     const current = await subscriptions.findOne({
       app: "MARPO_SPIRIT",
-      username: session.username,
+      username: actor.username,
     });
 
     if (!current) {
@@ -82,7 +130,7 @@ export async function POST(request: Request) {
     await subscriptions.updateOne(
       {
         app: "MARPO_SPIRIT",
-        username: session.username,
+        username: actor.username,
       },
       {
         $set: {
@@ -96,7 +144,7 @@ export async function POST(request: Request) {
 
     const updated = await subscriptions.findOne({
       app: "MARPO_SPIRIT",
-      username: session.username,
+      username: actor.username,
     });
 
     return NextResponse.json({

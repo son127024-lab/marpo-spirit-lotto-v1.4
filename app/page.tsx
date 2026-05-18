@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 import Image from "next/image";
 import MarpoSpiritPage from "../components/marpo-spirit-page";
+import MarpoSpiritDashboardV2 from "../components/marpo-spirit-dashboard-v2";
 import { usePiAuth } from "./pi-auth-provider";
 
 type UserTier = "basic" | "premium" | "vip";
@@ -1120,8 +1121,10 @@ export default function MainGameLobby() {
             </div>
           </header>
 
-          <main className="w-full flex-1 relative">
-            <MarpoSpiritPage lang={lang} />
+          <main className="w-full flex-1 relative p-4 md:p-8 space-y-8">
+             <MarpoSpiritDashboardV2 />
+
+             <MarpoSpiritPage lang={lang} />
           </main>
         </div>
       )}

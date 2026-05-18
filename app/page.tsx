@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import Image from "next/image";
 import MarpoSpiritPage from "../components/marpo-spirit-page";
 import MarpoSpiritDashboardV2 from "../components/marpo-spirit-dashboard-v2";
+import MarpoWorldTransition from "../components/marpo-world-transition";
 import { usePiAuth } from "./pi-auth-provider";
 
 type UserTier = "basic" | "premium" | "vip";
@@ -58,7 +59,9 @@ export default function MainGameLobby() {
   const [subscription, setSubscription] = useState<MarpoSubscription | null>(
     null
   );
-
+  const [dashboardMode, setDashboardMode] = useState<
+  "earth" | "travel" | "mar"
+>("earth");
   const {
     user: piUser,
     isAuthenticating,
@@ -1121,11 +1124,33 @@ export default function MainGameLobby() {
             </div>
           </header>
 
-          <main className="w-full flex-1 relative p-4 md:p-8 space-y-8">
-             <MarpoSpiritDashboardV2 />
+           <main className="w-full flex-1 relative p-4 md:p-8">
+  {dashboardMode === "earth" && (
+    <MarpoSpiritDashboardV2
+      onEnterMarWorld={() => setDashboardMode("travel")}
+    />
+  )}
 
-             <MarpoSpiritPage lang={lang} />
-          </main>
+  {dashboardMode === "travel" && (
+    <MarpoWorldTransition onComplete={() => setDashboardMode("mar")} />
+  )}
+
+  {dashboardMode === "mar" && (
+    <div className="space-y-5">
+      <div className="flex justify-end">
+        <button
+          type="button"
+          onClick={() => setDashboardMode("earth")}
+          className="rounded-full border border-cyan-500/50 bg-cyan-950/40 px-5 py-3 text-xs font-black uppercase tracking-widest text-cyan-200 transition hover:bg-cyan-900/60"
+        >
+          🌎 지구귀환
+        </button>
+      </div>
+
+      <MarpoSpiritPage lang={lang} />
+    </div>
+  )}
+</main>
         </div>
       )}
     </>

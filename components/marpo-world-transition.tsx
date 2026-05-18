@@ -18,7 +18,7 @@ export default function MarpoWorldTransition({
   }, [onComplete]);
 
   return (
-    <section className="relative flex min-h-[calc(100vh-80px)] w-full items-center justify-center overflow-hidden bg-black text-white">
+    <section className="relative flex min-h-[calc(100vh-80px)] w-full items-center justify-center overflow-hidden rounded-[2rem] bg-black text-white">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(88,28,135,0.65),transparent_35%),radial-gradient(circle_at_bottom,rgba(14,165,233,0.25),transparent_45%)]" />
 
       <div className="absolute inset-0 opacity-40">

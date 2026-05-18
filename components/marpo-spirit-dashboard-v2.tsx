@@ -48,7 +48,13 @@ function getTierLabel(tier?: string) {
   return "BASIC";
 }
 
-export default function MarpoSpiritDashboardV2() {
+type MarpoSpiritDashboardV2Props = {
+  onEnterMarWorld?: () => void;
+};
+
+export default function MarpoSpiritDashboardV2({
+  onEnterMarWorld,
+}: MarpoSpiritDashboardV2Props) {
   const [username, setUsername] = useState<string | null>(null);
   const [uid, setUid] = useState<string | null>(null);
   const [tier, setTier] = useState<"basic" | "premium" | "vip">("basic");

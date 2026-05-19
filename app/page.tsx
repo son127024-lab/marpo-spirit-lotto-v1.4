@@ -6,6 +6,7 @@ import MarpoSpiritPage from "../components/marpo-spirit-page";
 import MarpoSpiritDashboardV2 from "../components/marpo-spirit-dashboard-v2";
 import MarpoWorldTransition from "../components/marpo-world-transition";
 import { usePiAuth } from "./pi-auth-provider";
+import { playMarpoSound } from "@/lib/marpo-sound";
 
 type UserTier = "basic" | "premium" | "vip";
 
@@ -1140,7 +1141,10 @@ export default function MainGameLobby() {
       <div className="flex justify-end">
         <button
           type="button"
-          onClick={() => setDashboardMode("earth")}
+          onClick={() => {
+            playMarpoSound("click");
+            setDashboardMode("earth");
+  }}
           className="rounded-full border border-cyan-500/50 bg-cyan-950/40 px-5 py-3 text-xs font-black uppercase tracking-widest text-cyan-200 transition hover:bg-cyan-900/60"
         >
           🌎 지구귀환

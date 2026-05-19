@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-
+import { playMarpoSound } from "@/lib/marpo-sound";
 type MarpoWorldTransitionProps = {
   onComplete: () => void;
 };
@@ -10,11 +10,12 @@ export default function MarpoWorldTransition({
   onComplete,
 }: MarpoWorldTransitionProps) {
   useEffect(() => {
-    const timer = window.setTimeout(() => {
+    const arrivalTimer = window.setTimeout(() => {
+      playMarpoSound("arrival");
       onComplete();
     }, 5000);
 
-    return () => window.clearTimeout(timer);
+    return () => window.clearTimeout(arrivalTimer);
   }, [onComplete]);
 
   return (

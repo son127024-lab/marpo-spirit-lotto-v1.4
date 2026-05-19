@@ -1,6 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import MarpoSoundToggle from "@/components/marpo-sound-toggle";
+import { playMarpoSound, playMarpoWarpSequence } from "@/lib/marpo-sound";
 
 type EnergyProfile = {
   app?: string;
@@ -141,9 +143,11 @@ export default function MarpoSpiritDashboardV2({
       setDailyEnergy(data.dailyEnergy ?? 1);
       setProfile(data.profile ?? null);
 
-      if (data.alreadyClaimed) {
+     if (data.alreadyClaimed) {
+        playMarpoSound("click");
         setMessage("Daily Energy has already been claimed today.");
       } else {
+        playMarpoSound("success");
         setMessage(
           data.message ||
             `Daily Energy claimed successfully. +${data.dailyEnergy ?? dailyEnergy} Energy`
@@ -172,17 +176,21 @@ export default function MarpoSpiritDashboardV2({
 
   return (
     <section className="w-full rounded-[2rem] border border-zinc-800 bg-black/80 p-5 text-white shadow-2xl md:p-8">
-      <div className="mb-6">
-        <p className="text-[10px] font-black uppercase tracking-[0.4em] text-amber-500">
-          MARPO SPIRIT HUB
-        </p>
+      <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+        <div>
+          <p className="text-[10px] font-black uppercase tracking-[0.4em] text-amber-500">
+            MARPO SPIRIT HUB
+          </p>
         <h2 className="mt-2 text-3xl font-black italic uppercase md:text-5xl">
           Dashboard V2
         </h2>
-        <p className="mt-3 max-w-3xl text-sm leading-relaxed text-zinc-400">
-          Utility-based Energy system for MARPO SPIRIT. This section does not
-          use betting, jackpot, or cash-prize mechanics.
-        </p>
+                  <p className="mt-3 max-w-3xl text-sm leading-relaxed text-zinc-400">
+            Utility-based Energy system for MARPO SPIRIT. This section does not
+            use betting, jackpot, or cash-prize mechanics.
+          </p>
+        </div>
+
+        <MarpoSoundToggle />
       </div>
 
       {!username && (
@@ -315,7 +323,10 @@ export default function MarpoSpiritDashboardV2({
 
           <button
             type="button"
-            onClick={onEnterMarWorld}
+            onClick={() => {
+              playMarpoWarpSequence();
+              onEnterMarWorld?.();
+            }}
             className="rounded-3xl bg-amber-400 px-8 py-5 text-sm font-black uppercase text-black shadow-[0_0_30px_rgba(251,191,36,0.35)] transition hover:scale-105 disabled:opacity-50"
             disabled={!onEnterMarWorld}
           >
